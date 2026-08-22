@@ -614,6 +614,19 @@
 
     .recipe-machine-summary p { margin: 0; color: #b9cbbd; }
 
+    .recipe-chain-guide {
+      margin: 0 0 12px;
+      padding: 10px 12px;
+      border: 1px solid #8b7137;
+      border-radius: 10px;
+      background: linear-gradient(135deg, rgba(78, 59, 23, .62), rgba(20, 35, 27, .9));
+      color: #d8dfd5;
+      font-size: 9px;
+      line-height: 1.65;
+    }
+
+    .recipe-chain-guide strong { color: #ffe18c; }
+
     .recipe-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -637,6 +650,8 @@
       border-color: var(--accent);
       box-shadow: inset 0 0 0 2px rgba(240, 204, 101, .15);
     }
+
+    .recipe-card.ballistics { border-left: 3px solid #d1a443; }
 
     .recipe-card.locked { opacity: .52; }
     .recipe-card strong { color: #fff1b4; font-size: 12px; }
@@ -1595,7 +1610,7 @@
           <kbd class="tool-hotkey">3</kbd><span class="tool-icon">♨</span><span class="tool-name">Fornalha</span><span class="tool-recipe">Minério → Placa Fe/Cu</span><span class="tool-cost">55 Cr</span><span class="lock">Tier 2</span>
         </button>
         <button class="tool" data-tool="assembler">
-          <kbd class="tool-hotkey">4</kbd><span class="tool-icon">◆</span><span class="tool-name">Montadora</span><span class="tool-recipe">Fio / Circuito / Munição</span><span class="tool-cost">75 Cr</span><span class="lock">Tier 2</span>
+          <kbd class="tool-hotkey">4</kbd><span class="tool-icon">◆</span><span class="tool-name">Montadora</span><span class="tool-recipe">Fio / Circuito / Balística</span><span class="tool-cost">75 Cr</span><span class="lock">Tier 2</span>
         </button>
         <button class="tool" data-tool="splitter">
           <kbd class="tool-hotkey">5</kbd><span class="tool-icon">⑂</span><span class="tool-name">Divisor</span><span class="tool-recipe">1 entrada → 2 saídas</span><span class="tool-cost">18 Cr</span><span class="lock">Tier 2</span>
@@ -1667,12 +1682,13 @@
     const MAX_FRAME_DELTA = 0.25;
     const BASE_OFFLINE_MAX_SECONDS = 24 * 60 * 60;
     const SAVE_KEY = "factoryGridMVP_save_v1";
-    const SAVE_VERSION = 6;
+    const SAVE_VERSION = 7;
     const STARTING_CREDITS = 100;
     const MINER_INTERVAL = 1.5;
     const BELT_SPEED = 2.1;
-    const FIRST_WAVE_PREP = 75;
+    const FIRST_WAVE_PREP = 120;
     const BETWEEN_WAVE_PREP = 42;
+    const STARTER_AMMO = 30;
     const HUB_MAX_HP = 1000;
     const ENEMY_ATTACK_INTERVAL = 0.8;
     const ENEMY_SPAWNS = Object.freeze([
@@ -1695,6 +1711,9 @@
       ironPlate: { label: "Placa de ferro", short: "P", color: "#d1d9d5", edge: "#74827c", value: 6, research: 0.15 },
       copperPlate:{ label: "Placa de cobre", short: "C", color: "#d98b5d", edge: "#7f4930", value: 6.2, research: 0.15 },
       copperWire:{ label: "Fio de cobre", short: "F", color: "#f0a05c", edge: "#98532c", value: 6.5, research: 0.15 },
+      bulletCore:{ label: "Projétil de ferro", short: "PJ", color: "#c0cbc7", edge: "#5c6965", value: 3.2, research: 0.05 },
+      bulletCasing:{ label: "Estojo de cobre", short: "ET", color: "#e0a067", edge: "#86502e", value: 3.4, research: 0.05 },
+      cartridge: { label: "Cartucho montado", short: "CT", color: "#d9b85d", edge: "#735b29", value: 7.5, research: 0.12 },
       circuit:   { label: "Circuito", short: "◆", color: "#72d890", edge: "#2c7445", value: 24, research: 1 },
       ammo:      { label: "Munição", short: "•", color: "#e5bd65", edge: "#735a27", value: 1.8, research: 0.03 }
     });
@@ -1733,6 +1752,48 @@
         stage: 2,
         icon: "F"
       },
+      bulletCore: {
+        label: "Projéteis de ferro",
+        inputs: { ironPlate: 2 },
+        output: "bulletCore",
+        outputAmount: 4,
+        duration: 2.8,
+        tint: "#879691",
+        machine: "assembler",
+        tier: 2,
+        stage: 2,
+        family: "Balística",
+        chainStep: "1/3",
+        icon: "PJ"
+      },
+      bulletCasing: {
+        label: "Estojos de cobre",
+        inputs: { copperPlate: 2 },
+        output: "bulletCasing",
+        outputAmount: 4,
+        duration: 2.8,
+        tint: "#c77b47",
+        machine: "assembler",
+        tier: 2,
+        stage: 2,
+        family: "Balística",
+        chainStep: "1/3",
+        icon: "ET"
+      },
+      cartridge: {
+        label: "Cartuchos montados",
+        inputs: { bulletCore: 4, bulletCasing: 4 },
+        output: "cartridge",
+        outputAmount: 4,
+        duration: 3.4,
+        tint: "#c4a548",
+        machine: "assembler",
+        tier: 2,
+        stage: 3,
+        family: "Balística",
+        chainStep: "2/3",
+        icon: "CT"
+      },
       circuit: {
         label: "Circuito",
         inputs: { ironPlate: 1, copperWire: 1 },
@@ -1746,14 +1807,16 @@
       },
       ammo: {
         label: "Carregador de munição",
-        inputs: { ironPlate: 1 },
+        inputs: { cartridge: 4, ironPlate: 2, copperWire: 1 },
         output: "ammo",
         outputAmount: 4,
-        duration: 2.0,
+        duration: 4.5,
         tint: "#b99448",
         machine: "assembler",
         tier: 2,
-        stage: 2,
+        stage: 4,
+        family: "Balística",
+        chainStep: "3/3",
         icon: "••"
       }
     });
@@ -2210,6 +2273,7 @@
     function sanitizeState(raw) {
       const base = createNewState();
       if (!raw || typeof raw !== "object") return base;
+      const previousVersion = Math.max(0, Math.floor(Number(raw.version) || 0));
 
       const safe = {
         ...base,
@@ -2275,6 +2339,10 @@
         if (legacyCrafter && migratedType === "assembler" && recipe === "copperWire" && buffer.copperOre) {
           buffer.copperPlate = (Number(buffer.copperPlate) || 0) + (Number(buffer.copperOre) || 0);
           delete buffer.copperOre;
+        }
+        if (previousVersion < 7 && migratedType === "assembler" && recipe === "ammo" && buffer.ironPlate) {
+          safe.inventory.ironPlate += Math.max(0, Number(buffer.ironPlate) || 0);
+          delete buffer.ironPlate;
         }
         const level = clamp(Math.floor(Number(b.level) || 1), 1, MAX_BUILDING_LEVEL);
         const maximumHp = maxBuildingHp(migratedType, level, safe.tech);
@@ -2344,7 +2412,11 @@
       if (!hadCombat && safe.economy.tier >= 2) {
         safe.combat.phase = "prep";
         safe.combat.timer = FIRST_WAVE_PREP;
-        safe.inventory.ammo += 8;
+        safe.inventory.ammo += STARTER_AMMO;
+      }
+      if (previousVersion > 0 && previousVersion < 7 && hadCombat && (safe.economy.tier >= 2 || safe.combat.phase !== "locked")) {
+        safe.inventory.ammo += Math.max(0, STARTER_AMMO - 8);
+        if (safe.combat.phase === "prep") safe.combat.timer = Math.max(safe.combat.timer, FIRST_WAVE_PREP);
       }
 
       safe.enemies = Array.isArray(raw.enemies) ? raw.enemies.filter(enemy => {
@@ -2454,7 +2526,7 @@
       const item = ITEMS[kind];
       if (!item) return 0;
       let multiplier = 1;
-      const processed = kind === "ironPlate" || kind === "copperPlate" || kind === "copperWire" || kind === "circuit" || kind === "ammo";
+      const processed = kind !== "ironOre" && kind !== "copperOre";
       if (processed && hasTech("market1")) multiplier *= 1.20;
       if (hasTech("market2")) multiplier *= 1.35;
       return item.value * multiplier;
@@ -3064,8 +3136,8 @@
       state.combat.phase = "prep";
       state.combat.timer = FIRST_WAVE_PREP;
       state.combat.baseHp = HUB_MAX_HP;
-      state.inventory.ammo += 8;
-      if (!silent) showToast("Defesa liberada: 75 s até a primeira wave. Você recebeu 8 munições de emergência.");
+      state.inventory.ammo += STARTER_AMMO;
+      if (!silent) showToast(`Defesa liberada: ${FIRST_WAVE_PREP} s até a primeira wave. Você recebeu ${STARTER_AMMO} munições de emergência.`);
     }
 
     function startWave(manual = false) {
@@ -4922,6 +4994,9 @@
       const miners = state.buildings.filter(b => b.type === "miner");
       const furnaces = state.buildings.filter(b => b.type === "furnace");
       const wireAssemblers = state.buildings.filter(b => b.type === "assembler" && b.recipe === "copperWire");
+      const coreAssemblers = state.buildings.filter(b => b.type === "assembler" && b.recipe === "bulletCore");
+      const casingAssemblers = state.buildings.filter(b => b.type === "assembler" && b.recipe === "bulletCasing");
+      const cartridgeAssemblers = state.buildings.filter(b => b.type === "assembler" && b.recipe === "cartridge");
       const circuitAssemblers = state.buildings.filter(b => b.type === "assembler" && b.recipe === "circuit");
       const ammoAssemblers = state.buildings.filter(b => b.type === "assembler" && b.recipe === "ammo");
       const walls = state.buildings.filter(b => b.type === "wall");
@@ -4945,17 +5020,23 @@
       if (!furnaces.length) {
         return "Tier 2: construa <strong>Fornalhas</strong> e escolha a receita de Placa de Ferro ou Placa de Cobre.";
       }
+      if (!coreAssemblers.length || !casingAssemblers.length) {
+        return `Abra <strong>Receitas (C)</strong> da Montadora: crie uma linha de <strong>Projéteis de Ferro</strong> e outra de <strong>Estojos de Cobre</strong>.`;
+      }
+      if (!cartridgeAssemblers.length) {
+        return "Combine <strong>4 Projéteis + 4 Estojos</strong> em outra Montadora para formar <strong>4 Cartuchos</strong>.";
+      }
+      if (!wireAssemblers.length) {
+        return "A etapa final da munição também exige <strong>Fio de Cobre</strong>. Explore as receitas e monte essa linha auxiliar.";
+      }
       if (!ammoAssemblers.length) {
-        return `Wave ${state.combat.wave} em <strong>${Math.ceil(state.combat.timer)} s</strong>: configure uma Montadora para <strong>Munição</strong> e alimente-a com Placas de Ferro.`;
+        return `Etapa final: envie <strong>4 Cartuchos + 2 Placas de Ferro + 1 Fio de Cobre</strong> para uma Montadora de <strong>Munição</strong>.`;
       }
       if (!walls.length || !turrets.length) {
         return `Prepare a defesa: construa <strong>Paredes (8)</strong> para canalizar inimigos e <strong>Torretas (9)</strong> próximas ao Hub.`;
       }
-      if (state.inventory.ammo < 4) {
-        return `<strong>Estoque de munição baixo:</strong> ${formatNumber(state.inventory.ammo)}. Cada Placa de Ferro produz 4 munições na Montadora.`;
-      }
-      if (!wireAssemblers.length) {
-        return "Leve <strong>Placa de Cobre</strong> até uma Montadora configurada para produzir <strong>Fio de Cobre</strong>.";
+      if (state.inventory.ammo < 8) {
+        return `<strong>Estoque de munição baixo:</strong> ${formatNumber(state.inventory.ammo)}. Verifique as quatro receitas da cadeia balística e seus gargalos.`;
       }
       if (state.economy.tier === 2) {
         return `Processe materiais até o Tier 3: <strong>${formatNumber(state.economy.runEarned)} / ${TIER_THRESHOLDS[3]} Cr</strong> ganhos.`;
@@ -5325,7 +5406,9 @@
         showToast("Selecione uma Fornalha ou Montadora.");
         return;
       }
-      const recipes = Object.entries(RECIPES).filter(([, recipe]) => recipe.machine === building.type);
+      const recipes = Object.entries(RECIPES)
+        .filter(([, recipe]) => recipe.machine === building.type)
+        .sort(([, a], [, b]) => (a.stage || 99) - (b.stage || 99) || a.label.localeCompare(b.label, "pt-BR"));
       const cards = recipes.map(([key, recipe]) => {
         const active = building.recipe === key;
         const locked = state.economy.tier < recipe.tier;
@@ -5333,10 +5416,13 @@
         const outputAmount = Math.max(1, Number(recipe.outputAmount) || 1);
         const output = `${outputAmount > 1 ? `${outputAmount}× ` : ""}${ITEMS[recipe.output].label}`;
         const buttonLabel = active ? "RECEITA ATIVA" : locked ? `REQUER TIER ${recipe.tier}` : "SELECIONAR RECEITA";
-        return `<article class="recipe-card ${active ? "active" : ""} ${locked ? "locked" : ""}">
+        const productionLine = recipe.family
+          ? `${recipe.family} • etapa ${recipe.chainStep}`
+          : `Produção geral • estágio ${recipe.stage}`;
+        return `<article class="recipe-card ${recipe.family === "Balística" ? "ballistics" : ""} ${active ? "active" : ""} ${locked ? "locked" : ""}">
           <strong>${recipe.icon} ${recipe.label}</strong>
           <div class="recipe-flow"><span>${input}</span><b>→</b><span>${output}</span></div>
-          <small>Tempo base: ${String(recipe.duration).replace(".", ",")} s • Tier ${recipe.tier}</small>
+          <small>${productionLine}<br>Tempo base: ${String(recipe.duration).replace(".", ",")} s • Tier ${recipe.tier}</small>
           <button class="recipe-select" data-recipe-key="${key}" ${active || locked ? "disabled" : ""}>${buttonLabel}</button>
         </article>`;
       }).join("");
@@ -5348,6 +5434,7 @@
            <div class="recipe-machine-icon">${machineIcon}</div>
            <p><strong>Receita atual:</strong> ${RECIPES[building.recipe]?.label || "nenhuma"}<br>Entradas pelas portas azuis; resultado pela porta amarela.<br><span class="bad">Trocar uma máquina ocupada esvazia seu conteúdo.</span></p>
          </div>
+         ${building.type === "assembler" ? `<div class="recipe-chain-guide"><strong>Cadeia balística — 3 etapas, 4 receitas:</strong><br>2 Placas de Ferro → 4 Projéteis &nbsp;•&nbsp; 2 Placas de Cobre → 4 Estojos<br>4 Projéteis + 4 Estojos → 4 Cartuchos<br>4 Cartuchos + 2 Placas de Ferro + 1 Fio de Cobre → 4 Munições</div>` : ""}
          <div class="recipe-grid">${cards}</div>`,
         [{ label: "Fechar receitas", kind: "primary" }]
       );
@@ -5366,7 +5453,7 @@
            <li>Escolha <strong>Minerador</strong> na barra esquerda ou pressione <strong>1</strong>; clique numa jazida e gire a saída com <strong>R</strong>.</li>
            <li>Escolha <strong>Esteira</strong> ou pressione <strong>2</strong> e arraste do minerador até o Hub.</li>
            <li><span style="color:var(--input)"><strong>Portas azuis recebem</strong></span> itens; a <span style="color:var(--output)"><strong>porta amarela envia</strong></span> o resultado.</li>
-           <li><strong>3 Fornalha:</strong> escolha Placa de Ferro ou Placa de Cobre. <strong>4 Montadora:</strong> escolha Fio de Cobre, Circuito ou Munição. Use <strong>C ou Receitas</strong> para reconfigurar uma máquina selecionada.</li>
+           <li><strong>3 Fornalha:</strong> escolha Placa de Ferro ou Placa de Cobre. <strong>4 Montadora:</strong> explore receitas de fios, circuitos e componentes balísticos. Use <strong>C ou Receitas</strong> para reconfigurar uma máquina selecionada.</li>
            <li><strong>5 Divisor:</strong> uma entrada e duas saídas alternadas. <strong>6 Túnel:</strong> clique IN e depois OUT, em linha reta, a até seis tiles. <strong>7 Combinador:</strong> duas entradas azuis convergem em uma saída amarela. Use <strong>F ou Inverter</strong> para trocar o lado auxiliar.</li>
            <li><strong>8 Parede:</strong> clique e arraste para formar muralhas. <strong>9 Torreta:</strong> ataca automaticamente e consome Munição entregue ao Hub.</li>
            <li>Selecione uma construção e use <strong>Melhorar</strong>: cada nível dá +20% local, mas o custo cresce.</li>
@@ -5378,7 +5465,10 @@
            Fornalha: minério de cobre → placa de cobre<br>
            Montadora: placa de cobre → fio de cobre<br>
            Montadora: placa de ferro + fio de cobre → circuito<br>
-           Montadora: placa de ferro → 4 munições
+           Montadora: 2 placas de ferro → 4 projéteis<br>
+           Montadora: 2 placas de cobre → 4 estojos<br>
+           Montadora: 4 projéteis + 4 estojos → 4 cartuchos<br>
+           Montadora: 4 cartuchos + 2 placas de ferro + 1 fio de cobre → 4 munições
          </div>
          <p><strong>Waves:</strong> são liberadas no Tier 2. Inimigos entram pelas quatro estradas, atacam obstáculos e tentam destruir o Hub. Clique no painel WAVE/HUB/MUNIÇÃO para ver detalhes ou iniciar a próxima wave antes.</p>
          <p><strong>Offline:</strong> ao voltar, o jogo calcula em lote a vazão das rotas conectadas. Limite inicial de 24 h, ampliável pela árvore tecnológica.</p>
@@ -5447,7 +5537,11 @@
          <p><strong>Próxima formação:</strong> ${nextCount} invasores, com corredores a cada 4º inimigo e tanques a cada 7º. Eles entram pelas quatro estradas e procuram o caminho de menor resistência até o Hub.</p>
          <p><strong>Sua defesa:</strong> ${wallCount} paredes • ${turretCount} torretas<br>
          Paredes canalizam e absorvem dano. Torretas focam o alvo mais próximo e consomem <strong>${formatNumber(turretAmmoCost())} munição por disparo</strong>.</p>
-         <div class="box"><strong>Cadeia de munição</strong><br>Minério de ferro → Fornalha → Placa de ferro → Montadora de Munição → Hub → Torretas</div>
+         <div class="box"><strong>Cadeia de munição</strong><br>
+         Ferro → Placas → Projéteis<br>
+         Cobre → Placas → Estojos + Fio<br>
+         Projéteis + Estojos → Cartuchos<br>
+         Cartuchos + Placas de Ferro + Fio → Munição → Hub → Torretas</div>
          <p>Waves vencidas: <strong>${state.combat.victories}</strong> • eliminações: <strong>${state.combat.kills}</strong> • derrotas: <strong>${state.combat.defeats}</strong></p>
          <p><strong>Offline justo:</strong> a fábrica continua produzindo com a aba fechada, mas uma wave ativa volta para preparação; o Hub não é destruído offline.</p>`,
         actions
