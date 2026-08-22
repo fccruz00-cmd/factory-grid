@@ -267,6 +267,7 @@
     #defenseBtn strong { color: #f4e8a9; font-size: 9px; letter-spacing: 0; }
     #defenseBtn .hub strong { color: var(--good); }
     #defenseBtn .ammo strong { color: #f0c56c; }
+    #defenseBtn .threat strong { color: #ef9a8f; }
     #defenseBtn.active-wave {
       border-color: #ec756d;
       background: linear-gradient(180deg, rgba(87, 37, 34, .98), rgba(42, 20, 18, .98));
@@ -1753,10 +1754,11 @@
   </div>
 
   <div id="defenseHud">
-    <button id="defenseBtn" aria-label="Status da defesa e das waves">
+    <button id="defenseBtn" aria-label="Status da defesa, das waves e da ameaça">
       <span class="defense-chip wave">WAVE<strong id="waveText">BLOQUEADA</strong></span>
       <span class="defense-chip hub">HUB<strong id="baseText">100%</strong></span>
       <span class="defense-chip ammo">MUNIÇÃO<strong id="ammoText">0</strong></span>
+      <span class="defense-chip threat">AMEAÇA<strong id="threatText">NÍVEL 0</strong></span>
     </button>
   </div>
 
@@ -1860,7 +1862,7 @@
     const MAX_FRAME_DELTA = 0.25;
     const BASE_OFFLINE_MAX_SECONDS = 24 * 60 * 60;
     const SAVE_KEY = "factoryGridMVP_save_v1";
-    const SAVE_VERSION = 8;
+    const SAVE_VERSION = 9;
     const STARTING_CREDITS = 100;
     const MINER_INTERVAL = 1.5;
     const BELT_SPEED = 2.1;
@@ -2541,6 +2543,22 @@
       return Math.round((BUILDING_BASE_HP[type] || 180) * localScale * technology);
     }
 
+    function defaultThreatSnapshot() {
+      return {
+        score: 0,
+        progressScore: 0,
+        productionScore: 0,
+        resourcesPerHour: 0,
+        creditsPerHour: 0,
+        hpMultiplier: 1,
+        damageMultiplier: 1,
+        speedMultiplier: 1,
+        countBonus: 0,
+        rewardMultiplier: 1,
+        sampledAt: 0
+      };
+    }
+
     // ---------------------------------------------------------------------
     // Estado serializável e índices transitórios
     // ---------------------------------------------------------------------
@@ -2585,13 +2603,19 @@
           spawnedThisWave: 0,
           kills: 0,
           victories: 0,
-          defeats: 0
+          defeats: 0,
+          threat: defaultThreatSnapshot()
         },
         stats: {
           delivered: EMPTY_INVENTORY(),
           onlineSeconds: 0,
           offlineSeconds: 0,
-          totalBuilt: 0
+          totalBuilt: 0,
+          lastResourcesPerHour: 0,
+          lastCreditsPerHour: 0,
+          peakResourcesPerHour: 0,
+          peakCreditsPerHour: 0,
+          peakThreatScore: 0
         },
         ui: {
           seenHelp: false
@@ -2613,7 +2637,11 @@
         tech: { ...base.tech, ...(raw.tech || {}) },
         prestigeTree: { ...base.prestigeTree, ...(raw.prestigeTree || {}) },
         inventory: { ...base.inventory, ...(raw.inventory || {}) },
-        combat: { ...base.combat, ...(raw.combat || {}) },
+        combat: {
+          ...base.combat,
+          ...(raw.combat || {}),
+          threat: { ...base.combat.threat, ...((raw.combat && raw.combat.threat) || {}) }
+        },
         stats: {
           ...base.stats,
           ...(raw.stats || {}),
@@ -2745,6 +2773,25 @@
       safe.combat.kills = Math.max(0, Math.floor(Number(safe.combat.kills) || 0));
       safe.combat.victories = Math.max(0, Math.floor(Number(safe.combat.victories) || 0));
       safe.combat.defeats = Math.max(0, Math.floor(Number(safe.combat.defeats) || 0));
+      safe.combat.threat.score = Math.max(0, Math.round(Number(safe.combat.threat.score) || 0));
+      safe.combat.threat.progressScore = Math.max(0, Number(safe.combat.threat.progressScore) || 0);
+      safe.combat.threat.productionScore = Math.max(0, Number(safe.combat.threat.productionScore) || 0);
+      safe.combat.threat.resourcesPerHour = Math.max(0, Number(safe.combat.threat.resourcesPerHour) || 0);
+      safe.combat.threat.creditsPerHour = Math.max(0, Number(safe.combat.threat.creditsPerHour) || 0);
+      safe.combat.threat.hpMultiplier = clamp(Number(safe.combat.threat.hpMultiplier) || 1, 1, 8);
+      safe.combat.threat.damageMultiplier = clamp(Number(safe.combat.threat.damageMultiplier) || 1, 1, 5);
+      safe.combat.threat.speedMultiplier = clamp(Number(safe.combat.threat.speedMultiplier) || 1, 1, 1.75);
+      safe.combat.threat.countBonus = clamp(Math.floor(Number(safe.combat.threat.countBonus) || 0), 0, 24);
+      safe.combat.threat.rewardMultiplier = clamp(Number(safe.combat.threat.rewardMultiplier) || 1, 1, 4);
+      safe.combat.threat.sampledAt = Math.max(0, Number(safe.combat.threat.sampledAt) || 0);
+      safe.stats.lastResourcesPerHour = Math.max(0, Number(safe.stats.lastResourcesPerHour) || 0);
+      safe.stats.lastCreditsPerHour = Math.max(0, Number(safe.stats.lastCreditsPerHour) || 0);
+      safe.stats.peakResourcesPerHour = Math.max(safe.stats.lastResourcesPerHour, Number(safe.stats.peakResourcesPerHour) || 0);
+      safe.stats.peakCreditsPerHour = Math.max(safe.stats.lastCreditsPerHour, Number(safe.stats.peakCreditsPerHour) || 0);
+      safe.stats.peakThreatScore = Math.max(
+        safe.combat.threat.score,
+        Math.round(Number(safe.stats.peakThreatScore) || 0)
+      );
       if (!hadCombat && safe.economy.tier >= 2) {
         safe.combat.phase = "prep";
         safe.combat.timer = FIRST_WAVE_PREP;
@@ -2753,6 +2800,12 @@
       if (previousVersion > 0 && previousVersion < 7 && hadCombat && (safe.economy.tier >= 2 || safe.combat.phase !== "locked")) {
         safe.inventory.ammo += Math.max(0, STARTER_AMMO - 8);
         if (safe.combat.phase === "prep") safe.combat.timer = Math.max(safe.combat.timer, FIRST_WAVE_PREP);
+      }
+      if (previousVersion > 0 && previousVersion < 9 && safe.combat.phase === "active") {
+        safe.combat.phase = "prep";
+        safe.combat.timer = Math.max(25, safe.combat.timer);
+        safe.combat.spawnRemaining = 0;
+        safe.combat.spawnCooldown = 0;
       }
 
       safe.enemies = Array.isArray(raw.enemies) ? raw.enemies.filter(enemy => {
@@ -3557,12 +3610,13 @@
       }
     }
 
-    function waveEnemyCount(wave) {
-      return Math.min(38, 5 + wave * 2);
+    function waveEnemyCount(wave, threat = defaultThreatSnapshot()) {
+      return Math.min(72, 5 + wave * 2 + Math.max(0, Math.floor(threat.countBonus || 0)));
     }
 
     function spawnWaveEnemy() {
       const wave = state.combat.wave;
+      const threat = state.combat.threat || defaultThreatSnapshot();
       const index = state.combat.spawnedThisWave;
       const spawn = ENEMY_SPAWNS[(wave + index) % ENEMY_SPAWNS.length];
       const sequence = index + 1;
@@ -3571,7 +3625,7 @@
       const kindHp = kind === "tank" ? 2.8 : kind === "runner" ? 0.68 : 1;
       const kindSpeed = kind === "tank" ? 0.68 : kind === "runner" ? 1.55 : 1;
       const kindDamage = kind === "tank" ? 1.9 : kind === "runner" ? 0.72 : 1;
-      const maximumHp = Math.round(46 * scale * kindHp);
+      const maximumHp = Math.round(46 * scale * kindHp * threat.hpMultiplier);
       state.enemies.push({
         id: `e${state.nextId++}`,
         kind,
@@ -3582,8 +3636,8 @@
         progress: 0,
         hp: maximumHp,
         maxHp: maximumHp,
-        speed: 1.05 * kindSpeed * Math.min(1.45, 1 + wave * 0.012),
-        damage: 8 * Math.pow(1.11, wave - 1) * kindDamage,
+        speed: Math.min(4, 1.05 * kindSpeed * Math.min(1.45, 1 + wave * 0.012) * threat.speedMultiplier),
+        damage: 8 * Math.pow(1.11, wave - 1) * kindDamage * threat.damageMultiplier,
         attackCooldown: 0
       });
       state.combat.spawnedThisWave += 1;
@@ -3610,21 +3664,24 @@
 
     function startWave(manual = false) {
       if (state.combat.phase !== "prep") return false;
+      const network = getNetworkRates(true);
+      state.combat.threat = evaluateFactoryThreat(network, true);
       state.combat.phase = "active";
       state.combat.timer = 0;
-      state.combat.spawnRemaining = waveEnemyCount(state.combat.wave);
+      state.combat.spawnRemaining = waveEnemyCount(state.combat.wave, state.combat.threat);
       state.combat.spawnedThisWave = 0;
       state.combat.spawnCooldown = 0;
       state.enemies = [];
-      showToast(`Wave ${state.combat.wave} iniciada: ${state.combat.spawnRemaining} inimigos entrando pelas estradas.`);
+      showToast(`Wave ${state.combat.wave}: ${state.combat.spawnRemaining} inimigos • ameaça nível ${state.combat.threat.score} travada.`);
       updateUI(true);
       return true;
     }
 
     function finishWave() {
       const completedWave = state.combat.wave;
-      const credits = 35 + completedWave * 15;
-      const research = 3 + completedWave * 0.75;
+      const threat = state.combat.threat || defaultThreatSnapshot();
+      const credits = Math.round((35 + completedWave * 15) * threat.rewardMultiplier);
+      const research = Math.round((3 + completedWave * 0.75) * threat.rewardMultiplier * 100) / 100;
       state.economy.credits += credits;
       state.economy.runEarned += credits;
       state.economy.lifetimeEarned += credits;
@@ -3634,7 +3691,7 @@
       state.combat.phase = "prep";
       state.combat.timer = Math.max(20, BETWEEN_WAVE_PREP - completedWave * 0.7);
       state.combat.baseHp = Math.min(HUB_MAX_HP, state.combat.baseHp + HUB_MAX_HP * 0.25);
-      showToast(`Wave ${completedWave} vencida: +${credits} Cr e +${formatNumber(research)} Pesquisa.`);
+      showToast(`Wave ${completedWave} vencida no nível ${threat.score}: +${credits} Cr e +${formatNumber(research)} Pesquisa.`);
       cachedNetwork = null;
       updateTier(false);
     }
@@ -4344,6 +4401,68 @@
         creditsPerSecond += rate * itemCreditValue(kind);
       }
       return { itemRates: hubRates, creditsPerSecond };
+    }
+
+    function hourlyFactoryMetrics(network) {
+      const safeNetwork = network || { itemRates: {}, creditsPerSecond: 0 };
+      const resourcesPerSecond = Object.values(safeNetwork.itemRates || {})
+        .reduce((total, rate) => total + Math.max(0, Number(rate) || 0), 0);
+      return {
+        resourcesPerHour: resourcesPerSecond * 3600,
+        creditsPerHour: Math.max(0, Number(safeNetwork.creditsPerSecond) || 0) * 3600
+      };
+    }
+
+    function evaluateFactoryThreat(network, recordPeak = false) {
+      const current = hourlyFactoryMetrics(network);
+      if (recordPeak) {
+        state.stats.lastResourcesPerHour = current.resourcesPerHour;
+        state.stats.lastCreditsPerHour = current.creditsPerHour;
+        state.stats.peakResourcesPerHour = Math.max(state.stats.peakResourcesPerHour, current.resourcesPerHour);
+        state.stats.peakCreditsPerHour = Math.max(state.stats.peakCreditsPerHour, current.creditsPerHour);
+      }
+
+      // O pico da rodada impede reduzir a dificuldade desconectando a fábrica antes da wave.
+      const resourcesPerHour = Math.max(current.resourcesPerHour, state.stats.peakResourcesPerHour);
+      const creditsPerHour = Math.max(current.creditsPerHour, state.stats.peakCreditsPerHour);
+      const techCount = Object.keys(TECHS).filter(key => hasTech(key)).length;
+      const prestigeNodeCount = Object.keys(PRESTIGE_NODES).filter(key => hasPrestigeNode(key)).length;
+      const factoryPower = state.buildings.reduce((total, building) => {
+        const level = clamp(Math.floor(Number(building.level) || 1), 1, MAX_BUILDING_LEVEL);
+        if (building.type === "belt" || building.type === "splitter" || building.type === "merger" || building.type === "underground") {
+          return total + level * 0.12;
+        }
+        if (building.type === "wall") return total + level * 0.08;
+        return total + level;
+      }, 0);
+
+      const progressScore =
+        Math.max(0, state.economy.tier - 1) * 8 +
+        Math.log2(1 + state.economy.runEarned / 120) * 7 +
+        Math.max(0, factoryPower - 8) * 0.55 +
+        techCount * 2 +
+        state.economy.prestige * 3.5 +
+        prestigeNodeCount * 5;
+      const productionScore =
+        Math.max(0, Math.log2(Math.max(1, resourcesPerHour / 2400))) * 18 +
+        Math.max(0, Math.log2(Math.max(1, creditsPerHour / 4800))) * 10;
+      const calculatedScore = Math.max(0, Math.round(progressScore + productionScore));
+      const score = Math.max(calculatedScore, state.stats.peakThreatScore);
+      if (recordPeak) state.stats.peakThreatScore = Math.max(state.stats.peakThreatScore, score);
+
+      return {
+        score,
+        progressScore: Math.round(progressScore * 10) / 10,
+        productionScore: Math.round(productionScore * 10) / 10,
+        resourcesPerHour,
+        creditsPerHour,
+        hpMultiplier: clamp(1 + score / 110, 1, 8),
+        damageMultiplier: clamp(1 + score / 180, 1, 5),
+        speedMultiplier: clamp(1 + score / 650, 1, 1.75),
+        countBonus: Math.min(24, Math.floor(score / 25)),
+        rewardMultiplier: clamp(1 + score / 220, 1, 4),
+        sampledAt: Date.now()
+      };
     }
 
     function applyOfflineProgress(realSeconds) {
@@ -5419,6 +5538,7 @@
     const waveText = document.getElementById("waveText");
     const baseText = document.getElementById("baseText");
     const ammoText = document.getElementById("ammoText");
+    const threatText = document.getElementById("threatText");
     const TOOL_PAGE_SIZE = 2;
     let mobileLayout = window.innerWidth <= 760;
     let buildDrawerOpen = !mobileLayout;
@@ -5769,6 +5889,8 @@
     function updateUI(forceRate = false) {
       if (!state) return;
       const network = getNetworkRates(forceRate);
+      const calculatedThreat = evaluateFactoryThreat(network, true);
+      const visibleThreat = state.combat.phase === "active" ? state.combat.threat : calculatedThreat;
       creditsText.textContent = formatNumber(state.economy.credits);
       tierText.textContent = String(state.economy.tier);
       rateText.textContent = `${formatNumber(network.creditsPerSecond * 60)} Cr/min`;
@@ -5787,6 +5909,9 @@
           : `${state.combat.wave} • ${state.enemies.length + state.combat.spawnRemaining} RESTAM`;
       baseText.textContent = `${basePercent}%`;
       ammoText.textContent = formatNumber(state.inventory.ammo);
+      threatText.textContent = `NÍVEL ${visibleThreat.score}`;
+      threatText.title = `HP ${formatNumber(visibleThreat.hpMultiplier)}× • dano ${formatNumber(visibleThreat.damageMultiplier)}× • velocidade ${formatNumber(visibleThreat.speedMultiplier)}×`;
+      defenseBtn.setAttribute("aria-label", `Defesa da wave ${state.combat.wave}; ameaça nível ${visibleThreat.score}`);
       defenseBtn.classList.toggle("active-wave", state.combat.phase === "active");
       defenseBtn.classList.toggle("base-critical", basePercent <= 30);
 
@@ -6250,7 +6375,8 @@
            Montadora: 4 projéteis + 4 estojos → 4 cartuchos<br>
            Montadora: 4 cartuchos + 2 placas de ferro + 1 fio de cobre → 4 munições
          </div>
-         <p><strong>Waves:</strong> são liberadas no Tier 2. Inimigos entram pelas quatro estradas, atacam obstáculos e tentam destruir o Hub. Clique no painel WAVE/HUB/MUNIÇÃO para ver detalhes ou iniciar a próxima wave antes.</p>
+         <p><strong>Waves:</strong> são liberadas no Tier 2. Inimigos entram pelas quatro estradas, atacam obstáculos e tentam destruir o Hub. Clique no painel WAVE/HUB/MUNIÇÃO/AMEAÇA para ver detalhes ou iniciar a próxima wave antes.</p>
+         <p><strong>Diretor de Ameaça:</strong> mede o pico de itens/h e Cr/h entregues ao Hub, além de Tier, créditos da rodada, tamanho e níveis da fábrica, tecnologias e Prestígio. O nível fica travado quando a wave começa; desconectar esteiras não reduz a formação atual. A recompensa cresce junto com a dificuldade.</p>
          <p><strong>Offline:</strong> ao voltar, o jogo calcula em lote a vazão das rotas conectadas. Limite inicial de 24 h, ampliável pela árvore tecnológica.</p>
          <p><strong>Atalhos desktop:</strong> B modo BUILD • botão direito remove • 1–9/Q/E/Z/X construções • C receitas • R girar • F inverter lado • U melhorar • Del remover • T tecnologias • P prestígio • M menu • Esc cancelar.</p>`,
         [{
@@ -6292,6 +6418,7 @@
       return `<div class="box"><strong>Estoque e entregas no Hub</strong><ul>${rows}</ul></div>
         <p>Créditos ganhos na rodada: <strong>${formatNumber(state.economy.runEarned)}</strong><br>
         Créditos vitalícios: <strong>${formatNumber(state.economy.lifetimeEarned)}</strong><br>
+        Pico desta rodada: <strong>${formatNumber(state.stats.peakResourcesPerHour)} itens/h • ${formatNumber(state.stats.peakCreditsPerHour)} Cr/h</strong><br>
         Pesquisa disponível: <strong>${formatNumber(state.economy.researchPoints)}</strong><br>
         Tecnologias: <strong>${Object.keys(TECHS).filter(key => hasTech(key)).length}/${Object.keys(TECHS).length}</strong><br>
         Prestígio: <strong>${state.economy.prestige} Núcleos totais • ${state.economy.corePoints} livres • ${Object.keys(PRESTIGE_NODES).filter(key => hasPrestigeNode(key)).length}/${Object.keys(PRESTIGE_NODES).length} nós</strong><br>
@@ -6299,6 +6426,9 @@
     }
 
     function showDefenseStatus() {
+      const network = getNetworkRates(true);
+      const previewThreat = evaluateFactoryThreat(network, true);
+      const threat = state.combat.phase === "active" ? state.combat.threat : previewThreat;
       const phaseText = state.combat.phase === "locked"
         ? "Bloqueada até o Tier 2"
         : state.combat.phase === "prep"
@@ -6308,7 +6438,9 @@
       const turretCount = state.buildings.filter(building => building.type === "turret").length;
       const repairCount = state.buildings.filter(building => building.type === "repairStation").length;
       const teslaCount = state.buildings.filter(building => building.type === "tesla").length;
-      const nextCount = waveEnemyCount(state.combat.wave);
+      const nextCount = waveEnemyCount(state.combat.wave, threat);
+      const formationLabel = state.combat.phase === "active" ? "Formação travada" : "Próxima formação";
+      const peakWasUsed = threat.resourcesPerHour > state.stats.lastResourcesPerHour + 0.5 || threat.creditsPerHour > state.stats.lastCreditsPerHour + 0.5;
       const actions = [];
       if (state.combat.phase === "prep") {
         actions.push({ label: `Iniciar Wave ${state.combat.wave} agora`, kind: "danger", onClick: () => startWave(true) });
@@ -6317,7 +6449,13 @@
       openModal(
         `Defesa • Wave ${state.combat.wave}`,
         `<div class="box"><strong>${phaseText}</strong><br>Hub: ${formatNumber(state.combat.baseHp)} / ${HUB_MAX_HP} HP • Munição: ${formatNumber(state.inventory.ammo)}</div>
-         <p><strong>Próxima formação:</strong> ${nextCount} invasores, com corredores a cada 4º inimigo e tanques a cada 7º. Eles entram pelas quatro estradas e procuram o caminho de menor resistência até o Hub.</p>
+         <div class="box"><strong>Diretor de Ameaça • nível ${threat.score}</strong><br>
+         Avanço: ${formatNumber(threat.progressScore)} pontos • Produção: ${formatNumber(threat.productionScore)} pontos<br>
+         Atual: ${formatNumber(state.stats.lastResourcesPerHour)} itens/h • ${formatNumber(state.stats.lastCreditsPerHour)} Cr/h<br>
+         Pico usado: ${formatNumber(threat.resourcesPerHour)} itens/h • ${formatNumber(threat.creditsPerHour)} Cr/h${peakWasUsed ? "<br><span class=\"bad\">O pico da rodada foi preservado.</span>" : ""}<br>
+         Inimigos: <strong>${formatNumber(threat.hpMultiplier)}× HP • ${formatNumber(threat.damageMultiplier)}× dano • ${formatNumber(threat.speedMultiplier)}× velocidade • +${threat.countBonus} unidades</strong><br>
+         Recompensa da wave: <strong>${formatNumber(threat.rewardMultiplier)}×</strong></div>
+         <p><strong>${formationLabel}:</strong> ${nextCount} invasores, com corredores a cada 4º inimigo e tanques a cada 7º. Eles entram pelas quatro estradas e procuram o caminho de menor resistência até o Hub.</p>
          <p><strong>Sua defesa:</strong> ${wallCount} paredes • ${turretCount} torretas • ${repairCount} reparadores • ${teslaCount} Teslas<br>
          Torretas consomem <strong>${formatNumber(turretAmmoCost())} munição</strong>. Torres Tesla atingem vários alvos e consomem <strong>${formatNumber(teslaCircuitCost())} Circuito por pulso</strong>.</p>
          <div class="box"><strong>Cadeia de munição</strong><br>
@@ -6326,6 +6464,7 @@
          Projéteis + Estojos → Cartuchos<br>
          Cartuchos + Placas de Ferro + Fio → Munição → Hub → Torretas</div>
          <p>Waves vencidas: <strong>${state.combat.victories}</strong> • eliminações: <strong>${state.combat.kills}</strong> • derrotas: <strong>${state.combat.defeats}</strong></p>
+         <p><strong>Regra anti-exploit:</strong> a maior produção observada na rodada nunca diminui. Ao iniciar a wave, o Diretor salva um snapshot; mudanças na fábrica só afetam a próxima formação.</p>
          <p><strong>Offline justo:</strong> a fábrica continua produzindo com a aba fechada, mas uma wave ativa volta para preparação; o Hub não é destruído offline.</p>`,
         actions
       );
@@ -6737,6 +6876,11 @@
     window.FactoryGridDebug = Object.freeze({
       getState: () => JSON.parse(JSON.stringify(state)),
       getRates: () => JSON.parse(JSON.stringify(calculateNetworkRates())),
+      getThreat: () => JSON.parse(JSON.stringify(
+        state.combat.phase === "active"
+          ? state.combat.threat
+          : evaluateFactoryThreat(calculateNetworkRates(), false)
+      )),
       place: (tool, x, y, dir = 1) => placeToolAt(tool, x, y, dir, true),
       placeTunnel: (entryX, entryY, exitX, exitY, dir = 1) => {
         pendingUnderground = null;
