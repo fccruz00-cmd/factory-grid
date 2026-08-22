@@ -918,7 +918,7 @@
 
     .tech-map {
       position: relative;
-      width: 2100px;
+      width: 2660px;
       height: 1240px;
       overflow: hidden;
       background-color: #0f1d16;
@@ -971,7 +971,7 @@
     .tech-links {
       position: absolute;
       inset: 0;
-      width: 2100px;
+      width: 2660px;
       height: 1240px;
       overflow: visible;
       pointer-events: none;
@@ -1775,7 +1775,7 @@
           <kbd class="tool-hotkey">2</kbd><span class="tool-icon">➜</span><span class="tool-name">Esteira</span><span class="tool-recipe">Move na seta</span><span class="tool-cost">3 Cr</span><span class="lock">Tier 1</span>
         </button>
         <button class="tool" data-tool="furnace">
-          <kbd class="tool-hotkey">3</kbd><span class="tool-icon">♨</span><span class="tool-name">Fornalha</span><span class="tool-recipe">Minério → Placa Fe/Cu</span><span class="tool-cost">55 Cr</span><span class="lock">Tier 2</span>
+          <kbd class="tool-hotkey">3</kbd><span class="tool-icon">♨</span><span class="tool-name">Fornalha</span><span class="tool-recipe">Placas básicas e ligas</span><span class="tool-cost">55 Cr</span><span class="lock">Tier 2</span>
         </button>
         <button class="tool" data-tool="assembler">
           <kbd class="tool-hotkey">4</kbd><span class="tool-icon">◆</span><span class="tool-name">Montadora</span><span class="tool-recipe">Fio / Circuito / Balística</span><span class="tool-cost">75 Cr</span><span class="lock">Tier 2</span>
@@ -1795,11 +1795,17 @@
         <button class="tool" data-tool="turret">
           <kbd class="tool-hotkey">9</kbd><span class="tool-icon">⌖</span><span class="tool-name">Torreta</span><span class="tool-recipe">Alcance 4 • usa munição</span><span class="tool-cost">100 Cr</span><span class="lock">Tier 2</span>
         </button>
+        <button class="tool" data-tool="cannon">
+          <kbd class="tool-hotkey">V</kbd><span class="tool-icon">◉</span><span class="tool-name">Canhão automático</span><span class="tool-recipe">Explosão em área • usa Obus</span><span class="tool-cost">650 Cr</span><span class="lock">Tecnologia</span>
+        </button>
+        <button class="tool" data-tool="railgun">
+          <kbd class="tool-hotkey">G</kbd><span class="tool-icon">⇥</span><span class="tool-name">Railgun</span><span class="tool-recipe">Longo alcance • perfura alvos</span><span class="tool-cost">1.500 Cr</span><span class="lock">Tecnologia</span>
+        </button>
         <button class="tool" data-tool="beacon">
           <kbd class="tool-hotkey">Q</kbd><span class="tool-icon">◉</span><span class="tool-name">Beacon industrial</span><span class="tool-recipe">Acelera máquinas próximas</span><span class="tool-cost">500 Cr</span><span class="lock">Prestígio</span>
         </button>
         <button class="tool" data-tool="deepDrill">
-          <kbd class="tool-hotkey">E</kbd><span class="tool-icon">✦</span><span class="tool-name">Sonda profunda</span><span class="tool-recipe">Ferro + cobre fora de jazidas</span><span class="tool-cost">700 Cr</span><span class="lock">Prestígio</span>
+          <kbd class="tool-hotkey">E</kbd><span class="tool-icon">✦</span><span class="tool-name">Sonda profunda</span><span class="tool-recipe">Fe/Cu • expande no Prestígio</span><span class="tool-cost">700 Cr</span><span class="lock">Prestígio</span>
         </button>
         <button class="tool" data-tool="repairStation">
           <kbd class="tool-hotkey">Z</kbd><span class="tool-icon">✚</span><span class="tool-name">Estação de reparo</span><span class="tool-recipe">Regenera construções em combate</span><span class="tool-cost">600 Cr</span><span class="lock">Prestígio</span>
@@ -1862,7 +1868,7 @@
     const MAX_FRAME_DELTA = 0.25;
     const BASE_OFFLINE_MAX_SECONDS = 24 * 60 * 60;
     const SAVE_KEY = "factoryGridMVP_save_v1";
-    const SAVE_VERSION = 9;
+    const SAVE_VERSION = 10;
     const STARTING_CREDITS = 100;
     const MINER_INTERVAL = 1.5;
     const BELT_SPEED = 2.1;
@@ -1886,16 +1892,23 @@
     ]);
 
     const ITEMS = Object.freeze({
-      ironOre:   { label: "Minério de ferro", short: "Fe", color: "#9aa9a4", edge: "#596662", value: 2, research: 0 },
-      copperOre: { label: "Minério de cobre", short: "Cu", color: "#d88955", edge: "#7b442d", value: 2.4, research: 0 },
+      ironOre:   { label: "Minério de ferro", short: "Fe", color: "#9aa9a4", edge: "#596662", deposit: "rgba(103,119,114,.22)", value: 2, research: 0, raw: true },
+      copperOre: { label: "Minério de cobre", short: "Cu", color: "#d88955", edge: "#7b442d", deposit: "rgba(176,91,47,.22)", value: 2.4, research: 0, raw: true },
+      coal:      { label: "Carvão mineral", short: "C", color: "#505957", edge: "#202725", deposit: "rgba(38,45,43,.34)", value: 3, research: 0, raw: true },
+      tungstenOre:{ label: "Minério de tungstênio", short: "W", color: "#8aa5b8", edge: "#3c5364", deposit: "rgba(61,92,112,.28)", value: 8, research: 0, raw: true },
       ironPlate: { label: "Placa de ferro", short: "P", color: "#d1d9d5", edge: "#74827c", value: 6, research: 0.15 },
       copperPlate:{ label: "Placa de cobre", short: "C", color: "#d98b5d", edge: "#7f4930", value: 6.2, research: 0.15 },
+      steelPlate:{ label: "Liga de aço", short: "AÇ", color: "#b7c7c5", edge: "#556765", value: 28, research: 0.55 },
+      propellant:{ label: "Propelente industrial", short: "PR", color: "#c98545", edge: "#6c3f25", value: 9, research: 0.35 },
+      tungstenPlate:{ label: "Placa de tungstênio", short: "WP", color: "#a8c9da", edge: "#46687a", value: 60, research: 1.4 },
       copperWire:{ label: "Fio de cobre", short: "F", color: "#f0a05c", edge: "#98532c", value: 6.5, research: 0.15 },
       bulletCore:{ label: "Projétil de ferro", short: "PJ", color: "#c0cbc7", edge: "#5c6965", value: 3.2, research: 0.05 },
       bulletCasing:{ label: "Estojo de cobre", short: "ET", color: "#e0a067", edge: "#86502e", value: 3.4, research: 0.05 },
       cartridge: { label: "Cartucho montado", short: "CT", color: "#d9b85d", edge: "#735b29", value: 7.5, research: 0.12 },
       circuit:   { label: "Circuito", short: "◆", color: "#72d890", edge: "#2c7445", value: 24, research: 1 },
-      ammo:      { label: "Munição", short: "•", color: "#e5bd65", edge: "#735a27", value: 1.8, research: 0.03 }
+      ammo:      { label: "Munição", short: "•", color: "#e5bd65", edge: "#735a27", value: 1.8, research: 0.03 },
+      shell:     { label: "Obus de canhão", short: "OB", color: "#d8a247", edge: "#6d4921", value: 90, research: 1.2 },
+      railSlug:  { label: "Dardo de tungstênio", short: "DW", color: "#9ee7f2", edge: "#397488", value: 140, research: 3 }
     });
 
     const RECIPES = Object.freeze({
@@ -1920,6 +1933,34 @@
         tier: 2,
         stage: 1,
         icon: "Cu"
+      },
+      steelPlate: {
+        label: "Liga de aço",
+        inputs: { ironPlate: 2, coal: 2 },
+        output: "steelPlate",
+        duration: 4.2,
+        tint: "#869997",
+        machine: "furnace",
+        tier: 3,
+        tech: "steelProcessing",
+        stage: 3,
+        family: "Metalurgia avançada",
+        chainStep: "1/2",
+        icon: "AÇ"
+      },
+      tungstenPlate: {
+        label: "Placa de tungstênio",
+        inputs: { tungstenOre: 2, coal: 1 },
+        output: "tungstenPlate",
+        duration: 7.0,
+        tint: "#6e91a5",
+        machine: "furnace",
+        tier: 3,
+        tech: "tungstenExtraction",
+        stage: 5,
+        family: "Metalurgia avançada",
+        chainStep: "2/2",
+        icon: "W"
       },
       copperWire: {
         label: "Fio de cobre",
@@ -1998,8 +2039,57 @@
         family: "Balística",
         chainStep: "3/3",
         icon: "••"
+      },
+      propellant: {
+        label: "Propelente industrial",
+        inputs: { coal: 2, copperPlate: 1 },
+        output: "propellant",
+        outputAmount: 2,
+        duration: 3.8,
+        tint: "#a95f32",
+        machine: "assembler",
+        tier: 3,
+        tech: "industrialChemistry",
+        stage: 4,
+        family: "Artilharia",
+        chainStep: "1/2",
+        icon: "PR"
+      },
+      shell: {
+        label: "Obus de canhão",
+        inputs: { steelPlate: 2, propellant: 2 },
+        output: "shell",
+        duration: 5.8,
+        tint: "#b17a35",
+        machine: "assembler",
+        tier: 3,
+        tech: "artillery",
+        stage: 5,
+        family: "Artilharia",
+        chainStep: "2/2",
+        icon: "OB"
+      },
+      railSlug: {
+        label: "Dardo de tungstênio",
+        inputs: { tungstenPlate: 1, steelPlate: 1, circuit: 1 },
+        output: "railSlug",
+        duration: 8.5,
+        tint: "#5797ac",
+        machine: "assembler",
+        tier: 3,
+        tech: "railWeapons",
+        stage: 6,
+        family: "Artilharia",
+        chainStep: "Especial",
+        icon: "DW"
       }
     });
+
+    const RESOURCE_UNLOCK_TECH = Object.freeze({
+      coal: "steelProcessing",
+      tungstenOre: "tungstenExtraction"
+    });
+    const ADVANCED_RECIPE_KEYS = Object.freeze(["steelPlate", "propellant", "shell", "tungstenPlate", "railSlug"]);
 
     const TOOLS = Object.freeze({
       miner:       { label: "Minerador", type: "miner", cost: 30, tier: 1 },
@@ -2011,6 +2101,8 @@
       merger:      { label: "Combinador", type: "merger", cost: 18, tier: 2 },
       wall:        { label: "Parede", type: "wall", cost: 12, tier: 2 },
       turret:      { label: "Torreta", type: "turret", cost: 100, tier: 2 },
+      cannon:      { label: "Canhão automático", type: "cannon", cost: 650, tier: 3, tech: "artillery" },
+      railgun:     { label: "Railgun", type: "railgun", cost: 1500, tier: 3, tech: "railWeapons" },
       beacon:      { label: "Beacon industrial", type: "beacon", cost: 500, tier: 3, prestige: "beaconUnlock" },
       deepDrill:   { label: "Sonda profunda", type: "deepDrill", cost: 700, tier: 3, prestige: "deepDrillUnlock" },
       repairStation:{ label: "Estação de reparo", type: "repairStation", cost: 600, tier: 3, prestige: "repairStationUnlock" },
@@ -2032,6 +2124,8 @@
       merger: 25,
       wall: 18,
       turret: 120,
+      cannon: 280,
+      railgun: 480,
       beacon: 220,
       deepDrill: 260,
       repairStation: 240,
@@ -2143,15 +2237,51 @@
       },
       ballistics1: {
         label: "Balística automatizada",
-        description: "+30% de dano e +1 tile de alcance para todas as torretas.",
+        description: "+30% de dano e +1 tile de alcance para a Torreta padrão; abre o caminho para Artilharia.",
         cost: 180,
         requires: ["assembly1", "logistics2"]
       },
       ballistics2: {
         label: "Controle de tiro preditivo",
-        description: "+50% de cadência e 30% menos consumo de munição.",
+        description: "+50% de cadência e 30% menos consumo na Torreta; também acelera Canhões e Railguns.",
         cost: 380,
         requires: ["ballistics1", "core2"]
+      },
+      steelProcessing: {
+        label: "Carbono e aço",
+        description: "Permite minerar Carvão e libera a receita de Liga de Aço na Fornalha.",
+        cost: 220,
+        requires: ["mining2", "processing2"]
+      },
+      industrialChemistry: {
+        label: "Química industrial",
+        description: "Libera Propelente Industrial: Carvão e Cobre viram combustível para artilharia.",
+        cost: 320,
+        requires: ["steelProcessing", "assembly1"]
+      },
+      artillery: {
+        label: "Artilharia automatizada",
+        description: "Libera Obuses e o Canhão automático, uma arma lenta com dano em área.",
+        cost: 520,
+        requires: ["industrialChemistry", "ballistics1", "fortification1"]
+      },
+      tungstenExtraction: {
+        label: "Metalurgia de tungstênio",
+        description: "Permite minerar Tungstênio e fundi-lo com Carvão em placas de alta densidade.",
+        cost: 700,
+        requires: ["artillery", "mining3", "processing3"]
+      },
+      railWeapons: {
+        label: "Aceleração eletromagnética",
+        description: "Libera Dardos de Tungstênio e a Railgun de longo alcance, capaz de perfurar vários alvos.",
+        cost: 1100,
+        requires: ["tungstenExtraction", "ballistics2", "assembly3"]
+      },
+      advancedOrdnance: {
+        label: "Soluções de tiro hipersônico",
+        description: "+40% de dano, +25% de alcance e 20% menos consumo para Canhões e Railguns.",
+        cost: 1800,
+        requires: ["railWeapons", "core3"]
       },
       fortification1: {
         label: "Concreto industrial",
@@ -2304,6 +2434,22 @@
         requires: ["deepDrillUnlock"],
         icon: "✹"
       },
+      advancedMetallurgyP: {
+        label: "Fornalhas estelares",
+        description: "+75% de velocidade nas cadeias de Aço, Propelente, Tungstênio, Obuses e Dardos; a Sonda também encontra Carvão.",
+        cost: 5,
+        branch: "industry",
+        requires: ["industrialSingularity"],
+        icon: "♨"
+      },
+      matterBoreP: {
+        label: "Sonda omnigeológica",
+        description: "A Sonda profunda passa a extrair os quatro minérios e dá mais +50% de velocidade às receitas avançadas.",
+        cost: 7,
+        branch: "industry",
+        requires: ["advancedMetallurgyP"],
+        icon: "◇"
+      },
       logisticsCoreP: {
         label: "Núcleo logístico",
         description: "+50% de velocidade para esteiras, divisores, combinadores e túneis.",
@@ -2336,9 +2482,25 @@
         requires: ["compressedFlow"],
         icon: "⇉"
       },
+      ordnanceLogisticsP: {
+        label: "Logística de arsenal",
+        description: "Canhões e Railguns consomem 25% menos munição avançada.",
+        cost: 5,
+        branch: "logistics",
+        requires: ["instantDistribution"],
+        icon: "▸"
+      },
+      quantumAmmunitionP: {
+        label: "Duplicação balística",
+        description: "Cada ciclo de Obus ou Dardo de Tungstênio produz uma unidade adicional.",
+        cost: 7,
+        branch: "logistics",
+        requires: ["ordnanceLogisticsP"],
+        icon: "◈"
+      },
       defenseCoreP: {
         label: "Núcleo defensivo",
-        description: "+50% de vida para estruturas defensivas, dano e alcance das torretas.",
+        description: "+50% de vida para estruturas defensivas; melhora dano e alcance de todas as armas.",
         cost: 1,
         branch: "defense",
         requires: [],
@@ -2364,18 +2526,34 @@
       },
       fortressSingularity: {
         label: "Fortaleza autônoma",
-        description: "Dobra vida, dano e reparo defensivos; Torres Tesla gastam 40% menos Circuitos.",
+        description: "Dobra vida e dano defensivos, aumenta reparos e reduz o custo energético das Torres Tesla.",
         cost: 4,
         branch: "defense",
         requires: ["teslaUnlock"],
         icon: "▰"
       },
+      heavyWeaponsP: {
+        label: "Doutrina de armas pesadas",
+        description: "+40% de dano para Canhões e Railguns, explosões maiores e +1 alvo perfurado.",
+        cost: 5,
+        branch: "defense",
+        requires: ["fortressSingularity"],
+        icon: "✷"
+      },
+      warMachineP: {
+        label: "Máquina de guerra autônoma",
+        description: "+40% adicional de dano; Obuses mantêm 80% do dano em área e Railguns quase não perdem dano ao perfurar.",
+        cost: 7,
+        branch: "defense",
+        requires: ["heavyWeaponsP"],
+        icon: "⊕"
+      },
       omnifactory: {
         label: "ÔMEGA FÁBRICA",
-        description: "+150% de velocidade global, +50% de créditos e +50% de Pesquisa. Exige os três ramos completos.",
-        cost: 6,
+        description: "+150% de velocidade global, +50% de créditos e +50% de Pesquisa. Exige os seis estágios dos três ramos.",
+        cost: 8,
         branch: "capstone",
-        requires: ["industrialSingularity", "instantDistribution", "fortressSingularity"],
+        requires: ["matterBoreP", "quantumAmmunitionP", "warMachineP"],
         icon: "Ω"
       }
     });
@@ -2393,6 +2571,12 @@
       assembly3:    { x: 1100, y: 390,  icon: "✥", branch: "Montagem III" },
       ballistics1:  { x: 1100, y: 230,  icon: "⌖", branch: "Defesa I" },
       ballistics2:  { x: 1360, y: 230,  icon: "✹", branch: "Defesa II" },
+      steelProcessing:{ x: 1100, y: 60, icon: "AÇ", branch: "Metalurgia I" },
+      industrialChemistry:{ x: 1360, y: 60, icon: "⚗", branch: "Química industrial" },
+      tungstenExtraction:{ x: 1880, y: 60, icon: "W", branch: "Metalurgia II" },
+      artillery:     { x: 1620, y: 230, icon: "◉", branch: "Artilharia" },
+      railWeapons:   { x: 2140, y: 230, icon: "⇥", branch: "Armas pesadas I" },
+      advancedOrdnance:{ x: 2400, y: 230, icon: "✦", branch: "Armas pesadas II" },
       buffering1:   { x: 580,  y: 510,  icon: "▣", branch: "Armazenamento I" },
       buffering2:   { x: 840,  y: 510,  icon: "▦", branch: "Armazenamento II" },
       fortification1:{ x: 1100, y: 510,  icon: "▥", branch: "Fortificação I" },
@@ -2424,14 +2608,21 @@
     const EMPTY_INVENTORY = () => ({
       ironOre: 0,
       copperOre: 0,
+      coal: 0,
+      tungstenOre: 0,
       ironPlate: 0,
       copperPlate: 0,
+      steelPlate: 0,
+      propellant: 0,
+      tungstenPlate: 0,
       copperWire: 0,
       bulletCore: 0,
       bulletCasing: 0,
       cartridge: 0,
       circuit: 0,
-      ammo: 0
+      ammo: 0,
+      shell: 0,
+      railSlug: 0
     });
 
     const posKey = (x, y) => `${x},${y}`;
@@ -2463,12 +2654,16 @@
 
     addDepositCluster(16, 17, "ironOre");
     addDepositCluster(32, 20, "copperOre");
+    addDepositCluster(14, 25, "coal");
+    addDepositCluster(35, 10, "tungstenOre");
 
     function nearFactoryZone(x, y) {
       const nearHub = Math.hypot(x - HUB.x, y - HUB.y) < 13;
       const nearIron = Math.hypot(x - 16, y - 17) < 6;
       const nearCopper = Math.hypot(x - 32, y - 20) < 6;
-      return nearHub || nearIron || nearCopper;
+      const nearCoal = Math.hypot(x - 14, y - 25) < 5;
+      const nearTungsten = Math.hypot(x - 35, y - 10) < 5;
+      return nearHub || nearIron || nearCopper || nearCoal || nearTungsten;
     }
 
     function generateTerrain() {
@@ -2523,6 +2718,8 @@
       assembler: 260,
       wall: 600,
       turret: 280,
+      cannon: 380,
+      railgun: 340,
       beacon: 300,
       deepDrill: 380,
       repairStation: 440,
@@ -2537,7 +2734,7 @@
       const prestigeTree = prestigeState || (typeof state !== "undefined" && state ? state.prestigeTree : {}) || {};
       if (type === "wall" && tech.fortification1) technology *= 1.50;
       if (type === "wall" && tech.fortification2) technology *= 1.75;
-      const defensive = type === "wall" || type === "turret" || type === "tesla" || type === "repairStation";
+      const defensive = type === "wall" || type === "turret" || type === "cannon" || type === "railgun" || type === "tesla" || type === "repairStation";
       if (defensive && prestigeTree.defenseCoreP) technology *= 1.50;
       if (defensive && prestigeTree.fortressSingularity) technology *= 2.00;
       return Math.round((BUILDING_BASE_HP[type] || 180) * localScale * technology);
@@ -2684,7 +2881,7 @@
       safe.lastSavedAt = Number(safe.lastSavedAt) || Date.now();
       safe.nextId = Math.max(1, Math.floor(Number(safe.nextId) || 1));
 
-      const validTypes = new Set(["miner", "belt", "crafter", "furnace", "assembler", "splitter", "underground", "merger", "wall", "turret", "beacon", "deepDrill", "repairStation", "tesla"]);
+      const validTypes = new Set(["miner", "belt", "crafter", "furnace", "assembler", "splitter", "underground", "merger", "wall", "turret", "cannon", "railgun", "beacon", "deepDrill", "repairStation", "tesla"]);
       safe.buildings = Array.isArray(raw.buildings) ? raw.buildings.filter(b => {
         return b && validTypes.has(b.type) && inBounds(Number(b.x), Number(b.y)) && !isHub(Number(b.x), Number(b.y));
       }).map(b => {
@@ -2724,7 +2921,7 @@
           outputCount: Math.max(0, Math.floor(Number(b.outputCount) || 0)),
           role: migratedType === "underground" && b.role === "exit" ? "exit" : migratedType === "underground" ? "entrance" : null,
           pairId: migratedType === "underground" && b.pairId != null ? String(b.pairId) : null,
-          splitToggle: Math.abs(Math.floor(Number(b.splitToggle) || 0)) % 2,
+          splitToggle: Math.abs(Math.floor(Number(b.splitToggle) || 0)) % (migratedType === "deepDrill" ? 4 : 2),
           mirrored: (migratedType === "splitter" || migratedType === "merger") ? Boolean(b.mirrored) : false,
           aimAngle: Number(b.aimAngle) || 0,
           shotFlash: 0,
@@ -2901,6 +3098,30 @@
       return Boolean(state.prestigeTree && state.prestigeTree[key]);
     }
 
+    function resourceUnlockProblem(kind) {
+      const techKey = RESOURCE_UNLOCK_TECH[kind];
+      return techKey && !hasTech(techKey) ? `Requer a tecnologia ${TECHS[techKey].label}.` : null;
+    }
+
+    function recipeUnlockProblem(recipe) {
+      if (!recipe) return "Receita inválida.";
+      if (state.economy.tier < recipe.tier) return `Requer Tier ${recipe.tier}.`;
+      if (recipe.tech && !hasTech(recipe.tech)) return `Requer ${TECHS[recipe.tech]?.label || "uma tecnologia"}.`;
+      return null;
+    }
+
+    function deepDrillKinds() {
+      if (hasPrestigeNode("matterBoreP")) return ["ironOre", "copperOre", "coal", "tungstenOre"];
+      if (hasPrestigeNode("advancedMetallurgyP")) return ["ironOre", "copperOre", "coal"];
+      return ["ironOre", "copperOre"];
+    }
+
+    function recipeOutputQuantity(recipe) {
+      let amount = Math.max(1, Math.floor(Number(recipe?.outputAmount) || 1));
+      if (hasPrestigeNode("quantumAmmunitionP") && (recipe?.output === "shell" || recipe?.output === "railSlug")) amount += 1;
+      return amount;
+    }
+
     function prestigeCoreGain(circuits = state.inventory.circuit) {
       const ratio = Math.max(1, Math.max(0, Number(circuits) || 0) / PRESTIGE_CIRCUITS);
       return Math.max(1, Math.floor(Math.sqrt(ratio)));
@@ -2959,7 +3180,7 @@
       const item = ITEMS[kind];
       if (!item) return 0;
       let multiplier = 1;
-      const processed = kind !== "ironOre" && kind !== "copperOre";
+      const processed = !item.raw;
       if (processed && hasTech("market1")) multiplier *= 1.20;
       if (hasTech("market2")) multiplier *= 1.35;
       if (hasPrestigeNode("omnifactory")) multiplier *= 1.50;
@@ -3016,6 +3237,10 @@
         if (hasTech("assembly3")) technology *= 1.75;
         if (hasPrestigeNode("industryCore")) technology *= 1.35;
         if (hasPrestigeNode("industrialSingularity")) technology *= 2.00;
+      }
+      if ((building.type === "furnace" || building.type === "assembler") && ADVANCED_RECIPE_KEYS.includes(building.recipe)) {
+        if (hasPrestigeNode("advancedMetallurgyP")) technology *= 1.75;
+        if (hasPrestigeNode("matterBoreP")) technology *= 1.50;
       }
       return machineMultiplier() * level * technology * beaconMultiplierFor(building);
     }
@@ -3252,14 +3477,15 @@
         const multiplier = buildingSpeedMultiplier(building);
 
         if (building.type === "miner" || building.type === "deepDrill") {
-          const depositKind = building.type === "deepDrill"
-            ? (building.splitToggle ? "copperOre" : "ironOre")
+          const drillKinds = building.type === "deepDrill" ? deepDrillKinds() : null;
+          const depositKind = drillKinds
+            ? drillKinds[Math.abs(Math.floor(Number(building.splitToggle) || 0)) % drillKinds.length]
             : getDeposit(building.x, building.y);
           if (!depositKind) continue;
           building.cooldown = Math.min(MINER_INTERVAL, building.cooldown + dt * multiplier);
           if (building.cooldown >= MINER_INTERVAL && tryEmit(building, depositKind)) {
             building.cooldown -= MINER_INTERVAL;
-            if (building.type === "deepDrill") building.splitToggle = building.splitToggle ? 0 : 1;
+            if (building.type === "deepDrill") building.splitToggle = (building.splitToggle + 1) % drillKinds.length;
           }
           continue;
         }
@@ -3276,7 +3502,7 @@
         if (building.progress >= recipe.duration) {
           building.progress -= recipe.duration;
           consumeRecipeInputs(building, recipe);
-          building.outputCount += Math.max(1, Math.floor(Number(recipe.outputAmount) || 1));
+          building.outputCount += recipeOutputQuantity(recipe);
         }
       }
     }
@@ -3378,7 +3604,7 @@
       const building = buildingAt(x, y);
       if (!building) return 1;
       if (building.type === "wall") return 17;
-      if (building.type === "turret") return 12;
+      if (building.type === "turret" || building.type === "cannon" || building.type === "railgun" || building.type === "tesla") return 12;
       if (isTransportBuilding(building)) return 7;
       return 22;
     }
@@ -3546,6 +3772,89 @@
       return hasPrestigeNode("fortressSingularity") ? 0.15 : 0.25;
     }
 
+    function heavyWeaponDamageMultiplier() {
+      let multiplier = 1;
+      if (hasTech("advancedOrdnance")) multiplier *= 1.40;
+      if (hasPrestigeNode("defenseCoreP")) multiplier *= 1.50;
+      if (hasPrestigeNode("fortressSingularity")) multiplier *= 2.00;
+      if (hasPrestigeNode("heavyWeaponsP")) multiplier *= 1.40;
+      if (hasPrestigeNode("warMachineP")) multiplier *= 1.40;
+      return multiplier;
+    }
+
+    function heavyWeaponRangeMultiplier() {
+      let multiplier = 1;
+      if (hasTech("advancedOrdnance")) multiplier *= 1.25;
+      if (hasPrestigeNode("defenseCoreP")) multiplier *= 1.25;
+      return multiplier;
+    }
+
+    function heavyWeaponAmmoMultiplier() {
+      let multiplier = 1;
+      if (hasTech("advancedOrdnance")) multiplier *= 0.80;
+      if (hasPrestigeNode("ordnanceLogisticsP")) multiplier *= 0.75;
+      return multiplier;
+    }
+
+    function cannonRange(building) {
+      const level = Math.max(1, Number(building?.level) || 1);
+      return (5.4 + Math.min(2.4, (level - 1) * 0.27)) * heavyWeaponRangeMultiplier();
+    }
+
+    function cannonDamage(building) {
+      const level = Math.max(1, Number(building?.level) || 1);
+      return 115 * (1 + (level - 1) * 0.40) * machineMultiplier() * heavyWeaponDamageMultiplier();
+    }
+
+    function cannonFireInterval(building) {
+      const level = Math.max(1, Number(building?.level) || 1);
+      const fireControl = hasTech("ballistics2") ? 1.25 : 1;
+      return 2.6 / ((1 + (level - 1) * 0.11) * fireControl);
+    }
+
+    function cannonSplashRadius() {
+      let radius = 1.25;
+      if (hasTech("advancedOrdnance")) radius += 0.35;
+      if (hasPrestigeNode("heavyWeaponsP")) radius += 0.55;
+      return radius;
+    }
+
+    function cannonSplashFactor() {
+      return hasPrestigeNode("warMachineP") ? 0.80 : 0.55;
+    }
+
+    function cannonShellCost() {
+      return heavyWeaponAmmoMultiplier();
+    }
+
+    function railgunRange(building) {
+      const level = Math.max(1, Number(building?.level) || 1);
+      return (7.5 + Math.min(3.2, (level - 1) * 0.36)) * heavyWeaponRangeMultiplier();
+    }
+
+    function railgunDamage(building) {
+      const level = Math.max(1, Number(building?.level) || 1);
+      return 195 * (1 + (level - 1) * 0.42) * machineMultiplier() * heavyWeaponDamageMultiplier();
+    }
+
+    function railgunFireInterval(building) {
+      const level = Math.max(1, Number(building?.level) || 1);
+      const fireControl = hasTech("ballistics2") ? 1.20 : 1;
+      return 3.4 / ((1 + (level - 1) * 0.10) * fireControl);
+    }
+
+    function railgunPierceCount() {
+      return 3 + (hasPrestigeNode("heavyWeaponsP") ? 1 : 0) + (hasPrestigeNode("warMachineP") ? 1 : 0);
+    }
+
+    function railgunPierceFactor() {
+      return hasPrestigeNode("warMachineP") ? 0.95 : 0.82;
+    }
+
+    function railgunSlugCost() {
+      return heavyWeaponAmmoMultiplier();
+    }
+
     function damageEnemy(enemy, damage) {
       if (!enemy || enemy.hp <= 0) return false;
       enemy.hp -= Math.max(0, damage);
@@ -3607,6 +3916,95 @@
         tower.shotFlash = 0.18;
         tower.shotTargets = targets.map(entry => ({ x: entry.position.x, y: entry.position.y }));
         targets.forEach((entry, index) => damageEnemy(entry.enemy, teslaDamage(tower) * Math.pow(0.72, index)));
+      }
+    }
+
+    function updateCannons(dt) {
+      for (const cannon of state.buildings.filter(building => building.type === "cannon")) {
+        cannon.cooldown = Math.max(0, (Number(cannon.cooldown) || 0) - dt);
+        cannon.shotFlash = Math.max(0, (Number(cannon.shotFlash) || 0) - dt);
+        if (cannon.cooldown > 0 || state.inventory.shell + 1e-9 < cannonShellCost()) continue;
+
+        const range = cannonRange(cannon);
+        const splash = cannonSplashRadius();
+        const candidates = state.enemies
+          .filter(enemy => enemy.hp > 0)
+          .map(enemy => ({ enemy, position: enemyVisualPosition(enemy) }))
+          .filter(entry => Math.hypot(entry.position.x - cannon.x, entry.position.y - cannon.y) <= range)
+          .map(entry => ({
+            ...entry,
+            cluster: state.enemies.filter(other => {
+              if (other.hp <= 0) return false;
+              const otherPosition = enemyVisualPosition(other);
+              return Math.hypot(otherPosition.x - entry.position.x, otherPosition.y - entry.position.y) <= splash;
+            }).length,
+            pathDistance: defenseDistanceAt(Math.round(entry.position.x), Math.round(entry.position.y))
+          }))
+          .sort((a, b) => b.cluster - a.cluster || a.pathDistance - b.pathDistance);
+        const target = candidates[0];
+        if (!target) continue;
+
+        cannon.aimAngle = Math.atan2(target.position.y - cannon.y, target.position.x - cannon.x);
+        cannon.shotX = target.position.x;
+        cannon.shotY = target.position.y;
+        cannon.shotFlash = 0.28;
+        cannon.cooldown = cannonFireInterval(cannon);
+        state.inventory.shell = Math.max(0, state.inventory.shell - cannonShellCost());
+        const baseDamage = cannonDamage(cannon);
+        for (const enemy of state.enemies) {
+          if (enemy.hp <= 0) continue;
+          const position = enemyVisualPosition(enemy);
+          const distance = Math.hypot(position.x - target.position.x, position.y - target.position.y);
+          if (distance > splash) continue;
+          const damage = enemy.id === target.enemy.id
+            ? baseDamage
+            : baseDamage * cannonSplashFactor() * (1 - 0.30 * distance / Math.max(0.1, splash));
+          damageEnemy(enemy, damage);
+        }
+      }
+    }
+
+    function updateRailguns(dt) {
+      for (const railgun of state.buildings.filter(building => building.type === "railgun")) {
+        railgun.cooldown = Math.max(0, (Number(railgun.cooldown) || 0) - dt);
+        railgun.shotFlash = Math.max(0, (Number(railgun.shotFlash) || 0) - dt);
+        if (railgun.cooldown > 0 || state.inventory.railSlug + 1e-9 < railgunSlugCost()) continue;
+
+        const range = railgunRange(railgun);
+        const entries = state.enemies
+          .filter(enemy => enemy.hp > 0)
+          .map(enemy => ({ enemy, position: enemyVisualPosition(enemy) }))
+          .filter(entry => Math.hypot(entry.position.x - railgun.x, entry.position.y - railgun.y) <= range);
+        entries.sort((a, b) => defenseDistanceAt(Math.round(a.position.x), Math.round(a.position.y)) - defenseDistanceAt(Math.round(b.position.x), Math.round(b.position.y)));
+        const primary = entries[0];
+        if (!primary) continue;
+
+        const dx = primary.position.x - railgun.x;
+        const dy = primary.position.y - railgun.y;
+        const length = Math.max(0.001, Math.hypot(dx, dy));
+        const ux = dx / length;
+        const uy = dy / length;
+        const hits = entries.map(entry => {
+          const ex = entry.position.x - railgun.x;
+          const ey = entry.position.y - railgun.y;
+          const projection = ex * ux + ey * uy;
+          const perpendicular = Math.abs(ex * uy - ey * ux);
+          return { ...entry, projection, perpendicular };
+        }).filter(entry => entry.projection > 0 && entry.projection <= range && entry.perpendicular <= 0.55)
+          .sort((a, b) => a.projection - b.projection)
+          .slice(0, railgunPierceCount());
+        if (!hits.some(entry => entry.enemy.id === primary.enemy.id)) hits.push({ ...primary, projection: length, perpendicular: 0 });
+        hits.sort((a, b) => a.projection - b.projection);
+
+        railgun.aimAngle = Math.atan2(dy, dx);
+        railgun.shotTargets = hits.map(entry => ({ x: entry.position.x, y: entry.position.y }));
+        railgun.shotX = hits[hits.length - 1].position.x;
+        railgun.shotY = hits[hits.length - 1].position.y;
+        railgun.shotFlash = 0.22;
+        railgun.cooldown = railgunFireInterval(railgun);
+        state.inventory.railSlug = Math.max(0, state.inventory.railSlug - railgunSlugCost());
+        const baseDamage = railgunDamage(railgun);
+        hits.forEach((entry, index) => damageEnemy(entry.enemy, baseDamage * Math.pow(railgunPierceFactor(), index)));
       }
     }
 
@@ -3775,6 +4173,8 @@
       }
       updateTurrets(dt);
       updateTeslaTowers(dt);
+      updateCannons(dt);
+      updateRailguns(dt);
       updateEnemies(dt);
       if (state.combat.phase === "active" && state.combat.spawnRemaining === 0 && state.enemies.length === 0) finishWave();
     }
@@ -3817,6 +4217,9 @@
     function toolUnlockProblem(tool) {
       if (!tool) return "Ferramenta inválida.";
       if (state.economy.tier < tool.tier) return `Requer Tier ${tool.tier}.`;
+      if (tool.tech && !hasTech(tool.tech)) {
+        return `Requer ${TECHS[tool.tech]?.label || "uma tecnologia"}.`;
+      }
       if (tool.prestige && !hasPrestigeNode(tool.prestige)) {
         return `Requer ${PRESTIGE_NODES[tool.prestige]?.label || "um nó de Prestígio"}.`;
       }
@@ -3824,7 +4227,7 @@
     }
 
     function isDirectionlessType(type) {
-      return type === "wall" || type === "turret" || type === "beacon" || type === "repairStation" || type === "tesla";
+      return type === "wall" || type === "turret" || type === "cannon" || type === "railgun" || type === "beacon" || type === "repairStation" || type === "tesla";
     }
 
     function placementProblem(toolKey, x, y) {
@@ -3842,6 +4245,10 @@
       if (tile === 3 || tile === 4) return "Há um obstáculo neste tile.";
       const deposit = getDeposit(x, y);
       if (tool.type === "miner" && !deposit) return "Mineradores precisam ficar sobre uma jazida.";
+      if (tool.type === "miner" && deposit) {
+        const resourceProblem = resourceUnlockProblem(deposit);
+        if (resourceProblem) return resourceProblem;
+      }
       if (tool.type !== "miner" && deposit) return "Reserve a jazida para um minerador.";
       if (state.economy.credits < tool.cost) return `Faltam ${formatNumber(tool.cost - state.economy.credits)} Cr.`;
       return null;
@@ -3977,6 +4384,8 @@
       if (building.type === "assembler") return "assembler";
       if (building.type === "wall") return "wall";
       if (building.type === "turret") return "turret";
+      if (building.type === "cannon") return "cannon";
+      if (building.type === "railgun") return "railgun";
       if (building.type === "beacon") return "beacon";
       if (building.type === "deepDrill") return "deepDrill";
       if (building.type === "repairStation") return "repairStation";
@@ -4025,6 +4434,10 @@
         ? `${building.hp.toFixed(0)}/${nextMaximumHp} HP`
         : building.type === "turret"
           ? `${formatNumber(turretDamage(building))} dano • alcance ${formatNumber(turretRange(building))}`
+          : building.type === "cannon"
+            ? `${formatNumber(cannonDamage(building))} dano em área • alcance ${formatNumber(cannonRange(building))}`
+            : building.type === "railgun"
+              ? `${formatNumber(railgunDamage(building))} dano perfurante • alcance ${formatNumber(railgunRange(building))}`
           : building.type === "tesla"
             ? `${formatNumber(teslaDamage(building))} dano em cadeia • alcance ${formatNumber(teslaRange(building))}`
             : building.type === "beacon"
@@ -4376,9 +4789,9 @@
       }
 
       for (const drill of state.buildings.filter(b => b.type === "deepDrill")) {
-        const rate = buildingSpeedMultiplier(drill) / MINER_INTERVAL / 2;
-        routeRate(drill, "ironOre", rate);
-        routeRate(drill, "copperOre", rate);
+        const kinds = deepDrillKinds();
+        const rate = buildingSpeedMultiplier(drill) / MINER_INTERVAL / kinds.length;
+        for (const kind of kinds) routeRate(drill, kind, rate);
       }
 
       const productionBuildings = state.buildings
@@ -4393,7 +4806,7 @@
         for (const [kind, amount] of Object.entries(recipe.inputs)) {
           rate = Math.min(rate, (bucket[kind] || 0) / amount);
         }
-        routeRate(machine, recipe.output, rate * Math.max(1, Number(recipe.outputAmount) || 1));
+        routeRate(machine, recipe.output, rate * recipeOutputQuantity(recipe));
       }
 
       let creditsPerSecond = 0;
@@ -4667,7 +5080,7 @@
 
     function drawDeposit(px, py, kind, noise) {
       const item = ITEMS[kind];
-      ctx.fillStyle = kind === "ironOre" ? "rgba(103,119,114,.22)" : "rgba(176,91,47,.22)";
+      ctx.fillStyle = item.deposit || "rgba(103,119,114,.22)";
       ctx.fillRect(px + 2, py + 2, TILE - 4, TILE - 4);
       const dots = [
         [10, 12, 6], [25, 10, 5], [18, 25, 7], [31, 27, 4]
@@ -4924,8 +5337,8 @@
       const px = building.x * TILE;
       const py = building.y * TILE;
       const deposit = getDeposit(building.x, building.y);
-      const tint = deposit === "copperOre" ? "#b86f46" : "#73817c";
-      drawMachineBase(px, py, tint, "#303b38");
+      const resource = ITEMS[deposit] || ITEMS.ironOre;
+      drawMachineBase(px, py, resource.edge, "#303b38");
       ctx.save();
       ctx.translate(px + TILE / 2, py + 20);
       ctx.rotate(Math.sin(time * 5 + Number(building.id.slice(1))) * 0.36);
@@ -4954,8 +5367,11 @@
       ctx.fillStyle = "#251e1a";
       ctx.fillRect(px + 12, py + 13, 16, 14);
       const glow = 0.68 + Math.sin(time * 7) * 0.15;
-      ctx.fillStyle = building.recipe === "ironPlate" ? `rgba(255,188,69,${glow})` : `rgba(255,123,55,${glow})`;
+      ctx.save();
+      ctx.globalAlpha = glow;
+      ctx.fillStyle = ITEMS[recipe.output].color;
       ctx.fillRect(px + 15, py + 17, 10, 7);
+      ctx.restore();
       ctx.fillStyle = "#fff4d1";
       ctx.font = "bold 8px ui-monospace, monospace";
       ctx.textAlign = "center";
@@ -5085,6 +5501,108 @@
       }
     }
 
+    function drawCannon(building, time) {
+      const px = building.x * TILE;
+      const py = building.y * TILE;
+      const cx = px + TILE / 2;
+      const cy = py + TILE / 2;
+      drawAuraCircle(building, cannonRange(building), "rgba(237,179,76,.42)");
+      drawMachineBase(px, py, "#5f5135", "#2d281d");
+      ctx.fillStyle = "#7f7250";
+      ctx.beginPath();
+      ctx.arc(cx, cy, 11, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#d0b368";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      const angle = Number(building.aimAngle) || -Math.PI / 2;
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(angle);
+      ctx.fillStyle = "#292d2a";
+      ctx.fillRect(-2, -5, 23, 10);
+      ctx.fillStyle = "#a49362";
+      ctx.fillRect(8, -4, 15, 8);
+      ctx.fillStyle = "#202320";
+      ctx.fillRect(19, -5, 5, 10);
+      ctx.restore();
+      ctx.fillStyle = "#d8a247";
+      ctx.font = "bold 7px ui-monospace, monospace";
+      ctx.textAlign = "center";
+      ctx.fillText("OB", cx, py + 10);
+
+      if (building.shotFlash > 0) {
+        const alpha = clamp(building.shotFlash / 0.28, 0, 1);
+        const tx = (Number(building.shotX) + 0.5) * TILE;
+        const ty = (Number(building.shotY) + 0.5) * TILE;
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.strokeStyle = "#ffe39a";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(cx + Math.cos(angle) * 18, cy + Math.sin(angle) * 18);
+        ctx.lineTo(tx, ty);
+        ctx.stroke();
+        ctx.strokeStyle = "#f1a84d";
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.arc(tx, ty, cannonSplashRadius() * TILE * (1.05 - alpha * 0.35), 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+
+    function drawRailgun(building, time) {
+      const px = building.x * TILE;
+      const py = building.y * TILE;
+      const cx = px + TILE / 2;
+      const cy = py + TILE / 2;
+      drawAuraCircle(building, railgunRange(building), "rgba(105,225,246,.40)");
+      drawMachineBase(px, py, "#315c69", "#17333d");
+      const pulse = 0.65 + Math.sin(time * 7 + building.x) * 0.18;
+      ctx.strokeStyle = `rgba(137,235,250,${pulse})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 10, 0, Math.PI * 2);
+      ctx.stroke();
+      const angle = Number(building.aimAngle) || -Math.PI / 2;
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(angle);
+      ctx.fillStyle = "#172a31";
+      ctx.fillRect(-5, -6, 28, 4);
+      ctx.fillRect(-5, 2, 28, 4);
+      ctx.fillStyle = "#9ee7f2";
+      ctx.fillRect(3, -1, 23, 2);
+      ctx.restore();
+      ctx.fillStyle = "#d8fbff";
+      ctx.font = "bold 7px ui-monospace, monospace";
+      ctx.textAlign = "center";
+      ctx.fillText("W", cx, py + 10);
+
+      if (building.shotFlash > 0 && Array.isArray(building.shotTargets) && building.shotTargets.length) {
+        const target = building.shotTargets[building.shotTargets.length - 1];
+        ctx.save();
+        ctx.globalAlpha = clamp(building.shotFlash / 0.22, 0, 1);
+        ctx.strokeStyle = "#d9fbff";
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo((target.x + 0.5) * TILE, (target.y + 0.5) * TILE);
+        ctx.stroke();
+        ctx.strokeStyle = "#56cfe9";
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        for (const hit of building.shotTargets) {
+          ctx.fillStyle = "#f2ffff";
+          ctx.beginPath();
+          ctx.arc((hit.x + 0.5) * TILE, (hit.y + 0.5) * TILE, 4, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+    }
+
     function drawAuraCircle(building, radius, color) {
       if (building.id !== selectedBuildingId) return;
       const cx = (building.x + 0.5) * TILE;
@@ -5139,7 +5657,9 @@
       ctx.moveTo(0, -11);
       ctx.lineTo(0, 11);
       ctx.stroke();
-      ctx.fillStyle = building.splitToggle ? "#d88955" : "#bfcac6";
+      const kinds = deepDrillKinds();
+      const activeKind = kinds[Math.abs(Math.floor(Number(building.splitToggle) || 0)) % kinds.length];
+      ctx.fillStyle = ITEMS[activeKind].color;
       ctx.beginPath();
       ctx.arc(0, 0, 6, 0, Math.PI * 2);
       ctx.fill();
@@ -5147,7 +5667,7 @@
       ctx.fillStyle = "#d9fbff";
       ctx.font = "bold 7px ui-monospace, monospace";
       ctx.textAlign = "center";
-      ctx.fillText("Fe/Cu", px + TILE / 2, py + 9);
+      ctx.fillText(kinds.map(kind => ITEMS[kind].short).join("/"), px + TILE / 2, py + 9);
       drawMachinePorts(building, false);
       drawProgressBar(px, py, building.cooldown / MINER_INTERVAL, "#79d9e7");
     }
@@ -5224,6 +5744,8 @@
       else if (building.type === "assembler") drawAssembler(building, time);
       else if (building.type === "wall") drawWall(building);
       else if (building.type === "turret") drawTurret(building, time);
+      else if (building.type === "cannon") drawCannon(building, time);
+      else if (building.type === "railgun") drawRailgun(building, time);
       else if (building.type === "beacon") drawBeacon(building, time);
       else if (building.type === "deepDrill") drawDeepDrill(building, time);
       else if (building.type === "repairStation") drawRepairStation(building, time);
@@ -5669,7 +6191,8 @@
     function buildingLabel(building) {
       if (!building) return "";
       if (building.type === "miner") {
-        return getDeposit(building.x, building.y) === "copperOre" ? "Minerador de cobre" : "Minerador de ferro";
+        const kind = getDeposit(building.x, building.y);
+        return `Minerador — ${kind ? ITEMS[kind].label : "jazida"}`;
       }
       if (building.type === "belt") return "Esteira";
       if (building.type === "splitter") return "Divisor de esteira";
@@ -5679,6 +6202,8 @@
       if (building.type === "assembler") return `Montadora — ${RECIPES[building.recipe]?.label || "sem receita"}`;
       if (building.type === "wall") return "Parede defensiva";
       if (building.type === "turret") return "Torreta automática";
+      if (building.type === "cannon") return "Canhão automático";
+      if (building.type === "railgun") return "Railgun";
       if (building.type === "beacon") return "Beacon industrial";
       if (building.type === "deepDrill") return "Sonda profunda";
       if (building.type === "repairStation") return "Estação de reparo";
@@ -5716,13 +6241,19 @@
         return `<span style="color:var(--output)">SAI ${DIRS[building.dir].arrow}</span>: ${kind ? ITEMS[kind].label : "recurso da jazida"}`;
       }
       if (building.type === "deepDrill") {
-        return `<span style="color:var(--output)">SAI ${DIRS[building.dir].arrow}</span>: alterna Minério de Ferro e Minério de Cobre`;
+        return `<span style="color:var(--output)">SAI ${DIRS[building.dir].arrow}</span>: alterna ${deepDrillKinds().map(kind => ITEMS[kind].label).join(", ")}`;
       }
       if (building.type === "wall") {
         return `<span style="color:var(--output)">BLOQUEIO:</span> força os inimigos a contornar ou destruir esta parede`;
       }
       if (building.type === "turret") {
         return `<span style="color:var(--input)">ENTRA:</span> munição armazenada no Hub<br><span style="color:var(--output)">ATACA:</span> inimigo mais próximo dentro do alcance`;
+      }
+      if (building.type === "cannon") {
+        return `<span style="color:var(--input)">ENTRA:</span> ${formatNumber(cannonShellCost())} Obus do Hub por disparo<br><span style="color:var(--output)">ATACA:</span> a maior aglomeração em ${formatNumber(cannonSplashRadius())} tiles de explosão`;
+      }
+      if (building.type === "railgun") {
+        return `<span style="color:var(--input)">ENTRA:</span> ${formatNumber(railgunSlugCost())} Dardo de Tungstênio do Hub<br><span style="color:var(--output)">ATACA:</span> perfura até ${railgunPierceCount()} inimigos alinhados`;
       }
       if (building.type === "beacon") {
         return `<span style="color:var(--output)">AURA:</span> +${Math.round(beaconSpeedBonus(building) * 100)}% de velocidade em ${formatNumber(beaconRange(building))} tiles; múltiplos Beacons acumulam até o limite`;
@@ -5734,7 +6265,7 @@
         return `<span style="color:var(--input)">ENTRA:</span> ${formatNumber(teslaCircuitCost())} Circuito do Hub por pulso<br><span style="color:var(--output)">ATACA:</span> até ${hasPrestigeNode("fortressSingularity") ? 4 : 3} inimigos em cadeia`;
       }
       const recipe = RECIPES[building.recipe];
-      const outputAmount = Math.max(1, Number(recipe.outputAmount) || 1);
+      const outputAmount = recipeOutputQuantity(recipe);
       return `<span style="color:var(--input)">ENTRA pelos 3 lados azuis:</span> ${recipeInputLabel(recipe)}<br><span style="color:var(--output)">SAI ${DIRS[building.dir].arrow} pelo lado amarelo:</span> ${outputAmount > 1 ? `${outputAmount}× ` : ""}${ITEMS[recipe.output].label}`;
     }
 
@@ -5759,7 +6290,7 @@
           : `<strong>${tool.label}</strong> • clique IN, depois OUT • reta, alcance 2–${undergroundMaxRange()} • ${tool.cost} Cr pelo par`;
       }
       if (tool.type === "furnace") {
-        return `<strong>Fornalha</strong> • escolha Placa de Ferro ou Placa de Cobre após construir • ${tool.cost} Cr`;
+        return `<strong>Fornalha</strong> • placas de Ferro/Cobre e ligas avançadas após pesquisar • ${tool.cost} Cr`;
       }
       if (tool.type === "assembler") {
         return `<strong>Montadora</strong> • escolha fios, circuitos ou componentes balísticos após construir • ${tool.cost} Cr`;
@@ -5773,11 +6304,17 @@
       if (tool.type === "turret") {
         return `<strong>Torreta</strong> • alcance ${formatNumber(turretRange({ level: 1 }))} • consome 1 munição por disparo • ${tool.cost} Cr`;
       }
+      if (tool.type === "cannon") {
+        return `<strong>Canhão automático</strong> • ${formatNumber(cannonDamage({ level: 1 }))} dano em área • usa ${formatNumber(cannonShellCost())} Obus • ${tool.cost} Cr`;
+      }
+      if (tool.type === "railgun") {
+        return `<strong>Railgun</strong> • ${formatNumber(railgunDamage({ level: 1 }))} dano • perfura ${railgunPierceCount()} alvos • usa ${formatNumber(railgunSlugCost())} Dardo • ${tool.cost} Cr`;
+      }
       if (tool.type === "beacon") {
         return `<strong>Beacon industrial</strong> • +${Math.round(beaconSpeedBonus({ level: 1 }) * 100)}% em ${formatNumber(beaconRange({ level: 1 }))} tiles • ${tool.cost} Cr`;
       }
       if (tool.type === "deepDrill") {
-        return `<strong>Sonda profunda</strong> • produz Ferro e Cobre alternadamente fora das jazidas • saída ${DIRS[buildDir].arrow} • ${tool.cost} Cr`;
+        return `<strong>Sonda profunda</strong> • alterna ${deepDrillKinds().map(kind => ITEMS[kind].short).join("/")} fora das jazidas • saída ${DIRS[buildDir].arrow} • ${tool.cost} Cr`;
       }
       if (tool.type === "repairStation") {
         return `<strong>Estação de reparo</strong> • ${formatNumber(repairStationRate({ level: 1 }))} HP/s em ${formatNumber(repairStationRange({ level: 1 }))} tiles • ${tool.cost} Cr`;
@@ -5797,6 +6334,14 @@
       if (building.type === "turret") {
         const status = state.inventory.ammo + 1e-9 < turretAmmoCost() ? `<span class="bad">SEM MUNIÇÃO</span>` : state.combat.phase === "active" ? `<span class="good">DEFENDENDO</span>` : "Aguardando wave";
         return `<strong>Nível ${building.level || 1}</strong> • ${formatNumber(building.hp)} / ${formatNumber(maxBuildingHp("turret", building.level))} HP<br>${machineFlowHTML(building)}<br>Dano: <strong>${formatNumber(turretDamage(building))}</strong> • alcance: <strong>${formatNumber(turretRange(building))} tiles</strong> • ${status}`;
+      }
+      if (building.type === "cannon") {
+        const status = state.inventory.shell + 1e-9 < cannonShellCost() ? `<span class="bad">SEM OBUSES</span>` : state.combat.phase === "active" ? `<span class="good">BOMBARDEANDO</span>` : "Aguardando wave";
+        return `<strong>Nível ${building.level || 1}</strong> • ${formatNumber(building.hp)} / ${formatNumber(maxBuildingHp("cannon", building.level))} HP<br>${machineFlowHTML(building)}<br>Dano: <strong>${formatNumber(cannonDamage(building))}</strong> • alcance: <strong>${formatNumber(cannonRange(building))} tiles</strong> • intervalo: <strong>${formatNumber(cannonFireInterval(building))} s</strong> • ${status}`;
+      }
+      if (building.type === "railgun") {
+        const status = state.inventory.railSlug + 1e-9 < railgunSlugCost() ? `<span class="bad">SEM DARDOS</span>` : state.combat.phase === "active" ? `<span class="good">CARREGADA</span>` : "Aguardando wave";
+        return `<strong>Nível ${building.level || 1}</strong> • ${formatNumber(building.hp)} / ${formatNumber(maxBuildingHp("railgun", building.level))} HP<br>${machineFlowHTML(building)}<br>Dano: <strong>${formatNumber(railgunDamage(building))}</strong> • alcance: <strong>${formatNumber(railgunRange(building))} tiles</strong> • perfuração: <strong>${railgunPierceCount()} alvos</strong> • ${status}`;
       }
       if (building.type === "tesla") {
         const status = state.inventory.circuit + 1e-9 < teslaCircuitCost() ? `<span class="bad">SEM CIRCUITOS</span>` : state.combat.phase === "active" ? `<span class="good">ENERGIZADA</span>` : "Aguardando wave";
@@ -5830,6 +6375,14 @@
       const cartridgeAssemblers = state.buildings.filter(b => b.type === "assembler" && b.recipe === "cartridge");
       const circuitAssemblers = state.buildings.filter(b => b.type === "assembler" && b.recipe === "circuit");
       const ammoAssemblers = state.buildings.filter(b => b.type === "assembler" && b.recipe === "ammo");
+      const coalMiners = state.buildings.filter(b => b.type === "miner" && getDeposit(b.x, b.y) === "coal");
+      const tungstenMiners = state.buildings.filter(b => b.type === "miner" && getDeposit(b.x, b.y) === "tungstenOre");
+      const steelFurnaces = state.buildings.filter(b => b.type === "furnace" && b.recipe === "steelPlate");
+      const tungstenFurnaces = state.buildings.filter(b => b.type === "furnace" && b.recipe === "tungstenPlate");
+      const shellAssemblers = state.buildings.filter(b => b.type === "assembler" && b.recipe === "shell");
+      const slugAssemblers = state.buildings.filter(b => b.type === "assembler" && b.recipe === "railSlug");
+      const cannons = state.buildings.filter(b => b.type === "cannon");
+      const railguns = state.buildings.filter(b => b.type === "railgun");
       const walls = state.buildings.filter(b => b.type === "wall");
       const turrets = state.buildings.filter(b => b.type === "turret");
       const anyRate = network.creditsPerSecond > 0.0001;
@@ -5879,6 +6432,21 @@
       }
       if (!circuitAssemblers.length) {
         return "Tier 3: configure outra Montadora para <strong>Circuito</strong> e envie Placa de Ferro + Fio de Cobre pelos lados azuis.";
+      }
+      if (hasTech("steelProcessing") && !coalMiners.length) {
+        return "Nova jazida liberada: encontre o <strong>Carvão ao sudoeste</strong>, instale um Minerador e leve-o à área industrial.";
+      }
+      if (hasTech("steelProcessing") && !steelFurnaces.length) {
+        return "Configure uma Fornalha para <strong>Liga de Aço</strong>: entram 2 Placas de Ferro + 2 Carvões por ciclo.";
+      }
+      if (hasTech("artillery") && (!shellAssemblers.length || !cannons.length)) {
+        return "Artilharia liberada: produza <strong>Propelente → Obuses</strong> e construa um <strong>Canhão (V)</strong> para dano em área.";
+      }
+      if (hasTech("tungstenExtraction") && (!tungstenMiners.length || !tungstenFurnaces.length)) {
+        return "Explore o <strong>Tungstênio ao nordeste</strong> e funda 2 minérios + 1 Carvão em uma Placa de Tungstênio.";
+      }
+      if (hasTech("railWeapons") && (!slugAssemblers.length || !railguns.length)) {
+        return "Arma de endgame: combine <strong>Tungstênio + Aço + Circuito</strong> em Dardos e construa uma <strong>Railgun (G)</strong>.";
       }
       if (!prestigeAvailable()) {
         return `Entregue circuitos para prestigiar: <strong>${Math.floor(state.inventory.circuit)} / ${PRESTIGE_CIRCUITS}</strong>.`;
@@ -5942,7 +6510,15 @@
         button.style.opacity = !locked && state.economy.credits < tool.cost ? ".66" : "";
         button.setAttribute("aria-pressed", currentTool === key ? "true" : "false");
         const lockLabel = button.querySelector(".lock");
-        if (lockLabel) lockLabel.textContent = state.economy.tier < tool.tier ? `Tier ${tool.tier}` : tool.prestige && !hasPrestigeNode(tool.prestige) ? "Prestígio" : "";
+        if (lockLabel) {
+          lockLabel.textContent = state.economy.tier < tool.tier
+            ? `Tier ${tool.tier}`
+            : tool.tech && !hasTech(tool.tech)
+              ? "Tecnologia"
+              : tool.prestige && !hasPrestigeNode(tool.prestige)
+                ? "Prestígio"
+                : "";
+        }
       }
 
       const direction = currentTool ? buildDir : selected ? selected.dir : buildDir;
@@ -6179,7 +6755,7 @@
                <div class="tech-lane logistics"><span>LOGÍSTICA</span></div>
                <div class="tech-lane automation"><span>AUTOMAÇÃO, PESQUISA E MERCADO</span></div>
                <div class="tech-lane core"><span>NÚCLEO, ENGENHARIA E PRESTÍGIO</span></div>
-               <svg class="tech-links" viewBox="0 0 2100 1240" aria-hidden="true">${links}</svg>
+               <svg class="tech-links" viewBox="0 0 2660 1240" aria-hidden="true">${links}</svg>
                ${nodes}
              </div>
            </div>
@@ -6261,8 +6837,9 @@
       const building = buildingById.get(String(buildingId));
       const recipe = RECIPES[recipeKey];
       if (!isConfigurableMachine(building) || !recipe || recipe.machine !== building.type) return false;
-      if (state.economy.tier < recipe.tier) {
-        showToast(`A receita ${recipe.label} requer Tier ${recipe.tier}.`);
+      const unlockProblem = recipeUnlockProblem(recipe);
+      if (unlockProblem) {
+        showToast(`${recipe.label}: ${unlockProblem}`);
         return false;
       }
       if (building.recipe === recipeKey) return true;
@@ -6281,8 +6858,9 @@
       const building = buildingById.get(String(buildingId));
       const recipe = RECIPES[recipeKey];
       if (!building || !recipe || building.recipe === recipeKey) return;
-      if (state.economy.tier < recipe.tier) {
-        showToast(`A receita ${recipe.label} requer Tier ${recipe.tier}.`);
+      const unlockProblem = recipeUnlockProblem(recipe);
+      if (unlockProblem) {
+        showToast(`${recipe.label}: ${unlockProblem}`);
         return;
       }
       if (machineStoredUnits(building) > 0) {
@@ -6314,18 +6892,19 @@
         .sort(([, a], [, b]) => (a.stage || 99) - (b.stage || 99) || a.label.localeCompare(b.label, "pt-BR"));
       const cards = recipes.map(([key, recipe]) => {
         const active = building.recipe === key;
-        const locked = state.economy.tier < recipe.tier;
+        const unlockProblem = recipeUnlockProblem(recipe);
+        const locked = Boolean(unlockProblem);
         const input = Object.entries(recipe.inputs).map(([kind, amount]) => `${amount}× ${ITEMS[kind].label}`).join(" + ");
-        const outputAmount = Math.max(1, Number(recipe.outputAmount) || 1);
+        const outputAmount = recipeOutputQuantity(recipe);
         const output = `${outputAmount > 1 ? `${outputAmount}× ` : ""}${ITEMS[recipe.output].label}`;
-        const buttonLabel = active ? "RECEITA ATIVA" : locked ? `REQUER TIER ${recipe.tier}` : "SELECIONAR RECEITA";
+        const buttonLabel = active ? "RECEITA ATIVA" : locked ? unlockProblem.toUpperCase() : "SELECIONAR RECEITA";
         const productionLine = recipe.family
           ? `${recipe.family} • etapa ${recipe.chainStep}`
           : `Produção geral • estágio ${recipe.stage}`;
-        return `<article class="recipe-card ${recipe.family === "Balística" ? "ballistics" : ""} ${active ? "active" : ""} ${locked ? "locked" : ""}">
+        return `<article class="recipe-card ${recipe.family === "Balística" || recipe.family === "Artilharia" ? "ballistics" : ""} ${active ? "active" : ""} ${locked ? "locked" : ""}">
           <strong>${recipe.icon} ${recipe.label}</strong>
           <div class="recipe-flow"><span>${input}</span><b>→</b><span>${output}</span></div>
-          <small>${productionLine}<br>Tempo base: ${String(recipe.duration).replace(".", ",")} s • Tier ${recipe.tier}</small>
+          <small>${productionLine}<br>Tempo base: ${String(recipe.duration).replace(".", ",")} s • Tier ${recipe.tier}${recipe.tech ? ` • ${TECHS[recipe.tech].label}` : ""}</small>
           <button class="recipe-select" data-recipe-key="${key}" ${active || locked ? "disabled" : ""}>${buttonLabel}</button>
         </article>`;
       }).join("");
@@ -6337,7 +6916,8 @@
            <div class="recipe-machine-icon">${machineIcon}</div>
            <p><strong>Receita atual:</strong> ${RECIPES[building.recipe]?.label || "nenhuma"}<br>Entradas pelas portas azuis; resultado pela porta amarela.<br><span class="bad">Trocar uma máquina ocupada esvazia seu conteúdo.</span></p>
          </div>
-         ${building.type === "assembler" ? `<div class="recipe-chain-guide"><strong>Cadeia balística — 3 etapas, 4 receitas:</strong><br>2 Placas de Ferro → 4 Projéteis &nbsp;•&nbsp; 2 Placas de Cobre → 4 Estojos<br>4 Projéteis + 4 Estojos → 4 Cartuchos<br>4 Cartuchos + 2 Placas de Ferro + 1 Fio de Cobre → 4 Munições</div>` : ""}
+         ${building.type === "furnace" ? `<div class="recipe-chain-guide"><strong>Metalurgia avançada:</strong><br>2 Placas de Ferro + 2 Carvões → Liga de Aço<br>2 Minérios de Tungstênio + 1 Carvão → Placa de Tungstênio<br>As receitas aparecem bloqueadas até suas tecnologias serem pesquisadas.</div>` : ""}
+         ${building.type === "assembler" ? `<div class="recipe-chain-guide"><strong>Cadeias de armamento:</strong><br><b>Balística:</b> Projéteis + Estojos → Cartuchos → Munição<br><b>Canhão:</b> 2 Carvões + Cobre → 2 Propelentes; 2 Aços + 2 Propelentes → Obus<br><b>Railgun:</b> Tungstênio + Aço + Circuito → Dardo perfurante</div>` : ""}
          <div class="recipe-grid">${cards}</div>`,
         [{ label: "Fechar receitas", kind: "primary" }]
       );
@@ -6356,13 +6936,13 @@
            <li>Escolha <strong>Minerador</strong> na barra esquerda ou pressione <strong>1</strong>; clique numa jazida e gire a saída com <strong>R</strong>.</li>
            <li>Escolha <strong>Esteira</strong> ou pressione <strong>2</strong> e arraste do minerador até o Hub.</li>
            <li><span style="color:var(--input)"><strong>Portas azuis recebem</strong></span> itens; a <span style="color:var(--output)"><strong>porta amarela envia</strong></span> o resultado.</li>
-           <li><strong>3 Fornalha:</strong> escolha Placa de Ferro ou Placa de Cobre. <strong>4 Montadora:</strong> explore receitas de fios, circuitos e componentes balísticos. Use <strong>C ou Receitas</strong> para reconfigurar uma máquina selecionada.</li>
+           <li><strong>3 Fornalha:</strong> produz placas básicas e, após pesquisar, Aço e Tungstênio. <strong>4 Montadora:</strong> explore fios, circuitos, balística e artilharia. Use <strong>C ou Receitas</strong> para reconfigurar.</li>
            <li><strong>5 Divisor:</strong> uma entrada e duas saídas alternadas. <strong>6 Túnel:</strong> clique IN e depois OUT, em linha reta; o alcance cresce de 6 para até 20 tiles no Prestígio. <strong>7 Combinador:</strong> duas entradas azuis convergem em uma saída amarela. Use <strong>F ou Inverter</strong> para trocar o lado auxiliar.</li>
-           <li><strong>8 Parede:</strong> clique e arraste para formar muralhas. <strong>9 Torreta:</strong> ataca automaticamente e consome Munição entregue ao Hub.</li>
+           <li><strong>8 Parede:</strong> clique e arraste para formar muralhas. <strong>9 Torreta:</strong> usa Munição. <strong>V Canhão:</strong> usa Obuses e explode grupos. <strong>G Railgun:</strong> usa Dardos e perfura inimigos alinhados.</li>
            <li>Selecione uma construção e use <strong>Melhorar</strong>: cada nível dá +20% local, mas o custo cresce.</li>
            <li>Só materiais processados e circuitos entregues geram <strong>Pesquisa</strong>; minério bruto não gera. Abra <strong>TEC</strong>, arraste o mapa e toque nos nós para ver os caminhos permanentes.</li>
            <li>Ao entregar pelo menos <strong>${PRESTIGE_CIRCUITS} Circuitos</strong>, faça Prestígio para receber Núcleos. Pressione <strong>P</strong> para investi-los permanentemente em Indústria, Logística ou Defesa.</li>
-           <li>A Árvore de Prestígio libera <strong>Q Beacon</strong>, <strong>E Sonda Profunda</strong>, <strong>Z Estação de Reparo</strong> e <strong>X Torre Tesla</strong>. As peças continuam bloqueadas na barra até o nó correspondente.</li>
+           <li>A Árvore de Prestígio libera <strong>Q Beacon</strong>, <strong>E Sonda Profunda</strong>, <strong>Z Estação de Reparo</strong> e <strong>X Torre Tesla</strong>; os novos estágios melhoram metalurgia, munição avançada e armas pesadas.</li>
            <li>Clique numa construção para selecioná-la. Use Delete ou, no modo BUILD, clique nela com o botão direito. A remoção devolve 70% do custo.</li>
          </ol>
          <div class="box"><strong>Receitas</strong><br>
@@ -6373,12 +6953,17 @@
            Montadora: 2 placas de ferro → 4 projéteis<br>
            Montadora: 2 placas de cobre → 4 estojos<br>
            Montadora: 4 projéteis + 4 estojos → 4 cartuchos<br>
-           Montadora: 4 cartuchos + 2 placas de ferro + 1 fio de cobre → 4 munições
+           Montadora: 4 cartuchos + 2 placas de ferro + 1 fio de cobre → 4 munições<br><br>
+           <strong>Artilharia:</strong> 2 placas de ferro + 2 carvões → aço<br>
+           2 carvões + 1 placa de cobre → 2 propelentes<br>
+           2 aços + 2 propelentes → 1 obus<br>
+           2 minérios de tungstênio + 1 carvão → placa de tungstênio<br>
+           tungstênio + aço + circuito → dardo de Railgun
          </div>
          <p><strong>Waves:</strong> são liberadas no Tier 2. Inimigos entram pelas quatro estradas, atacam obstáculos e tentam destruir o Hub. Clique no painel WAVE/HUB/MUNIÇÃO/AMEAÇA para ver detalhes ou iniciar a próxima wave antes.</p>
          <p><strong>Diretor de Ameaça:</strong> mede o pico de itens/h e Cr/h entregues ao Hub, além de Tier, créditos da rodada, tamanho e níveis da fábrica, tecnologias e Prestígio. O nível fica travado quando a wave começa; desconectar esteiras não reduz a formação atual. A recompensa cresce junto com a dificuldade.</p>
          <p><strong>Offline:</strong> ao voltar, o jogo calcula em lote a vazão das rotas conectadas. Limite inicial de 24 h, ampliável pela árvore tecnológica.</p>
-         <p><strong>Atalhos desktop:</strong> B modo BUILD • botão direito remove • 1–9/Q/E/Z/X construções • C receitas • R girar • F inverter lado • U melhorar • Del remover • T tecnologias • P prestígio • M menu • Esc cancelar.</p>`,
+         <p><strong>Atalhos desktop:</strong> B modo BUILD • botão direito remove • 1–9/V/G/Q/E/Z/X construções • C receitas • R girar • F inverter lado • U melhorar • Del remover • T tecnologias • P prestígio • M menu • Esc cancelar.</p>`,
         [{
           label: firstRun ? "Começar" : "Voltar ao jogo",
           kind: "primary",
@@ -6436,6 +7021,8 @@
           : `Em andamento • ${state.enemies.length + state.combat.spawnRemaining} inimigos restantes`;
       const wallCount = state.buildings.filter(building => building.type === "wall").length;
       const turretCount = state.buildings.filter(building => building.type === "turret").length;
+      const cannonCount = state.buildings.filter(building => building.type === "cannon").length;
+      const railgunCount = state.buildings.filter(building => building.type === "railgun").length;
       const repairCount = state.buildings.filter(building => building.type === "repairStation").length;
       const teslaCount = state.buildings.filter(building => building.type === "tesla").length;
       const nextCount = waveEnemyCount(state.combat.wave, threat);
@@ -6448,7 +7035,7 @@
       actions.push({ label: "Fechar", kind: "primary" });
       openModal(
         `Defesa • Wave ${state.combat.wave}`,
-        `<div class="box"><strong>${phaseText}</strong><br>Hub: ${formatNumber(state.combat.baseHp)} / ${HUB_MAX_HP} HP • Munição: ${formatNumber(state.inventory.ammo)}</div>
+        `<div class="box"><strong>${phaseText}</strong><br>Hub: ${formatNumber(state.combat.baseHp)} / ${HUB_MAX_HP} HP<br>Munição: ${formatNumber(state.inventory.ammo)} • Obuses: ${formatNumber(state.inventory.shell)} • Dardos: ${formatNumber(state.inventory.railSlug)}</div>
          <div class="box"><strong>Diretor de Ameaça • nível ${threat.score}</strong><br>
          Avanço: ${formatNumber(threat.progressScore)} pontos • Produção: ${formatNumber(threat.productionScore)} pontos<br>
          Atual: ${formatNumber(state.stats.lastResourcesPerHour)} itens/h • ${formatNumber(state.stats.lastCreditsPerHour)} Cr/h<br>
@@ -6456,13 +7043,16 @@
          Inimigos: <strong>${formatNumber(threat.hpMultiplier)}× HP • ${formatNumber(threat.damageMultiplier)}× dano • ${formatNumber(threat.speedMultiplier)}× velocidade • +${threat.countBonus} unidades</strong><br>
          Recompensa da wave: <strong>${formatNumber(threat.rewardMultiplier)}×</strong></div>
          <p><strong>${formationLabel}:</strong> ${nextCount} invasores, com corredores a cada 4º inimigo e tanques a cada 7º. Eles entram pelas quatro estradas e procuram o caminho de menor resistência até o Hub.</p>
-         <p><strong>Sua defesa:</strong> ${wallCount} paredes • ${turretCount} torretas • ${repairCount} reparadores • ${teslaCount} Teslas<br>
-         Torretas consomem <strong>${formatNumber(turretAmmoCost())} munição</strong>. Torres Tesla atingem vários alvos e consomem <strong>${formatNumber(teslaCircuitCost())} Circuito por pulso</strong>.</p>
+         <p><strong>Sua defesa:</strong> ${wallCount} paredes • ${turretCount} torretas • ${cannonCount} canhões • ${railgunCount} railguns • ${repairCount} reparadores • ${teslaCount} Teslas<br>
+         Torreta: <strong>${formatNumber(turretAmmoCost())} Munição</strong> • Canhão: <strong>${formatNumber(cannonShellCost())} Obus</strong> • Railgun: <strong>${formatNumber(railgunSlugCost())} Dardo</strong> • Tesla: <strong>${formatNumber(teslaCircuitCost())} Circuito</strong>.</p>
          <div class="box"><strong>Cadeia de munição</strong><br>
          Ferro → Placas → Projéteis<br>
          Cobre → Placas → Estojos + Fio<br>
          Projéteis + Estojos → Cartuchos<br>
-         Cartuchos + Placas de Ferro + Fio → Munição → Hub → Torretas</div>
+         Cartuchos + Placas de Ferro + Fio → Munição → Hub → Torretas<br><br>
+         Carvão + Ferro → Aço; Carvão + Cobre → Propelente<br>
+         Aço + Propelente → Obus → Canhão<br>
+         Tungstênio + Aço + Circuito → Dardo → Railgun</div>
          <p>Waves vencidas: <strong>${state.combat.victories}</strong> • eliminações: <strong>${state.combat.kills}</strong> • derrotas: <strong>${state.combat.defeats}</strong></p>
          <p><strong>Regra anti-exploit:</strong> a maior produção observada na rodada nunca diminui. Ao iniciar a wave, o Diretor salva um snapshot; mudanças na fábrica só afetam a próxima formação.</p>
          <p><strong>Offline justo:</strong> a fábrica continua produzindo com a aba fechada, mas uma wave ativa volta para preparação; o Hub não é destruído offline.</p>`,
@@ -6710,6 +7300,8 @@
       ["Digit7", "merger"],
       ["Digit8", "wall"],
       ["Digit9", "turret"],
+      ["KeyV", "cannon"],
+      ["KeyG", "railgun"],
       ["KeyQ", "beacon"],
       ["KeyE", "deepDrill"],
       ["KeyZ", "repairStation"],
@@ -6876,6 +7468,47 @@
     window.FactoryGridDebug = Object.freeze({
       getState: () => JSON.parse(JSON.stringify(state)),
       getRates: () => JSON.parse(JSON.stringify(calculateNetworkRates())),
+      getCatalog: () => ({
+        items: Object.keys(ITEMS),
+        recipes: Object.keys(RECIPES),
+        tools: Object.keys(TOOLS),
+        techs: Object.keys(TECHS),
+        prestigeNodes: Object.keys(PRESTIGE_NODES),
+        techLayout: Object.keys(TECH_LAYOUT)
+      }),
+      validateCatalog: () => {
+        const errors = [];
+        const emptyInventory = EMPTY_INVENTORY();
+        for (const kind of Object.keys(ITEMS)) if (!(kind in emptyInventory)) errors.push(`Inventário sem ${kind}`);
+        for (const [key, recipe] of Object.entries(RECIPES)) {
+          if (!ITEMS[recipe.output]) errors.push(`Receita ${key} sem saída válida`);
+          for (const kind of Object.keys(recipe.inputs)) if (!ITEMS[kind]) errors.push(`Receita ${key} usa ${kind} inválido`);
+          if (recipe.tech && !TECHS[recipe.tech]) errors.push(`Receita ${key} usa tech inválida`);
+        }
+        for (const [key, tech] of Object.entries(TECHS)) {
+          if (!TECH_LAYOUT[key]) errors.push(`Tech ${key} sem posição`);
+          for (const requirement of tech.requires) if (!TECHS[requirement]) errors.push(`Tech ${key} requer ${requirement} inválida`);
+        }
+        for (const [key, node] of Object.entries(PRESTIGE_NODES)) {
+          for (const requirement of node.requires) if (!PRESTIGE_NODES[requirement]) errors.push(`Prestígio ${key} requer ${requirement} inválido`);
+        }
+        for (const [key, tool] of Object.entries(TOOLS)) {
+          if (tool.tech && !TECHS[tool.tech]) errors.push(`Ferramenta ${key} usa tech inválida`);
+          if (tool.prestige && !PRESTIGE_NODES[tool.prestige]) errors.push(`Ferramenta ${key} usa Prestígio inválido`);
+        }
+        return errors;
+      },
+      roundTripState: () => JSON.parse(JSON.stringify(sanitizeState(JSON.parse(JSON.stringify(state))))),
+      getBalance: () => ({
+        deepDrillKinds: deepDrillKinds(),
+        recipeOutputs: Object.fromEntries(Object.entries(RECIPES).map(([key, recipe]) => [key, recipeOutputQuantity(recipe)])),
+        cannon: { damage: cannonDamage({ level: 1 }), range: cannonRange({ level: 1 }), interval: cannonFireInterval({ level: 1 }), ammoCost: cannonShellCost(), splash: cannonSplashRadius() },
+        railgun: { damage: railgunDamage({ level: 1 }), range: railgunRange({ level: 1 }), interval: railgunFireInterval({ level: 1 }), ammoCost: railgunSlugCost(), pierce: railgunPierceCount() }
+      }),
+      renderOnce: () => {
+        render(0.016);
+        return true;
+      },
       getThreat: () => JSON.parse(JSON.stringify(
         state.combat.phase === "active"
           ? state.combat.threat
@@ -6935,6 +7568,24 @@
         return true;
       },
       startWave: () => startWave(true),
+      spawnEnemy: (x, y, hp = 1000, kind = "raider") => {
+        const enemy = {
+          id: `e${state.nextId++}`,
+          kind: ["raider", "runner", "tank"].includes(kind) ? kind : "raider",
+          x: clamp(Math.floor(Number(x) || HUB.x), 0, WORLD_W - 1),
+          y: clamp(Math.floor(Number(y) || HUB.y), 0, WORLD_H - 1),
+          tx: null,
+          ty: null,
+          progress: 0,
+          hp: Math.max(1, Number(hp) || 1000),
+          maxHp: Math.max(1, Number(hp) || 1000),
+          speed: 1,
+          damage: 1,
+          attackCooldown: 0
+        };
+        state.enemies.push(enemy);
+        return enemy.id;
+      },
       combat: () => JSON.parse(JSON.stringify({ combat: state.combat, enemies: state.enemies })),
       grantResearch: amount => {
         state.economy.researchPoints += Math.max(0, Number(amount) || 0);
