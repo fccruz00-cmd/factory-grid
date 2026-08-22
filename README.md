@@ -4,8 +4,6 @@ Jogo incremental de automação em Canvas 2D, inspirado em fábricas encadeadas 
 
 ## Jogar
 
-Depois que o GitHub Pages estiver habilitado:
-
 **https://fccruz00-cmd.github.io/factory-grid/**
 
 ## Sistemas
