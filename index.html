@@ -194,6 +194,12 @@
       box-shadow: 0 2px 5px rgba(0,0,0,.45);
     }
 
+    #coreBadge {
+      border-color: #fff0b2;
+      background: #9b712f;
+      color: #fff8d6;
+    }
+
     #sidePanel {
       position: absolute;
       right: calc(10px + env(safe-area-inset-right));
@@ -685,6 +691,165 @@
 
     @media (max-width: 560px) {
       .recipe-grid { grid-template-columns: 1fr; }
+    }
+
+    .prestige-summary {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 10px;
+      align-items: stretch;
+      margin-bottom: 12px;
+    }
+
+    .prestige-currency,
+    .prestige-total,
+    .prestige-explainer {
+      padding: 10px 12px;
+      border: 1px solid #8e7135;
+      border-radius: 10px;
+      background: linear-gradient(180deg, rgba(79, 59, 22, .92), rgba(37, 29, 14, .92));
+    }
+
+    .prestige-currency,
+    .prestige-total {
+      min-width: 120px;
+      display: grid;
+      place-items: center;
+      color: #e6d7a0;
+      font-size: 9px;
+      text-align: center;
+    }
+
+    .prestige-currency strong,
+    .prestige-total strong {
+      display: block;
+      color: #fff0a5;
+      font-size: 20px;
+    }
+
+    .prestige-explainer {
+      border-color: #526b59;
+      background: rgba(8, 18, 13, .55);
+      color: #b9cbbd;
+      font-size: 9px;
+      line-height: 1.5;
+    }
+
+    .prestige-tree-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 11px;
+    }
+
+    .prestige-branch {
+      min-width: 0;
+      padding: 11px;
+      border: 1px solid #4b6856;
+      border-radius: 12px;
+      background: linear-gradient(180deg, rgba(25, 46, 34, .96), rgba(10, 22, 15, .96));
+    }
+
+    .prestige-branch.industry { border-top: 3px solid #dc9a45; }
+    .prestige-branch.logistics { border-top: 3px solid #56b9d2; }
+    .prestige-branch.defense { border-top: 3px solid #d36a61; }
+
+    .prestige-branch h3 {
+      margin: 0 0 4px;
+      color: #fff0aa;
+      font-size: 14px;
+    }
+
+    .prestige-branch > p {
+      min-height: 38px;
+      margin: 0 0 9px !important;
+      color: #9fb4a4;
+      font-size: 8px;
+    }
+
+    .prestige-node-list { display: grid; gap: 8px; }
+
+    .prestige-node {
+      width: 100%;
+      min-height: 105px;
+      display: grid;
+      grid-template-columns: 38px minmax(0, 1fr);
+      grid-template-areas:
+        "icon title"
+        "icon desc"
+        "state state";
+      gap: 4px 9px;
+      padding: 9px;
+      border: 1px solid #4d6657;
+      border-radius: 9px;
+      background: rgba(7, 17, 11, .62);
+      color: #dce8de;
+      text-align: left;
+    }
+
+    .prestige-node.available {
+      border-color: #d2a73f;
+      box-shadow: inset 0 0 0 1px rgba(230, 183, 65, .18);
+    }
+
+    .prestige-node.unlocked {
+      border-color: #54bc75;
+      background: rgba(24, 67, 40, .56);
+    }
+
+    .prestige-node.blocked { opacity: .55; }
+
+    .prestige-node-icon {
+      grid-area: icon;
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border: 1px solid #77927e;
+      border-radius: 50%;
+      background: #1e3428;
+      color: #ffe69a;
+      font-size: 16px;
+      font-weight: 900;
+    }
+
+    .prestige-node strong { grid-area: title; color: #fff1ad; font-size: 10px; line-height: 1.2; }
+    .prestige-node small { grid-area: desc; color: #aec0b1; font-size: 8px; line-height: 1.35; }
+
+    .prestige-node-state {
+      grid-area: state;
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 4px;
+      padding-top: 6px;
+      border-top: 1px solid rgba(112, 140, 120, .28);
+      color: #d8c680;
+      font-size: 8px;
+      font-weight: 900;
+    }
+
+    .prestige-capstone {
+      margin-top: 11px;
+      padding: 11px;
+      border: 1px solid #9d7d35;
+      border-radius: 12px;
+      background: radial-gradient(circle at 50% 0, rgba(126, 91, 26, .4), rgba(10, 22, 15, .96) 70%);
+    }
+
+    .prestige-capstone .prestige-node { max-width: 620px; margin: auto; }
+
+    #modalOverlay.prestige-open { padding: 12px; }
+
+    .prestige-open .modal-card {
+      width: min(1060px, 97vw);
+      max-height: 96vh;
+    }
+
+    @media (max-width: 760px) {
+      .prestige-summary { grid-template-columns: 1fr 1fr; }
+      .prestige-explainer { grid-column: 1 / -1; }
+      .prestige-tree-grid { grid-template-columns: 1fr; }
+      .prestige-branch > p { min-height: 0; }
     }
 
     .tech-summary {
@@ -1376,7 +1541,7 @@
       }
 
       body.desktop-edition #buildDock::before {
-        content: "MODO BUILD  •  B FECHA  •  TECLAS 1–9";
+        content: "MODO BUILD  •  B FECHA  •  1–9 / Q E Z X";
         flex: 0 0 auto;
         margin: 0 2px 10px;
         color: var(--accent);
@@ -1576,6 +1741,7 @@
       <div class="top-actions">
         <button id="buildModeBtn" class="icon-btn" aria-label="Abrir modo de construção, tecla B" aria-pressed="false"><span class="icon-glyph">⚒</span><span class="icon-label">BUILD · B</span></button>
         <button id="techBtn" class="icon-btn" aria-label="Árvore tecnológica"><span class="icon-glyph">⚗</span><span class="icon-label">TEC</span><small id="researchBadge" class="tech-badge">0</small></button>
+        <button id="prestigeBtn" class="icon-btn" aria-label="Árvore de prestígio, tecla P"><span class="icon-glyph">✦</span><span class="icon-label">PREST · P</span><small id="coreBadge" class="tech-badge">0</small></button>
         <button id="helpBtn" class="icon-btn" aria-label="Como jogar"><span class="icon-glyph">?</span><span class="icon-label">AJUDA</span></button>
         <button id="menuBtn" class="icon-btn" aria-label="Menu"><span class="icon-glyph">☰</span><span class="icon-label">MENU</span></button>
       </div>
@@ -1616,7 +1782,7 @@
           <kbd class="tool-hotkey">5</kbd><span class="tool-icon">⑂</span><span class="tool-name">Divisor</span><span class="tool-recipe">1 entrada → 2 saídas</span><span class="tool-cost">18 Cr</span><span class="lock">Tier 2</span>
         </button>
         <button class="tool" data-tool="underground">
-          <kbd class="tool-hotkey">6</kbd><span class="tool-icon">⌒</span><span class="tool-name">Túnel</span><span class="tool-recipe">Par IN/OUT • alcance 6</span><span class="tool-cost">24 Cr</span><span class="lock">Tier 2</span>
+          <kbd class="tool-hotkey">6</kbd><span class="tool-icon">⌒</span><span class="tool-name">Túnel</span><span class="tool-recipe">Par IN/OUT • alcance 6–20</span><span class="tool-cost">24 Cr</span><span class="lock">Tier 2</span>
         </button>
         <button class="tool" data-tool="merger">
           <kbd class="tool-hotkey">7</kbd><span class="tool-icon">⋈</span><span class="tool-name">Combinador</span><span class="tool-recipe">2 entradas → 1 saída</span><span class="tool-cost">18 Cr</span><span class="lock">Tier 2</span>
@@ -1626,6 +1792,18 @@
         </button>
         <button class="tool" data-tool="turret">
           <kbd class="tool-hotkey">9</kbd><span class="tool-icon">⌖</span><span class="tool-name">Torreta</span><span class="tool-recipe">Alcance 4 • usa munição</span><span class="tool-cost">100 Cr</span><span class="lock">Tier 2</span>
+        </button>
+        <button class="tool" data-tool="beacon">
+          <kbd class="tool-hotkey">Q</kbd><span class="tool-icon">◉</span><span class="tool-name">Beacon industrial</span><span class="tool-recipe">Acelera máquinas próximas</span><span class="tool-cost">500 Cr</span><span class="lock">Prestígio</span>
+        </button>
+        <button class="tool" data-tool="deepDrill">
+          <kbd class="tool-hotkey">E</kbd><span class="tool-icon">✦</span><span class="tool-name">Sonda profunda</span><span class="tool-recipe">Ferro + cobre fora de jazidas</span><span class="tool-cost">700 Cr</span><span class="lock">Prestígio</span>
+        </button>
+        <button class="tool" data-tool="repairStation">
+          <kbd class="tool-hotkey">Z</kbd><span class="tool-icon">✚</span><span class="tool-name">Estação de reparo</span><span class="tool-recipe">Regenera construções em combate</span><span class="tool-cost">600 Cr</span><span class="lock">Prestígio</span>
+        </button>
+        <button class="tool" data-tool="tesla">
+          <kbd class="tool-hotkey">X</kbd><span class="tool-icon">ϟ</span><span class="tool-name">Torre Tesla</span><span class="tool-recipe">Dano em cadeia • usa circuitos</span><span class="tool-cost">900 Cr</span><span class="lock">Prestígio</span>
         </button>
       </div>
       <button id="toolNextBtn" class="tool-page-btn" aria-label="Mais ferramentas"><span>▶</span><small>MAIS</small></button>
@@ -1682,7 +1860,7 @@
     const MAX_FRAME_DELTA = 0.25;
     const BASE_OFFLINE_MAX_SECONDS = 24 * 60 * 60;
     const SAVE_KEY = "factoryGridMVP_save_v1";
-    const SAVE_VERSION = 7;
+    const SAVE_VERSION = 8;
     const STARTING_CREDITS = 100;
     const MINER_INTERVAL = 1.5;
     const BELT_SPEED = 2.1;
@@ -1830,7 +2008,11 @@
       underground: { label: "Túnel subterrâneo", type: "underground", cost: 24, tier: 2 },
       merger:      { label: "Combinador", type: "merger", cost: 18, tier: 2 },
       wall:        { label: "Parede", type: "wall", cost: 12, tier: 2 },
-      turret:      { label: "Torreta", type: "turret", cost: 100, tier: 2 }
+      turret:      { label: "Torreta", type: "turret", cost: 100, tier: 2 },
+      beacon:      { label: "Beacon industrial", type: "beacon", cost: 500, tier: 3, prestige: "beaconUnlock" },
+      deepDrill:   { label: "Sonda profunda", type: "deepDrill", cost: 700, tier: 3, prestige: "deepDrillUnlock" },
+      repairStation:{ label: "Estação de reparo", type: "repairStation", cost: 600, tier: 3, prestige: "repairStationUnlock" },
+      tesla:       { label: "Torre Tesla", type: "tesla", cost: 900, tier: 3, prestige: "teslaUnlock" }
     });
 
     const TIER_THRESHOLDS = Object.freeze([0, 0, 60, 240]);
@@ -1847,7 +2029,11 @@
       underground: 20,
       merger: 25,
       wall: 18,
-      turret: 120
+      turret: 120,
+      beacon: 220,
+      deepDrill: 260,
+      repairStation: 240,
+      tesla: 320
     });
 
     const TECHS = Object.freeze({
@@ -2063,6 +2249,135 @@
       }
     });
 
+    const PRESTIGE_BRANCHES = Object.freeze({
+      industry: {
+        label: "INDÚSTRIA",
+        icon: "⚙",
+        description: "Multiplicadores de produção e máquinas que substituem limitações do mapa."
+      },
+      logistics: {
+        label: "LOGÍSTICA",
+        icon: "➜",
+        description: "Vazão extrema, túneis longos e redes compactas sem gargalos."
+      },
+      defense: {
+        label: "DEFESA",
+        icon: "⌖",
+        description: "Sobrevivência permanente e construções avançadas contra waves longas."
+      }
+    });
+
+    const PRESTIGE_NODES = Object.freeze({
+      industryCore: {
+        label: "Núcleo industrial",
+        description: "+35% de velocidade para mineradores, fornalhas, montadoras e sondas.",
+        cost: 1,
+        branch: "industry",
+        requires: [],
+        icon: "⚙"
+      },
+      beaconUnlock: {
+        label: "Rede de overclock",
+        description: "Libera o Beacon industrial: +50% de velocidade em uma área de 4 tiles.",
+        cost: 2,
+        branch: "industry",
+        requires: ["industryCore"],
+        icon: "◉",
+        unlock: "Beacon industrial"
+      },
+      deepDrillUnlock: {
+        label: "Perfuração profunda",
+        description: "Libera a Sonda profunda, capaz de extrair ferro e cobre em qualquer terreno livre.",
+        cost: 3,
+        branch: "industry",
+        requires: ["beaconUnlock"],
+        icon: "✦",
+        unlock: "Sonda profunda"
+      },
+      industrialSingularity: {
+        label: "Singularidade industrial",
+        description: "Dobra a velocidade de toda produção e eleva o limite dos Beacons para +300% local.",
+        cost: 4,
+        branch: "industry",
+        requires: ["deepDrillUnlock"],
+        icon: "✹"
+      },
+      logisticsCoreP: {
+        label: "Núcleo logístico",
+        description: "+50% de velocidade para esteiras, divisores, combinadores e túneis.",
+        cost: 1,
+        branch: "logistics",
+        requires: [],
+        icon: "➜"
+      },
+      longTunnels: {
+        label: "Subsolo estabilizado",
+        description: "Túneis alcançam 12 tiles e deixam de perder vazão com a distância.",
+        cost: 2,
+        branch: "logistics",
+        requires: ["logisticsCoreP"],
+        icon: "⌒"
+      },
+      compressedFlow: {
+        label: "Fluxo comprimido",
+        description: "Dobra novamente a velocidade de toda a malha logística.",
+        cost: 3,
+        branch: "logistics",
+        requires: ["longTunnels"],
+        icon: "≫"
+      },
+      instantDistribution: {
+        label: "Distribuição quântica",
+        description: "Túneis alcançam 20 tiles e toda logística recebe mais +100% de velocidade.",
+        cost: 4,
+        branch: "logistics",
+        requires: ["compressedFlow"],
+        icon: "⇉"
+      },
+      defenseCoreP: {
+        label: "Núcleo defensivo",
+        description: "+50% de vida para estruturas defensivas, dano e alcance das torretas.",
+        cost: 1,
+        branch: "defense",
+        requires: [],
+        icon: "▥"
+      },
+      repairStationUnlock: {
+        label: "Drones de manutenção",
+        description: "Libera a Estação de reparo, que regenera construções próximas até durante waves.",
+        cost: 2,
+        branch: "defense",
+        requires: ["defenseCoreP"],
+        icon: "✚",
+        unlock: "Estação de reparo"
+      },
+      teslaUnlock: {
+        label: "Arco voltaico",
+        description: "Libera a Torre Tesla: atinge até 3 inimigos e consome Circuitos do Hub.",
+        cost: 3,
+        branch: "defense",
+        requires: ["repairStationUnlock"],
+        icon: "ϟ",
+        unlock: "Torre Tesla"
+      },
+      fortressSingularity: {
+        label: "Fortaleza autônoma",
+        description: "Dobra vida, dano e reparo defensivos; Torres Tesla gastam 40% menos Circuitos.",
+        cost: 4,
+        branch: "defense",
+        requires: ["teslaUnlock"],
+        icon: "▰"
+      },
+      omnifactory: {
+        label: "ÔMEGA FÁBRICA",
+        description: "+150% de velocidade global, +50% de créditos e +50% de Pesquisa. Exige os três ramos completos.",
+        cost: 6,
+        branch: "capstone",
+        requires: ["industrialSingularity", "instantDistribution", "fortressSingularity"],
+        icon: "Ω"
+      }
+    });
+
     const TECH_LAYOUT = Object.freeze({
       mining1:      { x: 60,   y: 60,   icon: "⛏", branch: "Extração I" },
       mining2:      { x: 320,  y: 60,   icon: "⛏", branch: "Extração II" },
@@ -2110,6 +2425,9 @@
       ironPlate: 0,
       copperPlate: 0,
       copperWire: 0,
+      bulletCore: 0,
+      bulletCasing: 0,
+      cartridge: 0,
       circuit: 0,
       ammo: 0
     });
@@ -2202,16 +2520,24 @@
       furnace: 240,
       assembler: 260,
       wall: 600,
-      turret: 280
+      turret: 280,
+      beacon: 300,
+      deepDrill: 380,
+      repairStation: 440,
+      tesla: 360
     });
 
-    function maxBuildingHp(type, level = 1, techState = null) {
+    function maxBuildingHp(type, level = 1, techState = null, prestigeState = null) {
       const safeLevel = clamp(Math.floor(Number(level) || 1), 1, MAX_BUILDING_LEVEL);
       const localScale = type === "wall" ? 1 + (safeLevel - 1) * 0.45 : 1 + (safeLevel - 1) * 0.22;
       let technology = 1;
       const tech = techState || (typeof state !== "undefined" && state ? state.tech : {}) || {};
+      const prestigeTree = prestigeState || (typeof state !== "undefined" && state ? state.prestigeTree : {}) || {};
       if (type === "wall" && tech.fortification1) technology *= 1.50;
       if (type === "wall" && tech.fortification2) technology *= 1.75;
+      const defensive = type === "wall" || type === "turret" || type === "tesla" || type === "repairStation";
+      if (defensive && prestigeTree.defenseCoreP) technology *= 1.50;
+      if (defensive && prestigeTree.fortressSingularity) technology *= 2.00;
       return Math.round((BUILDING_BASE_HP[type] || 180) * localScale * technology);
     }
 
@@ -2239,9 +2565,12 @@
           lifetimeEarned: 0,
           tier: 1,
           prestige: 0,
+          prestigeRuns: 0,
+          corePoints: 0,
           researchPoints: 0
         },
         tech: {},
+        prestigeTree: {},
         inventory: EMPTY_INVENTORY(),
         buildings: [],
         items: [],
@@ -2282,6 +2611,7 @@
         player: { ...base.player, ...(raw.player || {}) },
         economy: { ...base.economy, ...(raw.economy || {}) },
         tech: { ...base.tech, ...(raw.tech || {}) },
+        prestigeTree: { ...base.prestigeTree, ...(raw.prestigeTree || {}) },
         inventory: { ...base.inventory, ...(raw.inventory || {}) },
         combat: { ...base.combat, ...(raw.combat || {}) },
         stats: {
@@ -2309,6 +2639,10 @@
       safe.economy.runEarned = Math.max(0, Number(safe.economy.runEarned) || 0);
       safe.economy.lifetimeEarned = Math.max(0, Number(safe.economy.lifetimeEarned) || 0);
       safe.economy.prestige = Math.max(0, Math.floor(Number(safe.economy.prestige) || 0));
+      const hadCorePoints = raw.economy && Number.isFinite(Number(raw.economy.corePoints));
+      safe.economy.corePoints = Math.max(0, Math.floor(Number(safe.economy.corePoints) || 0));
+      if (!hadCorePoints) safe.economy.corePoints = safe.economy.prestige;
+      safe.economy.prestigeRuns = Math.max(0, Math.floor(Number(safe.economy.prestigeRuns) || safe.economy.prestige));
       safe.economy.tier = clamp(Math.floor(Number(safe.economy.tier) || 1), 1, 3);
       const hadResearchPoints = raw.economy && Number.isFinite(Number(raw.economy.researchPoints));
       safe.economy.researchPoints = Math.max(0, Number(safe.economy.researchPoints) || 0);
@@ -2318,10 +2652,11 @@
         }, 0);
       }
       safe.tech = Object.fromEntries(Object.keys(TECHS).map(key => [key, Boolean(safe.tech[key])]));
+      safe.prestigeTree = Object.fromEntries(Object.keys(PRESTIGE_NODES).map(key => [key, Boolean(safe.prestigeTree[key])]));
       safe.lastSavedAt = Number(safe.lastSavedAt) || Date.now();
       safe.nextId = Math.max(1, Math.floor(Number(safe.nextId) || 1));
 
-      const validTypes = new Set(["miner", "belt", "crafter", "furnace", "assembler", "splitter", "underground", "merger", "wall", "turret"]);
+      const validTypes = new Set(["miner", "belt", "crafter", "furnace", "assembler", "splitter", "underground", "merger", "wall", "turret", "beacon", "deepDrill", "repairStation", "tesla"]);
       safe.buildings = Array.isArray(raw.buildings) ? raw.buildings.filter(b => {
         return b && validTypes.has(b.type) && inBounds(Number(b.x), Number(b.y)) && !isHub(Number(b.x), Number(b.y));
       }).map(b => {
@@ -2345,7 +2680,7 @@
           delete buffer.ironPlate;
         }
         const level = clamp(Math.floor(Number(b.level) || 1), 1, MAX_BUILDING_LEVEL);
-        const maximumHp = maxBuildingHp(migratedType, level, safe.tech);
+        const maximumHp = maxBuildingHp(migratedType, level, safe.tech, safe.prestigeTree);
         return {
           id: String(b.id || `b${safe.nextId++}`),
           type: migratedType,
@@ -2367,7 +2702,8 @@
           shotFlash: 0,
           targetId: null,
           shotX: Number(b.shotX) || Math.round(Number(b.x)),
-          shotY: Number(b.shotY) || Math.round(Number(b.y))
+          shotY: Number(b.shotY) || Math.round(Number(b.y)),
+          shotTargets: []
         };
       }) : [];
 
@@ -2508,6 +2844,49 @@
       return Boolean(state.tech && state.tech[key]);
     }
 
+    function hasPrestigeNode(key) {
+      return Boolean(state.prestigeTree && state.prestigeTree[key]);
+    }
+
+    function prestigeCoreGain(circuits = state.inventory.circuit) {
+      const ratio = Math.max(1, Math.max(0, Number(circuits) || 0) / PRESTIGE_CIRCUITS);
+      return Math.max(1, Math.floor(Math.sqrt(ratio)));
+    }
+
+    function nextPrestigeGainRequirement(circuits = state.inventory.circuit) {
+      const gain = prestigeCoreGain(circuits);
+      return PRESTIGE_CIRCUITS * Math.pow(gain + 1, 2);
+    }
+
+    function undergroundMaxRange() {
+      if (hasPrestigeNode("instantDistribution")) return 20;
+      return hasPrestigeNode("longTunnels") ? 12 : 6;
+    }
+
+    function beaconRange(building) {
+      const level = Math.max(1, Number(building?.level) || 1);
+      return 4 + (level - 1) * 0.35 + (hasPrestigeNode("industrialSingularity") ? 2 : 0);
+    }
+
+    function beaconSpeedBonus(building) {
+      const level = Math.max(1, Number(building?.level) || 1);
+      const base = 0.50 + (level - 1) * 0.08;
+      return hasPrestigeNode("industrialSingularity") ? base * 1.50 : base;
+    }
+
+    function beaconMultiplierFor(building) {
+      if (!building || !(building.type === "miner" || building.type === "deepDrill" || building.type === "furnace" || building.type === "assembler")) return 1;
+      let totalBonus = 0;
+      for (const beacon of state.buildings) {
+        if (beacon.type !== "beacon" || beacon.hp <= 0) continue;
+        if (Math.hypot(beacon.x - building.x, beacon.y - building.y) <= beaconRange(beacon)) {
+          totalBonus += beaconSpeedBonus(beacon);
+        }
+      }
+      const cap = hasPrestigeNode("industrialSingularity") ? 3 : 1.5;
+      return 1 + Math.min(cap, totalBonus);
+    }
+
     function prestigeSpeedPerLevel() {
       if (hasTech("prestige2")) return 0.30;
       if (hasTech("prestige1")) return 0.25;
@@ -2519,6 +2898,7 @@
       if (hasTech("research1")) multiplier += 0.25;
       if (hasTech("research2")) multiplier += 0.50;
       if (hasTech("research3")) multiplier += 1.00;
+      if (hasPrestigeNode("omnifactory")) multiplier *= 1.50;
       return multiplier;
     }
 
@@ -2529,6 +2909,7 @@
       const processed = kind !== "ironOre" && kind !== "copperOre";
       if (processed && hasTech("market1")) multiplier *= 1.20;
       if (hasTech("market2")) multiplier *= 1.35;
+      if (hasPrestigeNode("omnifactory")) multiplier *= 1.50;
       return item.value * multiplier;
     }
 
@@ -2545,35 +2926,45 @@
       if (hasTech("core1")) centralControl *= 1.10;
       if (hasTech("core2")) centralControl *= 1.15;
       if (hasTech("core3")) centralControl *= 1.25;
+      if (hasPrestigeNode("omnifactory")) centralControl *= 2.50;
       return prestige * centralControl;
     }
 
     function buildingSpeedMultiplier(building) {
       const level = 1 + (Math.max(1, Number(building.level) || 1) - 1) * LEVEL_SPEED_BONUS;
       let technology = 1;
-      if (building.type === "miner") {
+      if (building.type === "miner" || building.type === "deepDrill") {
         if (hasTech("mining1")) technology *= 1.25;
         if (hasTech("mining2")) technology *= 1.30;
         if (hasTech("mining3")) technology *= 1.40;
         if (hasTech("mining4")) technology *= 1.60;
+        if (hasPrestigeNode("industryCore")) technology *= 1.35;
+        if (hasPrestigeNode("industrialSingularity")) technology *= 2.00;
       }
       if (isTransportBuilding(building)) {
         if (hasTech("logistics1")) technology *= 1.25;
         if (hasTech("logistics2")) technology *= 1.30;
         if (hasTech("logistics3")) technology *= 1.40;
         if (hasTech("logistics4")) technology *= 1.60;
+        if (hasPrestigeNode("logisticsCoreP")) technology *= 1.50;
+        if (hasPrestigeNode("compressedFlow")) technology *= 2.00;
+        if (hasPrestigeNode("instantDistribution")) technology *= 2.00;
       }
       if (building.type === "furnace") {
         if (hasTech("processing1")) technology *= 1.25;
         if (hasTech("processing2")) technology *= 1.35;
         if (hasTech("processing3")) technology *= 1.55;
+        if (hasPrestigeNode("industryCore")) technology *= 1.35;
+        if (hasPrestigeNode("industrialSingularity")) technology *= 2.00;
       }
       if (building.type === "assembler") {
         if (hasTech("assembly1")) technology *= 1.25;
         if (hasTech("assembly2")) technology *= 1.50;
         if (hasTech("assembly3")) technology *= 1.75;
+        if (hasPrestigeNode("industryCore")) technology *= 1.35;
+        if (hasPrestigeNode("industrialSingularity")) technology *= 2.00;
       }
-      return machineMultiplier() * level * technology;
+      return machineMultiplier() * level * technology * beaconMultiplierFor(building);
     }
 
     function inputBufferCapacity() {
@@ -2710,7 +3101,7 @@
       if (!isTransportBuilding(building)) return Infinity;
       const base = BELT_SPEED * buildingSpeedMultiplier(building);
       return building.type === "underground" && building.role === "entrance"
-        ? base / undergroundDistance(building)
+        ? (hasPrestigeNode("longTunnels") ? base : base / undergroundDistance(building))
         : base;
     }
 
@@ -2807,12 +3198,15 @@
         if (isTransportBuilding(building)) continue;
         const multiplier = buildingSpeedMultiplier(building);
 
-        if (building.type === "miner") {
-          const depositKind = getDeposit(building.x, building.y);
+        if (building.type === "miner" || building.type === "deepDrill") {
+          const depositKind = building.type === "deepDrill"
+            ? (building.splitToggle ? "copperOre" : "ironOre")
+            : getDeposit(building.x, building.y);
           if (!depositKind) continue;
           building.cooldown = Math.min(MINER_INTERVAL, building.cooldown + dt * multiplier);
           if (building.cooldown >= MINER_INTERVAL && tryEmit(building, depositKind)) {
             building.cooldown -= MINER_INTERVAL;
+            if (building.type === "deepDrill") building.splitToggle = building.splitToggle ? 0 : 1;
           }
           continue;
         }
@@ -3029,12 +3423,16 @@
     }
 
     function turretRange(building) {
-      return 4 + Math.min(1.8, (Math.max(1, building.level || 1) - 1) * 0.2) + (hasTech("ballistics1") ? 1 : 0);
+      let range = 4 + Math.min(1.8, (Math.max(1, building.level || 1) - 1) * 0.2) + (hasTech("ballistics1") ? 1 : 0);
+      if (hasPrestigeNode("defenseCoreP")) range *= 1.50;
+      return range;
     }
 
     function turretDamage(building) {
       let damage = 22 * (1 + (Math.max(1, building.level || 1) - 1) * 0.35) * machineMultiplier();
       if (hasTech("ballistics1")) damage *= 1.30;
+      if (hasPrestigeNode("defenseCoreP")) damage *= 1.50;
+      if (hasPrestigeNode("fortressSingularity")) damage *= 2.00;
       return damage;
     }
 
@@ -3046,6 +3444,53 @@
 
     function turretAmmoCost() {
       return hasTech("ballistics2") ? 0.70 : 1;
+    }
+
+    function repairStationRange(building) {
+      const level = Math.max(1, Number(building?.level) || 1);
+      return 4 + (level - 1) * 0.35 + (hasPrestigeNode("fortressSingularity") ? 2 : 0);
+    }
+
+    function repairStationRate(building) {
+      const level = Math.max(1, Number(building?.level) || 1);
+      let rate = 18 * (1 + (level - 1) * 0.28);
+      if (hasPrestigeNode("fortressSingularity")) rate *= 2;
+      return rate;
+    }
+
+    function updateRepairStations(dt) {
+      for (const station of state.buildings.filter(building => building.type === "repairStation" && building.hp > 0)) {
+        const range = repairStationRange(station);
+        const amount = repairStationRate(station) * dt;
+        for (const target of state.buildings) {
+          if (target.id === station.id || target.hp <= 0) continue;
+          if (Math.hypot(target.x - station.x, target.y - station.y) > range) continue;
+          const maximum = maxBuildingHp(target.type, target.level);
+          if (target.hp < maximum) target.hp = Math.min(maximum, target.hp + amount);
+        }
+      }
+    }
+
+    function teslaRange(building) {
+      const level = Math.max(1, Number(building?.level) || 1);
+      return 4.5 + Math.min(2.5, (level - 1) * 0.28) + (hasPrestigeNode("fortressSingularity") ? 1.5 : 0);
+    }
+
+    function teslaDamage(building) {
+      const level = Math.max(1, Number(building?.level) || 1);
+      let damage = 48 * (1 + (level - 1) * 0.38) * machineMultiplier();
+      if (hasPrestigeNode("defenseCoreP")) damage *= 1.50;
+      if (hasPrestigeNode("fortressSingularity")) damage *= 2.00;
+      return damage;
+    }
+
+    function teslaFireInterval(building) {
+      const level = Math.max(1, Number(building?.level) || 1);
+      return 1.35 / (1 + (level - 1) * 0.12);
+    }
+
+    function teslaCircuitCost() {
+      return hasPrestigeNode("fortressSingularity") ? 0.15 : 0.25;
     }
 
     function damageEnemy(enemy, damage) {
@@ -3086,6 +3531,29 @@
         turret.cooldown = turretFireInterval(turret);
         state.inventory.ammo = Math.max(0, state.inventory.ammo - turretAmmoCost());
         damageEnemy(target, turretDamage(turret));
+      }
+    }
+
+    function updateTeslaTowers(dt) {
+      for (const tower of state.buildings.filter(building => building.type === "tesla")) {
+        tower.cooldown = Math.max(0, (Number(tower.cooldown) || 0) - dt);
+        tower.shotFlash = Math.max(0, (Number(tower.shotFlash) || 0) - dt);
+        if (tower.cooldown > 0 || state.inventory.circuit + 1e-9 < teslaCircuitCost()) continue;
+
+        const range = teslaRange(tower);
+        const targets = state.enemies
+          .filter(enemy => enemy.hp > 0)
+          .map(enemy => ({ enemy, position: enemyVisualPosition(enemy) }))
+          .filter(entry => Math.hypot(entry.position.x - tower.x, entry.position.y - tower.y) <= range)
+          .sort((a, b) => Math.hypot(a.position.x - tower.x, a.position.y - tower.y) - Math.hypot(b.position.x - tower.x, b.position.y - tower.y))
+          .slice(0, hasPrestigeNode("fortressSingularity") ? 4 : 3);
+        if (!targets.length) continue;
+
+        state.inventory.circuit = Math.max(0, state.inventory.circuit - teslaCircuitCost());
+        tower.cooldown = teslaFireInterval(tower);
+        tower.shotFlash = 0.18;
+        tower.shotTargets = targets.map(entry => ({ x: entry.position.x, y: entry.position.y }));
+        targets.forEach((entry, index) => damageEnemy(entry.enemy, teslaDamage(tower) * Math.pow(0.72, index)));
       }
     }
 
@@ -3235,6 +3703,7 @@
     function updateCombat(dt) {
       unlockCombatIfNeeded(false);
       if (state.combat.phase === "locked") return;
+      updateRepairStations(dt);
       if (state.combat.phase === "prep") {
         repairBetweenWaves(dt);
         state.combat.timer = Math.max(0, state.combat.timer - dt);
@@ -3248,6 +3717,7 @@
         state.combat.spawnCooldown = Math.max(0.38, 1.15 - state.combat.wave * 0.025);
       }
       updateTurrets(dt);
+      updateTeslaTowers(dt);
       updateEnemies(dt);
       if (state.combat.phase === "active" && state.combat.spawnRemaining === 0 && state.enemies.length === 0) finishWave();
     }
@@ -3287,10 +3757,23 @@
       ));
     }
 
-    function placementProblem(toolKey, x, y) {
-      const tool = TOOLS[toolKey];
+    function toolUnlockProblem(tool) {
       if (!tool) return "Ferramenta inválida.";
       if (state.economy.tier < tool.tier) return `Requer Tier ${tool.tier}.`;
+      if (tool.prestige && !hasPrestigeNode(tool.prestige)) {
+        return `Requer ${PRESTIGE_NODES[tool.prestige]?.label || "um nó de Prestígio"}.`;
+      }
+      return null;
+    }
+
+    function isDirectionlessType(type) {
+      return type === "wall" || type === "turret" || type === "beacon" || type === "repairStation" || type === "tesla";
+    }
+
+    function placementProblem(toolKey, x, y) {
+      const tool = TOOLS[toolKey];
+      const unlockProblem = toolUnlockProblem(tool);
+      if (unlockProblem) return unlockProblem;
       if (!inBounds(x, y)) return "Fora do mapa.";
       if (isHub(x, y)) return "O Hub ocupa este tile.";
       if (isEnemySpawn(x, y)) return "Esta estrada é uma entrada de inimigos.";
@@ -3364,7 +3847,7 @@
         }
         pendingUnderground = { x, y, dir: buildDir };
         selectedBuildingId = null;
-        showToast(`Entrada IN marcada. Coloque a saída OUT de 2 a 6 tiles em ${DIRS[buildDir].label}.`);
+        showToast(`Entrada IN marcada. Coloque a saída OUT de 2 a ${undergroundMaxRange()} tiles em ${DIRS[buildDir].label}.`);
         updateUI(true);
         return null;
       }
@@ -3375,8 +3858,8 @@
       const dy = y - entry.y;
       const distance = dx * dir.x + dy * dir.y;
       const perpendicular = dx * dir.y - dy * dir.x;
-      if (perpendicular !== 0 || distance < 2 || distance > 6) {
-        showToast(`A saída OUT deve ficar reta, de 2 a 6 tiles em ${DIRS[entry.dir].label}.`);
+      if (perpendicular !== 0 || distance < 2 || distance > undergroundMaxRange()) {
+        showToast(`A saída OUT deve ficar reta, de 2 a ${undergroundMaxRange()} tiles em ${DIRS[entry.dir].label}.`);
         return null;
       }
 
@@ -3437,6 +3920,10 @@
       if (building.type === "assembler") return "assembler";
       if (building.type === "wall") return "wall";
       if (building.type === "turret") return "turret";
+      if (building.type === "beacon") return "beacon";
+      if (building.type === "deepDrill") return "deepDrill";
+      if (building.type === "repairStation") return "repairStation";
+      if (building.type === "tesla") return "tesla";
       return null;
     }
 
@@ -3481,6 +3968,12 @@
         ? `${building.hp.toFixed(0)}/${nextMaximumHp} HP`
         : building.type === "turret"
           ? `${formatNumber(turretDamage(building))} dano • alcance ${formatNumber(turretRange(building))}`
+          : building.type === "tesla"
+            ? `${formatNumber(teslaDamage(building))} dano em cadeia • alcance ${formatNumber(teslaRange(building))}`
+            : building.type === "beacon"
+              ? `+${Math.round(beaconSpeedBonus(building) * 100)}% em ${formatNumber(beaconRange(building))} tiles`
+              : building.type === "repairStation"
+                ? `${formatNumber(repairStationRate(building))} HP/s em ${formatNumber(repairStationRange(building))} tiles`
           : `+${(building.level - 1) * 20}% local`;
       showToast(`${buildingLabel(building)} agora é nível ${building.level}: ${upgradeEffect}.`);
       updateUI(true);
@@ -3521,6 +4014,40 @@
       saveGame(false);
       showToast(`${tech.label} pesquisada.`);
       showTechTree();
+    }
+
+    function prestigePrerequisitesMet(key) {
+      const node = PRESTIGE_NODES[key];
+      return Boolean(node && node.requires.every(requirement => hasPrestigeNode(requirement)));
+    }
+
+    function buyPrestigeNode(key) {
+      const node = PRESTIGE_NODES[key];
+      if (!node || hasPrestigeNode(key)) return;
+      if (!prestigePrerequisitesMet(key)) {
+        showToast("Desbloqueie primeiro os nós anteriores deste caminho.");
+        return;
+      }
+      if (state.economy.corePoints < node.cost) {
+        showToast(`Faltam ${node.cost - state.economy.corePoints} Núcleos. Faça outro prestígio ou prolongue a rodada.`);
+        return;
+      }
+
+      const healthRatios = new Map(state.buildings.map(building => {
+        const maximum = maxBuildingHp(building.type, building.level);
+        return [building.id, maximum > 0 ? clamp(building.hp / maximum, 0, 1) : 1];
+      }));
+      state.economy.corePoints -= node.cost;
+      state.prestigeTree[key] = true;
+      for (const building of state.buildings) {
+        building.hp = maxBuildingHp(building.type, building.level) * (healthRatios.get(building.id) ?? 1);
+      }
+      cachedNetwork = null;
+      markDefenseFlowDirty();
+      updateUI(true);
+      saveGame(false);
+      showToast(`${node.label} ativado permanentemente${node.unlock ? `: ${node.unlock} liberado` : ""}.`);
+      showPrestigeTree();
     }
 
     function destroyBuildingByCombat(building) {
@@ -3575,7 +4102,7 @@
 
     function rotateCurrentTarget() {
       if (currentTool) {
-        if (TOOLS[currentTool].type === "wall" || TOOLS[currentTool].type === "turret") {
+        if (isDirectionlessType(TOOLS[currentTool].type)) {
           showToast(`${TOOLS[currentTool].label} não precisa de direção.`);
           return;
         }
@@ -3588,7 +4115,7 @@
           showToast("Escolha uma peça ou selecione uma construção.");
           return;
         }
-        if (building.type === "wall" || building.type === "turret") {
+        if (isDirectionlessType(building.type)) {
           showToast(`${buildingLabel(building)} não precisa ser girada.`);
           return;
         }
@@ -3645,11 +4172,15 @@
     function performPrestige() {
       if (!prestigeAvailable()) return;
       const old = state;
+      const gainedCores = prestigeCoreGain(old.inventory.circuit);
       const fresh = createNewState();
-      fresh.economy.prestige = old.economy.prestige + 1;
+      fresh.economy.prestige = old.economy.prestige + gainedCores;
+      fresh.economy.corePoints = old.economy.corePoints + gainedCores;
+      fresh.economy.prestigeRuns = old.economy.prestigeRuns + 1;
       fresh.economy.lifetimeEarned = old.economy.lifetimeEarned;
       fresh.economy.researchPoints = old.economy.researchPoints;
       fresh.tech = { ...old.tech };
+      fresh.prestigeTree = { ...old.prestigeTree };
       fresh.ui.seenHelp = true;
       state = fresh;
       currentTool = null;
@@ -3662,7 +4193,7 @@
       markDefenseFlowDirty();
       snapCameraToPlayer();
       saveGame(false);
-      showToast(`Núcleo ${state.economy.prestige}: velocidade +${Math.round(state.economy.prestige * prestigeSpeedPerLevel() * 100)}%.`);
+      showToast(`Prestígio concluído: +${gainedCores} ${gainedCores === 1 ? "Núcleo" : "Núcleos"}. Abra P para investir na árvore permanente.`);
       updateUI(true);
     }
 
@@ -3785,6 +4316,12 @@
       for (const miner of state.buildings.filter(b => b.type === "miner")) {
         const kind = getDeposit(miner.x, miner.y);
         if (kind) routeRate(miner, kind, buildingSpeedMultiplier(miner) / MINER_INTERVAL);
+      }
+
+      for (const drill of state.buildings.filter(b => b.type === "deepDrill")) {
+        const rate = buildingSpeedMultiplier(drill) / MINER_INTERVAL / 2;
+        routeRate(drill, "ironOre", rate);
+        routeRate(drill, "copperOre", rate);
       }
 
       const productionBuildings = state.buildings
@@ -4429,6 +4966,135 @@
       }
     }
 
+    function drawAuraCircle(building, radius, color) {
+      if (building.id !== selectedBuildingId) return;
+      const cx = (building.x + 0.5) * TILE;
+      const cy = (building.y + 0.5) * TILE;
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.setLineDash([6, 5]);
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius * TILE, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawBeacon(building, time) {
+      const px = building.x * TILE;
+      const py = building.y * TILE;
+      const cx = px + TILE / 2;
+      const cy = py + TILE / 2;
+      drawAuraCircle(building, beaconRange(building), "rgba(255,210,91,.45)");
+      drawMachineBase(px, py, "#76622c", "#3a321d");
+      const pulse = 0.65 + Math.sin(time * 4 + building.x) * 0.25;
+      ctx.strokeStyle = `rgba(255,224,112,${pulse})`;
+      ctx.lineWidth = 2;
+      for (let radius = 6; radius <= 13; radius += 7) {
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      ctx.fillStyle = "#fff0a3";
+      ctx.beginPath();
+      ctx.arc(cx, cy, 5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#604817";
+      ctx.beginPath();
+      ctx.arc(cx, cy, 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function drawDeepDrill(building, time) {
+      const px = building.x * TILE;
+      const py = building.y * TILE;
+      drawMachineBase(px, py, "#4d6670", "#24363d");
+      ctx.save();
+      ctx.translate(px + TILE / 2, py + TILE / 2);
+      ctx.rotate(time * 2.8);
+      ctx.strokeStyle = "#9ee5ee";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(-11, 0);
+      ctx.lineTo(11, 0);
+      ctx.moveTo(0, -11);
+      ctx.lineTo(0, 11);
+      ctx.stroke();
+      ctx.fillStyle = building.splitToggle ? "#d88955" : "#bfcac6";
+      ctx.beginPath();
+      ctx.arc(0, 0, 6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+      ctx.fillStyle = "#d9fbff";
+      ctx.font = "bold 7px ui-monospace, monospace";
+      ctx.textAlign = "center";
+      ctx.fillText("Fe/Cu", px + TILE / 2, py + 9);
+      drawMachinePorts(building, false);
+      drawProgressBar(px, py, building.cooldown / MINER_INTERVAL, "#79d9e7");
+    }
+
+    function drawRepairStation(building, time) {
+      const px = building.x * TILE;
+      const py = building.y * TILE;
+      const cx = px + TILE / 2;
+      const cy = py + TILE / 2;
+      drawAuraCircle(building, repairStationRange(building), "rgba(102,226,151,.42)");
+      drawMachineBase(px, py, "#40745b", "#213a2d");
+      const pulse = 0.72 + Math.sin(time * 5) * 0.18;
+      ctx.fillStyle = `rgba(137,244,174,${pulse})`;
+      ctx.fillRect(cx - 4, cy - 12, 8, 24);
+      ctx.fillRect(cx - 12, cy - 4, 24, 8);
+      ctx.strokeStyle = "#d9ffe5";
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(cx - 4, cy - 12, 8, 24);
+      ctx.strokeRect(cx - 12, cy - 4, 24, 8);
+    }
+
+    function drawTesla(building, time) {
+      const px = building.x * TILE;
+      const py = building.y * TILE;
+      const cx = px + TILE / 2;
+      const cy = py + TILE / 2;
+      drawAuraCircle(building, teslaRange(building), "rgba(112,205,255,.42)");
+      drawMachineBase(px, py, "#345d72", "#1e3440");
+      ctx.strokeStyle = "#8edfff";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 11, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.fillStyle = `rgba(204,246,255,${0.72 + Math.sin(time * 8) * 0.2})`;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#102a37";
+      ctx.font = "bold 13px ui-monospace, monospace";
+      ctx.textAlign = "center";
+      ctx.fillText("ϟ", cx, cy + 5);
+
+      if (building.shotFlash > 0 && Array.isArray(building.shotTargets) && building.shotTargets.length) {
+        ctx.save();
+        ctx.globalAlpha = clamp(building.shotFlash / 0.18, 0, 1);
+        ctx.strokeStyle = "#baf2ff";
+        ctx.lineWidth = 2.5;
+        let fromX = cx;
+        let fromY = cy;
+        for (const target of building.shotTargets) {
+          const toX = (target.x + 0.5) * TILE;
+          const toY = (target.y + 0.5) * TILE;
+          const midX = (fromX + toX) / 2 + Math.sin(time * 37 + toX) * 5;
+          const midY = (fromY + toY) / 2 + Math.cos(time * 31 + toY) * 5;
+          ctx.beginPath();
+          ctx.moveTo(fromX, fromY);
+          ctx.lineTo(midX, midY);
+          ctx.lineTo(toX, toY);
+          ctx.stroke();
+          fromX = toX;
+          fromY = toY;
+        }
+        ctx.restore();
+      }
+    }
+
     function drawBuilding(building, time) {
       if (building.type === "belt") drawBelt(building, time);
       else if (building.type === "splitter") drawSplitter(building, time);
@@ -4439,6 +5105,10 @@
       else if (building.type === "assembler") drawAssembler(building, time);
       else if (building.type === "wall") drawWall(building);
       else if (building.type === "turret") drawTurret(building, time);
+      else if (building.type === "beacon") drawBeacon(building, time);
+      else if (building.type === "deepDrill") drawDeepDrill(building, time);
+      else if (building.type === "repairStation") drawRepairStation(building, time);
+      else if (building.type === "tesla") drawTesla(building, time);
 
       const maximumHp = maxBuildingHp(building.type, building.level);
       if (building.hp < maximumHp - 0.5) {
@@ -4619,7 +5289,7 @@
         const dy = hoverTile.y - pendingUnderground.y;
         const distance = dx * dir.x + dy * dir.y;
         const perpendicular = dx * dir.y - dy * dir.x;
-        if (perpendicular !== 0 || distance < 2 || distance > 6) problem = "Saída fora da linha do túnel.";
+        if (perpendicular !== 0 || distance < 2 || distance > undergroundMaxRange()) problem = "Saída fora da linha do túnel.";
       }
       const px = hoverTile.x * TILE;
       const py = hoverTile.y * TILE;
@@ -4642,6 +5312,10 @@
         : tool.type === "merger" ? "2→1"
         : tool.type === "wall" ? "▥"
         : tool.type === "turret" ? "⌖"
+        : tool.type === "beacon" ? "◉"
+        : tool.type === "deepDrill" ? "✦"
+        : tool.type === "repairStation" ? "✚"
+        : tool.type === "tesla" ? "ϟ"
         : tool.recipe === "ironPlate" ? "Fe" : "Cu";
       ctx.fillText(text, px + TILE / 2, py + TILE / 2 + 3);
       const ghostBuilding = { x: hoverTile.x, y: hoverTile.y, dir: buildDir, mirrored: buildMirrored };
@@ -4653,8 +5327,8 @@
         const tunnelDirection = pendingUnderground ? pendingUnderground.dir : buildDir;
         ghostBuilding.dir = tunnelDirection;
         drawTransportPorts(ghostBuilding, pendingUnderground ? [] : [(tunnelDirection + 2) % 4], pendingUnderground ? [tunnelDirection] : []);
-      } else if (tool.type !== "belt" && tool.type !== "wall" && tool.type !== "turret") {
-        drawMachinePorts({ x: hoverTile.x, y: hoverTile.y, dir: buildDir }, tool.type !== "miner");
+      } else if (tool.type !== "belt" && !isDirectionlessType(tool.type)) {
+        drawMachinePorts({ x: hoverTile.x, y: hoverTile.y, dir: buildDir }, !(tool.type === "miner" || tool.type === "deepDrill"));
       }
       ctx.restore();
     }
@@ -4731,8 +5405,10 @@
     const cancelBtn = document.getElementById("cancelBtn");
     const menuBtn = document.getElementById("menuBtn");
     const techBtn = document.getElementById("techBtn");
+    const prestigeBtn = document.getElementById("prestigeBtn");
     const buildModeBtn = document.getElementById("buildModeBtn");
     const researchBadge = document.getElementById("researchBadge");
+    const coreBadge = document.getElementById("coreBadge");
     const buildBarElement = document.getElementById("buildBar");
     const buildToggleBtn = document.getElementById("buildToggleBtn");
     const buildToggleIcon = document.getElementById("buildToggleIcon");
@@ -4883,6 +5559,10 @@
       if (building.type === "assembler") return `Montadora — ${RECIPES[building.recipe]?.label || "sem receita"}`;
       if (building.type === "wall") return "Parede defensiva";
       if (building.type === "turret") return "Torreta automática";
+      if (building.type === "beacon") return "Beacon industrial";
+      if (building.type === "deepDrill") return "Sonda profunda";
+      if (building.type === "repairStation") return "Estação de reparo";
+      if (building.type === "tesla") return "Torre Tesla";
       return "Construção";
     }
 
@@ -4915,11 +5595,23 @@
         const kind = getDeposit(building.x, building.y);
         return `<span style="color:var(--output)">SAI ${DIRS[building.dir].arrow}</span>: ${kind ? ITEMS[kind].label : "recurso da jazida"}`;
       }
+      if (building.type === "deepDrill") {
+        return `<span style="color:var(--output)">SAI ${DIRS[building.dir].arrow}</span>: alterna Minério de Ferro e Minério de Cobre`;
+      }
       if (building.type === "wall") {
         return `<span style="color:var(--output)">BLOQUEIO:</span> força os inimigos a contornar ou destruir esta parede`;
       }
       if (building.type === "turret") {
         return `<span style="color:var(--input)">ENTRA:</span> munição armazenada no Hub<br><span style="color:var(--output)">ATACA:</span> inimigo mais próximo dentro do alcance`;
+      }
+      if (building.type === "beacon") {
+        return `<span style="color:var(--output)">AURA:</span> +${Math.round(beaconSpeedBonus(building) * 100)}% de velocidade em ${formatNumber(beaconRange(building))} tiles; múltiplos Beacons acumulam até o limite`;
+      }
+      if (building.type === "repairStation") {
+        return `<span style="color:var(--output)">REPARA:</span> ${formatNumber(repairStationRate(building))} HP/s em todas as construções dentro de ${formatNumber(repairStationRange(building))} tiles`;
+      }
+      if (building.type === "tesla") {
+        return `<span style="color:var(--input)">ENTRA:</span> ${formatNumber(teslaCircuitCost())} Circuito do Hub por pulso<br><span style="color:var(--output)">ATACA:</span> até ${hasPrestigeNode("fortressSingularity") ? 4 : 3} inimigos em cadeia`;
       }
       const recipe = RECIPES[building.recipe];
       const outputAmount = Math.max(1, Number(recipe.outputAmount) || 1);
@@ -4943,14 +5635,14 @@
       }
       if (tool.type === "underground") {
         return pendingUnderground
-          ? `<strong>Túnel: IN marcado</strong> • clique a saída OUT, reta, 2–6 tiles em ${DIRS[pendingUnderground.dir].label} • ${tool.cost} Cr pelo par`
-          : `<strong>${tool.label}</strong> • clique IN, depois OUT • reta, alcance 2–6 • ${tool.cost} Cr pelo par`;
+          ? `<strong>Túnel: IN marcado</strong> • clique a saída OUT, reta, 2–${undergroundMaxRange()} tiles em ${DIRS[pendingUnderground.dir].label} • ${tool.cost} Cr pelo par`
+          : `<strong>${tool.label}</strong> • clique IN, depois OUT • reta, alcance 2–${undergroundMaxRange()} • ${tool.cost} Cr pelo par`;
       }
       if (tool.type === "furnace") {
         return `<strong>Fornalha</strong> • escolha Placa de Ferro ou Placa de Cobre após construir • ${tool.cost} Cr`;
       }
       if (tool.type === "assembler") {
-        return `<strong>Montadora</strong> • escolha Fio de Cobre, Circuito ou Munição após construir • ${tool.cost} Cr`;
+        return `<strong>Montadora</strong> • escolha fios, circuitos ou componentes balísticos após construir • ${tool.cost} Cr`;
       }
       if (tool.type === "miner") {
         return `<strong>${tool.label}</strong> • sem entrada • <span style="color:var(--output)">SAI ${DIRS[buildDir].arrow}: minério</span> • ${tool.cost} Cr`;
@@ -4960,6 +5652,18 @@
       }
       if (tool.type === "turret") {
         return `<strong>Torreta</strong> • alcance ${formatNumber(turretRange({ level: 1 }))} • consome 1 munição por disparo • ${tool.cost} Cr`;
+      }
+      if (tool.type === "beacon") {
+        return `<strong>Beacon industrial</strong> • +${Math.round(beaconSpeedBonus({ level: 1 }) * 100)}% em ${formatNumber(beaconRange({ level: 1 }))} tiles • ${tool.cost} Cr`;
+      }
+      if (tool.type === "deepDrill") {
+        return `<strong>Sonda profunda</strong> • produz Ferro e Cobre alternadamente fora das jazidas • saída ${DIRS[buildDir].arrow} • ${tool.cost} Cr`;
+      }
+      if (tool.type === "repairStation") {
+        return `<strong>Estação de reparo</strong> • ${formatNumber(repairStationRate({ level: 1 }))} HP/s em ${formatNumber(repairStationRange({ level: 1 }))} tiles • ${tool.cost} Cr`;
+      }
+      if (tool.type === "tesla") {
+        return `<strong>Torre Tesla</strong> • dano em cadeia • gasta ${formatNumber(teslaCircuitCost())} Circuito por pulso • ${tool.cost} Cr`;
       }
       const recipe = RECIPES[tool.recipe];
       return `<strong>${tool.label}</strong> • <span style="color:var(--input)">ENTRA: ${recipeInputLabel(recipe)}</span> • <span style="color:var(--output)">SAI ${DIRS[buildDir].arrow}: ${ITEMS[recipe.output].label}</span> • ${tool.cost} Cr`;
@@ -4974,6 +5678,13 @@
         const status = state.inventory.ammo + 1e-9 < turretAmmoCost() ? `<span class="bad">SEM MUNIÇÃO</span>` : state.combat.phase === "active" ? `<span class="good">DEFENDENDO</span>` : "Aguardando wave";
         return `<strong>Nível ${building.level || 1}</strong> • ${formatNumber(building.hp)} / ${formatNumber(maxBuildingHp("turret", building.level))} HP<br>${machineFlowHTML(building)}<br>Dano: <strong>${formatNumber(turretDamage(building))}</strong> • alcance: <strong>${formatNumber(turretRange(building))} tiles</strong> • ${status}`;
       }
+      if (building.type === "tesla") {
+        const status = state.inventory.circuit + 1e-9 < teslaCircuitCost() ? `<span class="bad">SEM CIRCUITOS</span>` : state.combat.phase === "active" ? `<span class="good">ENERGIZADA</span>` : "Aguardando wave";
+        return `<strong>Nível ${building.level || 1}</strong> • ${formatNumber(building.hp)} / ${formatNumber(maxBuildingHp("tesla", building.level))} HP<br>${machineFlowHTML(building)}<br>Dano inicial: <strong>${formatNumber(teslaDamage(building))}</strong> • alcance: <strong>${formatNumber(teslaRange(building))} tiles</strong> • ${status}`;
+      }
+      if (building.type === "beacon" || building.type === "repairStation") {
+        return `<strong>Nível ${building.level || 1}</strong> • ${formatNumber(building.hp)} / ${formatNumber(maxBuildingHp(building.type, building.level))} HP<br>${machineFlowHTML(building)}`;
+      }
       const levelLine = `<strong>Nível ${building.level || 1}</strong> • velocidade efetiva ${formatNumber(buildingSpeedMultiplier(building))}×`;
       if (isTransportBuilding(building)) {
         const item = itemAt(building.x, building.y);
@@ -4982,7 +5693,7 @@
           : "";
         return `${levelLine}<br>${machineFlowHTML(building)}${tunnelDetail}${item ? `<br>Agora: ${ITEMS[item.kind].label} em trânsito` : "<br>Agora: vazia"}`;
       }
-      if (building.type === "miner") {
+      if (building.type === "miner" || building.type === "deepDrill") {
         return `${levelLine}<br>${machineFlowHTML(building)}`;
       }
       const recipe = RECIPES[building.recipe];
@@ -5004,6 +5715,11 @@
       const anyRate = network.creditsPerSecond > 0.0001;
       const researchedCount = Object.keys(TECHS).filter(key => hasTech(key)).length;
       const firstTechCost = Math.min(...Object.values(TECHS).filter(tech => tech.requires.length === 0).map(tech => tech.cost));
+      const affordablePrestigeNode = Object.keys(PRESTIGE_NODES).find(key => !hasPrestigeNode(key) && prestigePrerequisitesMet(key) && PRESTIGE_NODES[key].cost <= state.economy.corePoints);
+
+      if (affordablePrestigeNode) {
+        return `Você possui <strong>${state.economy.corePoints} Núcleos livres</strong>. Pressione <strong>P</strong> e escolha um bônus permanente ou uma nova construção.`;
+      }
 
       if (!miners.length) {
         return "Pressione <strong>B</strong>, escolha <strong>Minerador</strong> e coloque-o na jazida cinza a oeste. Gire a saída para o Hub.";
@@ -5047,7 +5763,7 @@
       if (!prestigeAvailable()) {
         return `Entregue circuitos para prestigiar: <strong>${Math.floor(state.inventory.circuit)} / ${PRESTIGE_CIRCUITS}</strong>.`;
       }
-      return `Prestígio disponível no menu. Cada Núcleo concede <strong>+${Math.round(prestigeSpeedPerLevel() * 100)}% de velocidade permanente</strong>.`;
+      return `Prestígio disponível: esta rodada rende <strong>+${prestigeCoreGain()} ${prestigeCoreGain() === 1 ? "Núcleo" : "Núcleos"}</strong>. Pressione <strong>P</strong> para planejar a árvore permanente.`;
     }
 
     function updateUI(forceRate = false) {
@@ -5056,9 +5772,12 @@
       creditsText.textContent = formatNumber(state.economy.credits);
       tierText.textContent = String(state.economy.tier);
       rateText.textContent = `${formatNumber(network.creditsPerSecond * 60)} Cr/min`;
-      coreText.textContent = `${state.economy.prestige} (+${Math.round(state.economy.prestige * prestigeSpeedPerLevel() * 100)}%)`;
+      coreText.textContent = `${state.economy.prestige} • ${state.economy.corePoints} livres`;
+      coreText.title = `Bônus base: +${Math.round(state.economy.prestige * prestigeSpeedPerLevel() * 100)}% • ${state.economy.prestigeRuns} prestígios realizados`;
       researchBadge.textContent = formatNumber(state.economy.researchPoints);
       researchBadge.title = `${formatNumber(state.economy.researchPoints)} pontos de Pesquisa`;
+      coreBadge.textContent = formatNumber(state.economy.corePoints);
+      coreBadge.title = `${state.economy.corePoints} Núcleos disponíveis na árvore de Prestígio`;
       objectiveText.innerHTML = currentObjective(network);
       const basePercent = Math.round(clamp(state.combat.baseHp / HUB_MAX_HP, 0, 1) * 100);
       waveText.textContent = state.combat.phase === "locked"
@@ -5090,18 +5809,21 @@
       for (const button of document.querySelectorAll(".tool")) {
         const key = button.dataset.tool;
         const tool = TOOLS[key];
-        const locked = state.economy.tier < tool.tier;
+        const lockProblem = toolUnlockProblem(tool);
+        const locked = Boolean(lockProblem);
         button.classList.toggle("locked", locked);
         button.classList.toggle("selected", currentTool === key);
         button.disabled = locked;
         button.style.opacity = !locked && state.economy.credits < tool.cost ? ".66" : "";
         button.setAttribute("aria-pressed", currentTool === key ? "true" : "false");
+        const lockLabel = button.querySelector(".lock");
+        if (lockLabel) lockLabel.textContent = state.economy.tier < tool.tier ? `Tier ${tool.tier}` : tool.prestige && !hasPrestigeNode(tool.prestige) ? "Prestígio" : "";
       }
 
       const direction = currentTool ? buildDir : selected ? selected.dir : buildDir;
       rotateLabel.textContent = DIRS[direction].label;
-      const directionlessTool = currentTool && (TOOLS[currentTool].type === "wall" || TOOLS[currentTool].type === "turret");
-      rotateBtn.disabled = Boolean(directionlessTool || (selected && (selected.type === "underground" || selected.type === "wall" || selected.type === "turret") && !currentTool));
+      const directionlessTool = currentTool && isDirectionlessType(TOOLS[currentTool].type);
+      rotateBtn.disabled = Boolean(directionlessTool || (selected && (selected.type === "underground" || isDirectionlessType(selected.type)) && !currentTool));
       const invertTarget = currentTool
         ? { type: TOOLS[currentTool].type, dir: buildDir, mirrored: buildMirrored }
         : selected;
@@ -5137,16 +5859,16 @@
       cancelBtn.disabled = !currentTool && !selected;
 
       if (currentTool) {
-        const rotates = TOOLS[currentTool].type !== "wall" && TOOLS[currentTool].type !== "turret";
+        const rotates = !isDirectionlessType(TOOLS[currentTool].type);
         modeHint.innerHTML = `${toolFlowHTML(currentTool)}${rotates ? " • <strong>R</strong> gira" : ""} • <strong>botão direito</strong> remove • <strong>B</strong> fecha`;
       } else if (selected) {
         modeHint.innerHTML = `${machineFlowHTML(selected)}${isConfigurableMachine(selected) ? " • <strong>C</strong> receitas" : ""} • <strong>U</strong> melhora • <strong>Del</strong> remove${desktopBuildOpen && !mobileLayout ? " • <strong>botão direito</strong> remove sob o cursor" : ""}`;
       } else if (mobileLayout && buildDrawerOpen) {
         modeHint.textContent = "Escolha uma peça • a barra fecha ao selecionar • use MAIS/VOLTAR para trocar a página";
       } else if (!mobileLayout && desktopBuildOpen) {
-        modeHint.innerHTML = `<strong>MODO BUILD</strong> • 1–9 escolhe a peça • botão direito remove • B fecha`;
+        modeHint.innerHTML = `<strong>MODO BUILD</strong> • 1–9 / Q E Z X escolhem peças • botão direito remove • B fecha`;
       } else {
-        modeHint.textContent = "WASD/setas: andar • B: modo BUILD • T: tecnologias • M: menu • clique: selecionar";
+        modeHint.textContent = "WASD/setas: andar • B: BUILD • T: tecnologias • P: prestígio • M: menu • clique: selecionar";
       }
       updateToolPageButtons();
     }
@@ -5154,6 +5876,7 @@
     function closeModal() {
       modalOverlay.hidden = true;
       modalOverlay.classList.remove("tech-open");
+      modalOverlay.classList.remove("prestige-open");
       modalActions.replaceChildren();
     }
 
@@ -5161,6 +5884,7 @@
       heldMoveDir = null;
       for (const key of document.querySelectorAll(".dkey")) key.classList.remove("pressed");
       modalOverlay.classList.remove("tech-open");
+      modalOverlay.classList.remove("prestige-open");
       modalTitle.textContent = title;
       modalBody.innerHTML = bodyHTML;
       modalActions.replaceChildren();
@@ -5349,6 +6073,60 @@
       window.requestAnimationFrame(() => centerTechNode(selectedTechKey));
     }
 
+    function prestigeNodeStatus(key) {
+      if (hasPrestigeNode(key)) return "unlocked";
+      return prestigePrerequisitesMet(key) ? "available" : "blocked";
+    }
+
+    function prestigeNodeHTML(key) {
+      const node = PRESTIGE_NODES[key];
+      const status = prestigeNodeStatus(key);
+      const missing = node.requires.filter(requirement => !hasPrestigeNode(requirement));
+      const stateText = status === "unlocked"
+        ? "ATIVA PERMANENTEMENTE"
+        : status === "available"
+          ? `${node.cost} ${node.cost === 1 ? "NÚCLEO" : "NÚCLEOS"}`
+          : `REQUER ${missing.map(requirement => PRESTIGE_NODES[requirement].label).join(" + ")}`;
+      return `<button class="prestige-node ${status}" data-prestige-node="${key}" ${status !== "available" ? "disabled" : ""}>
+        <span class="prestige-node-icon">${node.icon}</span>
+        <strong>${node.label}</strong>
+        <small>${node.description}${node.unlock ? `<br><b>CONSTRUÇÃO: ${node.unlock}</b>` : ""}</small>
+        <span class="prestige-node-state"><span>${stateText}</span><span>${status === "available" && state.economy.corePoints < node.cost ? `faltam ${node.cost - state.economy.corePoints}` : ""}</span></span>
+      </button>`;
+    }
+
+    function showPrestigeTree() {
+      const branches = Object.entries(PRESTIGE_BRANCHES).map(([branchKey, branch]) => {
+        const nodes = Object.keys(PRESTIGE_NODES).filter(key => PRESTIGE_NODES[key].branch === branchKey);
+        return `<section class="prestige-branch ${branchKey}">
+          <h3>${branch.icon} ${branch.label}</h3>
+          <p>${branch.description}</p>
+          <div class="prestige-node-list">${nodes.map(prestigeNodeHTML).join("")}</div>
+        </section>`;
+      }).join("");
+
+      const currentGain = prestigeCoreGain();
+      const nextRequirement = nextPrestigeGainRequirement();
+      openModal(
+        "Árvore de Prestígio",
+        `<div class="prestige-summary">
+          <div class="prestige-currency"><span>Núcleos livres</span><strong>✦ ${state.economy.corePoints}</strong></div>
+          <div class="prestige-explainer"><strong>Como funciona:</strong> Núcleos são gastos nesta árvore e nunca somem. Cada prestígio mantém Pesquisa, tecnologias e estes nós.<br>A rodada atual rende <strong>${currentGain} ${currentGain === 1 ? "Núcleo" : "Núcleos"}</strong> com ${Math.floor(state.inventory.circuit)} Circuitos; o próximo ganho aumenta em ${nextRequirement} Circuitos.</div>
+          <div class="prestige-total"><span>Total obtido</span><strong>${state.economy.prestige}</strong><span>${state.economy.prestigeRuns} ciclos</span></div>
+        </div>
+        <div class="prestige-tree-grid">${branches}</div>
+        <section class="prestige-capstone">${prestigeNodeHTML("omnifactory")}</section>`,
+        [
+          { label: prestigeAvailable() ? `Prestigiar por +${currentGain} ✦` : `Prestígio ${Math.floor(state.inventory.circuit)}/${PRESTIGE_CIRCUITS}`, disabled: !prestigeAvailable(), kind: prestigeAvailable() ? "primary" : "", onClick: showPrestigeConfirmation },
+          { label: "Fechar árvore", kind: "primary" }
+        ]
+      );
+      modalOverlay.classList.add("prestige-open");
+      for (const button of modalBody.querySelectorAll("[data-prestige-node]")) {
+        button.addEventListener("click", () => buyPrestigeNode(button.dataset.prestigeNode));
+      }
+    }
+
     function machineStoredUnits(building) {
       const buffered = Object.values(building?.buffer || {}).reduce((total, amount) => total + Math.max(0, Number(amount) || 0), 0);
       return buffered + Math.max(0, Number(building?.outputCount) || 0) + (Number(building?.progress) > 0.001 ? 1 : 0);
@@ -5454,10 +6232,12 @@
            <li>Escolha <strong>Esteira</strong> ou pressione <strong>2</strong> e arraste do minerador até o Hub.</li>
            <li><span style="color:var(--input)"><strong>Portas azuis recebem</strong></span> itens; a <span style="color:var(--output)"><strong>porta amarela envia</strong></span> o resultado.</li>
            <li><strong>3 Fornalha:</strong> escolha Placa de Ferro ou Placa de Cobre. <strong>4 Montadora:</strong> explore receitas de fios, circuitos e componentes balísticos. Use <strong>C ou Receitas</strong> para reconfigurar uma máquina selecionada.</li>
-           <li><strong>5 Divisor:</strong> uma entrada e duas saídas alternadas. <strong>6 Túnel:</strong> clique IN e depois OUT, em linha reta, a até seis tiles. <strong>7 Combinador:</strong> duas entradas azuis convergem em uma saída amarela. Use <strong>F ou Inverter</strong> para trocar o lado auxiliar.</li>
+           <li><strong>5 Divisor:</strong> uma entrada e duas saídas alternadas. <strong>6 Túnel:</strong> clique IN e depois OUT, em linha reta; o alcance cresce de 6 para até 20 tiles no Prestígio. <strong>7 Combinador:</strong> duas entradas azuis convergem em uma saída amarela. Use <strong>F ou Inverter</strong> para trocar o lado auxiliar.</li>
            <li><strong>8 Parede:</strong> clique e arraste para formar muralhas. <strong>9 Torreta:</strong> ataca automaticamente e consome Munição entregue ao Hub.</li>
            <li>Selecione uma construção e use <strong>Melhorar</strong>: cada nível dá +20% local, mas o custo cresce.</li>
            <li>Só materiais processados e circuitos entregues geram <strong>Pesquisa</strong>; minério bruto não gera. Abra <strong>TEC</strong>, arraste o mapa e toque nos nós para ver os caminhos permanentes.</li>
+           <li>Ao entregar pelo menos <strong>${PRESTIGE_CIRCUITS} Circuitos</strong>, faça Prestígio para receber Núcleos. Pressione <strong>P</strong> para investi-los permanentemente em Indústria, Logística ou Defesa.</li>
+           <li>A Árvore de Prestígio libera <strong>Q Beacon</strong>, <strong>E Sonda Profunda</strong>, <strong>Z Estação de Reparo</strong> e <strong>X Torre Tesla</strong>. As peças continuam bloqueadas na barra até o nó correspondente.</li>
            <li>Clique numa construção para selecioná-la. Use Delete ou, no modo BUILD, clique nela com o botão direito. A remoção devolve 70% do custo.</li>
          </ol>
          <div class="box"><strong>Receitas</strong><br>
@@ -5472,7 +6252,7 @@
          </div>
          <p><strong>Waves:</strong> são liberadas no Tier 2. Inimigos entram pelas quatro estradas, atacam obstáculos e tentam destruir o Hub. Clique no painel WAVE/HUB/MUNIÇÃO para ver detalhes ou iniciar a próxima wave antes.</p>
          <p><strong>Offline:</strong> ao voltar, o jogo calcula em lote a vazão das rotas conectadas. Limite inicial de 24 h, ampliável pela árvore tecnológica.</p>
-         <p><strong>Atalhos desktop:</strong> B modo BUILD • botão direito remove • 1–9 construções • C receitas • R girar • F inverter lado • U melhorar • Del remover • T tecnologias • M menu • Esc cancelar.</p>`,
+         <p><strong>Atalhos desktop:</strong> B modo BUILD • botão direito remove • 1–9/Q/E/Z/X construções • C receitas • R girar • F inverter lado • U melhorar • Del remover • T tecnologias • P prestígio • M menu • Esc cancelar.</p>`,
         [{
           label: firstRun ? "Começar" : "Voltar ao jogo",
           kind: "primary",
@@ -5514,6 +6294,7 @@
         Créditos vitalícios: <strong>${formatNumber(state.economy.lifetimeEarned)}</strong><br>
         Pesquisa disponível: <strong>${formatNumber(state.economy.researchPoints)}</strong><br>
         Tecnologias: <strong>${Object.keys(TECHS).filter(key => hasTech(key)).length}/${Object.keys(TECHS).length}</strong><br>
+        Prestígio: <strong>${state.economy.prestige} Núcleos totais • ${state.economy.corePoints} livres • ${Object.keys(PRESTIGE_NODES).filter(key => hasPrestigeNode(key)).length}/${Object.keys(PRESTIGE_NODES).length} nós</strong><br>
         Multiplicador global: <strong>${formatNumber(machineMultiplier())}×</strong></p>`;
     }
 
@@ -5525,6 +6306,8 @@
           : `Em andamento • ${state.enemies.length + state.combat.spawnRemaining} inimigos restantes`;
       const wallCount = state.buildings.filter(building => building.type === "wall").length;
       const turretCount = state.buildings.filter(building => building.type === "turret").length;
+      const repairCount = state.buildings.filter(building => building.type === "repairStation").length;
+      const teslaCount = state.buildings.filter(building => building.type === "tesla").length;
       const nextCount = waveEnemyCount(state.combat.wave);
       const actions = [];
       if (state.combat.phase === "prep") {
@@ -5535,8 +6318,8 @@
         `Defesa • Wave ${state.combat.wave}`,
         `<div class="box"><strong>${phaseText}</strong><br>Hub: ${formatNumber(state.combat.baseHp)} / ${HUB_MAX_HP} HP • Munição: ${formatNumber(state.inventory.ammo)}</div>
          <p><strong>Próxima formação:</strong> ${nextCount} invasores, com corredores a cada 4º inimigo e tanques a cada 7º. Eles entram pelas quatro estradas e procuram o caminho de menor resistência até o Hub.</p>
-         <p><strong>Sua defesa:</strong> ${wallCount} paredes • ${turretCount} torretas<br>
-         Paredes canalizam e absorvem dano. Torretas focam o alvo mais próximo e consomem <strong>${formatNumber(turretAmmoCost())} munição por disparo</strong>.</p>
+         <p><strong>Sua defesa:</strong> ${wallCount} paredes • ${turretCount} torretas • ${repairCount} reparadores • ${teslaCount} Teslas<br>
+         Torretas consomem <strong>${formatNumber(turretAmmoCost())} munição</strong>. Torres Tesla atingem vários alvos e consomem <strong>${formatNumber(teslaCircuitCost())} Circuito por pulso</strong>.</p>
          <div class="box"><strong>Cadeia de munição</strong><br>
          Ferro → Placas → Projéteis<br>
          Cobre → Placas → Estojos + Fio<br>
@@ -5549,10 +6332,12 @@
     }
 
     function showPrestigeConfirmation() {
+      const gain = prestigeCoreGain();
+      const nextRequirement = nextPrestigeGainRequirement();
       openModal(
         "Confirmar prestígio",
         `<p>Isso remove máquinas, upgrades locais, itens, créditos e entregas da rodada.</p>
-         <div class="box"><strong>Você mantém:</strong> Pesquisa e tecnologias.<br><strong>Você recebe:</strong> Núcleo ${state.economy.prestige + 1}, com +${Math.round((state.economy.prestige + 1) * prestigeSpeedPerLevel() * 100)}% de velocidade total.</div>`,
+         <div class="box"><strong>Você mantém:</strong> Pesquisa, tecnologias e toda a Árvore de Prestígio.<br><strong>Você recebe agora:</strong> +${gain} ${gain === 1 ? "Núcleo" : "Núcleos"}, totalizando ${state.economy.prestige + gain}.<br><strong>Rodadas longas rendem mais:</strong> alcance ${nextRequirement} Circuitos para receber ${gain + 1} Núcleos no próximo cálculo.</div>`,
         [
           { label: "Cancelar" },
           { label: "Prestigiar", kind: "primary", onClick: performPrestige }
@@ -5563,7 +6348,7 @@
     function showResetConfirmation() {
       openModal(
         "Apagar todo o progresso?",
-        `<p class="bad">Esta ação remove o save, incluindo Pesquisa, tecnologias e todos os níveis de Núcleo. Não pode ser desfeita.</p>`,
+        `<p class="bad">Esta ação remove o save, incluindo Pesquisa, tecnologias, Árvore de Prestígio e todos os Núcleos. Não pode ser desfeita.</p>`,
         [
           { label: "Cancelar" },
           { label: "Apagar", kind: "danger", onClick: resetGame }
@@ -5578,10 +6363,11 @@
         [
           { label: "Salvar agora", onClick: () => saveGame(true) },
           { label: `Tecnologias (${formatNumber(state.economy.researchPoints)} ⚗)`, onClick: showTechTree },
+          { label: `Árvore de Prestígio (${state.economy.corePoints} ✦ livres)`, onClick: showPrestigeTree },
           { label: `Defesa • Wave ${state.combat.wave}`, onClick: showDefenseStatus },
           { label: "Como jogar", onClick: () => showHelp(false) },
           {
-            label: prestigeAvailable() ? "Prestigiar" : `Prestígio ${Math.floor(state.inventory.circuit)}/${PRESTIGE_CIRCUITS}`,
+            label: prestigeAvailable() ? `Prestigiar por +${prestigeCoreGain()} ✦` : `Prestígio ${Math.floor(state.inventory.circuit)}/${PRESTIGE_CIRCUITS}`,
             kind: prestigeAvailable() ? "primary" : "",
             disabled: !prestigeAvailable(),
             onClick: showPrestigeConfirmation
@@ -5673,8 +6459,9 @@
     function toggleToolSelection(key) {
       const tool = TOOLS[key];
       if (!tool) return;
-      if (state.economy.tier < tool.tier) {
-        showToast(`Requer Tier ${tool.tier}.`);
+      const lockProblem = toolUnlockProblem(tool);
+      if (lockProblem) {
+        showToast(lockProblem);
         return;
       }
       const activating = currentTool !== key;
@@ -5706,6 +6493,7 @@
     upgradeBtn.addEventListener("click", upgradeSelectedBuilding);
     cancelBtn.addEventListener("click", clearSelection);
     techBtn.addEventListener("click", showTechTree);
+    prestigeBtn.addEventListener("click", showPrestigeTree);
     defenseBtn.addEventListener("click", showDefenseStatus);
     document.getElementById("helpBtn").addEventListener("click", () => showHelp(false));
     menuBtn.addEventListener("click", showMenu);
@@ -5782,7 +6570,11 @@
       ["Digit6", "underground"],
       ["Digit7", "merger"],
       ["Digit8", "wall"],
-      ["Digit9", "turret"]
+      ["Digit9", "turret"],
+      ["KeyQ", "beacon"],
+      ["KeyE", "deepDrill"],
+      ["KeyZ", "repairStation"],
+      ["KeyX", "tesla"]
     ]);
 
     const keyDirections = new Map([
@@ -5832,6 +6624,9 @@
       } else if (event.code === "KeyT") {
         event.preventDefault();
         showTechTree();
+      } else if (event.code === "KeyP") {
+        event.preventDefault();
+        showPrestigeTree();
       } else if (event.code === "KeyM") {
         event.preventDefault();
         showMenu();
@@ -5975,6 +6770,25 @@
       grantAmmo: amount => {
         state.inventory.ammo += Math.max(0, Number(amount) || 0);
         updateUI(true);
+      },
+      grantItem: (kind, amount) => {
+        if (!ITEMS[kind]) return false;
+        state.inventory[kind] += Math.max(0, Number(amount) || 0);
+        updateUI(true);
+        return true;
+      },
+      grantCores: amount => {
+        const granted = Math.max(0, Math.floor(Number(amount) || 0));
+        state.economy.prestige += granted;
+        state.economy.corePoints += granted;
+        updateUI(true);
+      },
+      buyPrestige: key => buyPrestigeNode(String(key)),
+      damageBuilding: (id, amount) => {
+        const building = buildingById.get(String(id));
+        if (!building) return false;
+        building.hp = Math.max(1, building.hp - Math.max(0, Number(amount) || 0));
+        return true;
       },
       startWave: () => startWave(true),
       combat: () => JSON.parse(JSON.stringify({ combat: state.combat, enemies: state.enemies })),
