@@ -522,6 +522,84 @@
 
     #toast.show { opacity: 1; transform: translate(-50%, 0); }
 
+    #abilityBar {
+      position: fixed;
+      z-index: 19;
+      left: 16px;
+      bottom: 18px;
+      display: flex;
+      gap: 6px;
+      padding: 7px;
+      border: 1px solid rgba(82, 117, 93, .78);
+      border-radius: 11px;
+      background: rgba(12, 25, 18, .93);
+      box-shadow: 0 8px 22px rgba(0,0,0,.42);
+      pointer-events: auto;
+      transition: left .18s ease;
+    }
+
+    .ability-btn {
+      position: relative;
+      width: 58px;
+      height: 48px;
+      padding: 4px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .ability-btn .ability-icon { font-size: 17px; font-weight: 900; line-height: 1; }
+    .ability-btn .ability-key { color: #b8cbbd; font-size: 7px; line-height: 1; }
+    .ability-btn .ability-cooldown {
+      position: absolute;
+      inset: auto 0 0;
+      min-height: 15px;
+      display: grid;
+      place-items: center;
+      background: rgba(7, 12, 9, .9);
+      color: #ffe49a;
+      font-size: 8px;
+      font-weight: 900;
+    }
+    .ability-btn.ready { border-color: #70d58d; }
+    .ability-btn.locked { opacity: .42; filter: grayscale(.8); }
+
+    .contract-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 9px;
+      margin-top: 10px;
+    }
+    .contract-card {
+      display: grid;
+      gap: 7px;
+      padding: 11px;
+      border: 1px solid #526d5d;
+      border-radius: 10px;
+      background: linear-gradient(180deg, rgba(36, 58, 46, .96), rgba(17, 35, 26, .96));
+    }
+    .contract-card.active { border-color: var(--accent); box-shadow: inset 0 0 0 2px rgba(240,199,94,.13); }
+    .contract-card.done { border-color: var(--good); opacity: .72; }
+    .contract-card.locked { opacity: .46; }
+    .contract-card > strong { color: #fff1b4; font-size: 12px; }
+    .contract-card small { color: #a9bba8; font-size: 8px; }
+    .contract-requirement { display: grid; gap: 4px; }
+    .contract-requirement span { display: flex; justify-content: space-between; gap: 8px; font-size: 9px; }
+    .contract-progress {
+      height: 5px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: #0a1710;
+    }
+    .contract-progress i { display: block; height: 100%; background: var(--good); }
+    .contract-select { min-height: 35px; border-radius: 7px; font-size: 9px; font-weight: 900; }
+
+    @media (max-width: 760px) {
+      #abilityBar { display: none; }
+      .contract-grid { grid-template-columns: 1fr; }
+    }
+
     #modalOverlay {
       position: fixed;
       z-index: 100;
@@ -1541,8 +1619,12 @@
         pointer-events: none;
       }
 
+      body.desktop-edition.desktop-build-open #abilityBar {
+        left: calc(var(--desktop-left) + 32px);
+      }
+
       body.desktop-edition #buildDock::before {
-        content: "MODO BUILD  •  B FECHA  •  1–9 / Q E Z X";
+        content: "MODO BUILD  •  B FECHA  •  1–9 / O Q E Z X V G";
         flex: 0 0 auto;
         margin: 0 2px 10px;
         color: var(--accent);
@@ -1647,7 +1729,7 @@
       body.desktop-edition #buildToggleBtn { display: none; }
 
       body.desktop-edition #modeHint {
-        bottom: 18px;
+        bottom: 82px;
         max-width: min(620px, calc(100vw - var(--desktop-left) - var(--desktop-right) - 70px));
         padding: 8px 14px;
         font-size: 9px;
@@ -1723,7 +1805,7 @@
       body.desktop-edition .tool .tool-icon { width: 40px; height: 40px; }
       body.desktop-edition #sidePanel { top: 74px; }
       body.desktop-edition #actions { bottom: 12px; }
-      body.desktop-edition #modeHint { bottom: 12px; }
+      body.desktop-edition #modeHint { bottom: 76px; }
     }
   </style>
 </head>
@@ -1780,6 +1862,9 @@
         <button class="tool" data-tool="assembler">
           <kbd class="tool-hotkey">4</kbd><span class="tool-icon">◆</span><span class="tool-name">Montadora</span><span class="tool-recipe">Fio / Circuito / Balística</span><span class="tool-cost">75 Cr</span><span class="lock">Tier 2</span>
         </button>
+        <button class="tool" data-tool="terminal">
+          <kbd class="tool-hotkey">O</kbd><span class="tool-icon">▣</span><span class="tool-name">Terminal de contratos</span><span class="tool-recipe">Entregas físicas por esteira</span><span class="tool-cost">350 Cr</span><span class="lock">Tecnologia</span>
+        </button>
         <button class="tool" data-tool="splitter">
           <kbd class="tool-hotkey">5</kbd><span class="tool-icon">⑂</span><span class="tool-name">Divisor</span><span class="tool-recipe">1 entrada → 2 saídas</span><span class="tool-cost">18 Cr</span><span class="lock">Tier 2</span>
         </button>
@@ -1834,12 +1919,19 @@
       <div id="actions" aria-label="Ações de construção">
         <button id="rotateBtn" class="action-btn"><span class="big">↻</span><span id="rotateLabel">Leste</span></button>
         <button id="invertBtn" class="action-btn"><span class="big">⇆</span><span id="invertLabel">Inverter</span></button>
-        <button id="recipeBtn" class="action-btn"><span class="big">▤</span><span>Receitas · C</span></button>
+        <button id="recipeBtn" class="action-btn"><span class="big">▤</span><span id="configLabel">Receitas · C</span></button>
         <button id="deleteBtn" class="action-btn"><span class="big">⌫</span>Remover</button>
         <button id="upgradeBtn" class="action-btn"><span class="big">⬆</span><span id="upgradeLabel">Selecione para melhorar</span></button>
         <button id="cancelBtn" class="action-btn"><span id="cancelLabel">Limpar seleção</span></button>
       </div>
     </div>
+  </div>
+  <div id="abilityBar" aria-label="Operações de campo">
+    <button class="ability-btn" data-ability="overclock"><span class="ability-icon">⚡</span><span class="ability-key">Y • TURBO</span><span class="ability-cooldown"></span></button>
+    <button class="ability-btn" data-ability="repair"><span class="ability-icon">✚</span><span class="ability-key">J • REPARO</span><span class="ability-cooldown"></span></button>
+    <button class="ability-btn" data-ability="emp"><span class="ability-icon">◎</span><span class="ability-key">K • EMP</span><span class="ability-cooldown"></span></button>
+    <button class="ability-btn" data-ability="scanner"><span class="ability-icon">⌁</span><span class="ability-key">L • SCAN</span><span class="ability-cooldown"></span></button>
+    <button class="ability-btn" data-ability="recall"><span class="ability-icon">⌂</span><span class="ability-key">N • HUB</span><span class="ability-cooldown"></span></button>
   </div>
   <div id="toast" role="status" aria-live="polite"></div>
 
@@ -1868,7 +1960,7 @@
     const MAX_FRAME_DELTA = 0.25;
     const BASE_OFFLINE_MAX_SECONDS = 24 * 60 * 60;
     const SAVE_KEY = "factoryGridMVP_save_v1";
-    const SAVE_VERSION = 10;
+    const SAVE_VERSION = 11;
     const STARTING_CREDITS = 100;
     const MINER_INTERVAL = 1.5;
     const BELT_SPEED = 2.1;
@@ -2085,6 +2177,82 @@
       }
     });
 
+    const CONTRACTS = Object.freeze({
+      foundryLot: {
+        label: "Lote de fundição",
+        description: "Primeiro contrato físico: valide duas linhas de placas no mesmo terminal.",
+        requirements: { ironPlate: 30, copperPlate: 24 },
+        credits: 900,
+        research: 35,
+        reputation: 1,
+        tier: 2
+      },
+      signalGrid: {
+        label: "Rede de sinal",
+        description: "Exige produção encadeada de fios e circuitos em volume estável.",
+        requirements: { copperWire: 45, circuit: 18 },
+        credits: 2200,
+        research: 90,
+        reputation: 2,
+        tier: 3
+      },
+      perimeterSupply: {
+        label: "Suprimento de perímetro",
+        description: "Teste completo da cadeia balística antes de uma defesa prolongada.",
+        requirements: { ammo: 80, steelPlate: 12 },
+        credits: 4200,
+        research: 170,
+        reputation: 2,
+        tier: 2,
+        tech: "ballistics1"
+      },
+      siegePackage: {
+        label: "Pacote de cerco",
+        description: "Contrato de artilharia: aço, propelente e obuses precisam chegar fisicamente.",
+        requirements: { steelPlate: 28, propellant: 24, shell: 10 },
+        credits: 7600,
+        research: 300,
+        reputation: 3,
+        tier: 3,
+        tech: "artillery"
+      },
+      acceleratorArray: {
+        label: "Matriz aceleradora",
+        description: "Pedido de fim de jogo que cruza metalurgia rara, eletrônica e Railguns.",
+        requirements: { tungstenPlate: 20, circuit: 24, railSlug: 8 },
+        credits: 13500,
+        research: 520,
+        reputation: 4,
+        tier: 3,
+        tech: "railWeapons"
+      }
+    });
+
+    const ABILITIES = Object.freeze({
+      overclock: { label: "Pulso de overclock", cooldown: 42, radius: 4.5, tier: 1, hotkey: "Y" },
+      repair: { label: "Drones de campo", cooldown: 36, radius: 4.5, tier: 2, hotkey: "J" },
+      emp: { label: "EMP tático", cooldown: 58, radius: 5.5, tier: 2, tech: "ballistics1", hotkey: "K" },
+      scanner: { label: "Scanner de exploração", cooldown: 24, radius: 0, tier: 1, hotkey: "L" },
+      recall: { label: "Retorno logístico", cooldown: 30, radius: 0, tier: 1, hotkey: "N" }
+    });
+
+    const ENEMY_ADAPTATIONS = Object.freeze({
+      breacher: { label: "Demolidores", description: "causam 3× dano em paredes", kind: "breacher" },
+      armored: { label: "Blindados", description: "reduzem em 45% o dano de Torretas", kind: "armored" },
+      disperser: { label: "Formação dispersa", description: "reduz dano de Canhão e evita agrupamentos", kind: "disperser" },
+      swarm: { label: "Enxame", description: "+25% de unidades leves contra Railguns", kind: "swarm" },
+      saboteur: { label: "Sabotadores", description: "invadem a malha e desativam máquinas por alguns segundos", kind: "saboteur" }
+    });
+
+    const EXPLORATION_SITES = Object.freeze([
+      { id: "westCache", x: 6, y: 17, label: "Depósito ferroviário", credits: 180, research: 8, items: { ironPlate: 12 } },
+      { id: "northCache", x: 24, y: 5, label: "Posto de observação", credits: 260, research: 14, items: { ammo: 18 } },
+      { id: "eastCache", x: 42, y: 17, label: "Armazém abandonado", credits: 420, research: 22, items: { copperWire: 18 } },
+      { id: "southCache", x: 24, y: 29, label: "Oficina de campo", credits: 650, research: 32, items: { circuit: 5 } },
+      { id: "coalCache", x: 10, y: 27, label: "Sondagem carbonífera", credits: 800, research: 45, items: { steelPlate: 6 } },
+      { id: "tungstenCache", x: 39, y: 8, label: "Cápsula geológica", credits: 1400, research: 75, items: { tungstenPlate: 3 } }
+    ]);
+
     const RESOURCE_UNLOCK_TECH = Object.freeze({
       coal: "steelProcessing",
       tungstenOre: "tungstenExtraction"
@@ -2096,6 +2264,7 @@
       belt:        { label: "Esteira", type: "belt", cost: 3, tier: 1 },
       furnace:     { label: "Fornalha", type: "furnace", recipe: "ironPlate", cost: 55, tier: 2 },
       assembler:   { label: "Montadora", type: "assembler", recipe: "copperWire", cost: 75, tier: 2 },
+      terminal:    { label: "Terminal de contratos", type: "terminal", cost: 350, tier: 2, tech: "market1" },
       splitter:    { label: "Divisor", type: "splitter", cost: 18, tier: 2 },
       underground: { label: "Túnel subterrâneo", type: "underground", cost: 24, tier: 2 },
       merger:      { label: "Combinador", type: "merger", cost: 18, tier: 2 },
@@ -2119,6 +2288,7 @@
       belt: 8,
       furnace: 60,
       assembler: 100,
+      terminal: 180,
       splitter: 25,
       underground: 20,
       merger: 25,
@@ -2333,13 +2503,13 @@
       },
       market1: {
         label: "Contratos industriais",
-        description: "+20% de créditos por placas, fios e circuitos entregues.",
+        description: "Libera o Terminal de Contratos e dá +20% de créditos por materiais processados entregues.",
         cost: 85,
         requires: ["research1"]
       },
       market2: {
         label: "Mercado interplanetário",
-        description: "+35% de créditos por qualquer item entregue.",
+        description: "+35% de créditos por qualquer item e +50% nas recompensas de contratos.",
         cost: 190,
         requires: ["market1", "assembly2"]
       },
@@ -2425,6 +2595,15 @@
         requires: ["beaconUnlock"],
         icon: "✦",
         unlock: "Sonda profunda"
+      },
+      districtInheritance: {
+        label: "Distrito legado",
+        description: "Ao prestigiar, preserva construções e níveis dentro de uma área 6×6 marcada ao redor do personagem.",
+        cost: 5,
+        branch: "industry",
+        requires: ["deepDrillUnlock"],
+        icon: "▦",
+        unlock: "Herança de distrito 6×6"
       },
       industrialSingularity: {
         label: "Singularidade industrial",
@@ -2514,6 +2693,14 @@
         requires: ["defenseCoreP"],
         icon: "✚",
         unlock: "Estação de reparo"
+      },
+      fieldDoctrineP: {
+        label: "Doutrina de campo",
+        description: "Reduz em 35% a recarga das habilidades, amplia seus raios e fortalece Overclock, Reparo e EMP.",
+        cost: 4,
+        branch: "defense",
+        requires: ["repairStationUnlock"],
+        icon: "★"
       },
       teslaUnlock: {
         label: "Arco voltaico",
@@ -2691,6 +2878,16 @@
     }
 
     generateTerrain();
+    for (const site of EXPLORATION_SITES) {
+      terrain[site.y][site.x] = 0;
+      for (const dir of DIRS) {
+        const nx = site.x + dir.x;
+        const ny = site.y + dir.y;
+        if (nx >= 2 && ny >= 2 && nx < WORLD_W - 2 && ny < WORLD_H - 2 && !deposits.has(posKey(nx, ny))) {
+          terrain[ny][nx] = terrain[ny][nx] === 1 ? 1 : 0;
+        }
+      }
+    }
 
     function inBounds(x, y) {
       return x >= 0 && y >= 0 && x < WORLD_W && y < WORLD_H;
@@ -2716,6 +2913,7 @@
       miner: 200,
       furnace: 240,
       assembler: 260,
+      terminal: 520,
       wall: 600,
       turret: 280,
       cannon: 380,
@@ -2752,6 +2950,8 @@
         speedMultiplier: 1,
         countBonus: 0,
         rewardMultiplier: 1,
+        adaptations: [],
+        profile: {},
         sampledAt: 0
       };
     }
@@ -2786,6 +2986,26 @@
         },
         tech: {},
         prestigeTree: {},
+        contracts: {
+          activeId: null,
+          progress: {},
+          completedThisRun: [],
+          reputation: 0,
+          lifetimeCompleted: 0
+        },
+        abilities: {
+          cooldowns: Object.fromEntries(Object.keys(ABILITIES).map(key => [key, 0])),
+          scannerFor: 0,
+          scannerTarget: null
+        },
+        exploration: {
+          found: [],
+          scans: 0
+        },
+        legacy: {
+          anchorX: HUB.x,
+          anchorY: HUB.y
+        },
         inventory: EMPTY_INVENTORY(),
         buildings: [],
         items: [],
@@ -2812,7 +3032,9 @@
           lastCreditsPerHour: 0,
           peakResourcesPerHour: 0,
           peakCreditsPerHour: 0,
-          peakThreatScore: 0
+          peakThreatScore: 0,
+          sabotagesSuffered: 0,
+          fieldCachesFound: 0
         },
         ui: {
           seenHelp: false
@@ -2833,6 +3055,18 @@
         economy: { ...base.economy, ...(raw.economy || {}) },
         tech: { ...base.tech, ...(raw.tech || {}) },
         prestigeTree: { ...base.prestigeTree, ...(raw.prestigeTree || {}) },
+        contracts: {
+          ...base.contracts,
+          ...(raw.contracts || {}),
+          progress: { ...base.contracts.progress, ...((raw.contracts && raw.contracts.progress) || {}) }
+        },
+        abilities: {
+          ...base.abilities,
+          ...(raw.abilities || {}),
+          cooldowns: { ...base.abilities.cooldowns, ...((raw.abilities && raw.abilities.cooldowns) || {}) }
+        },
+        exploration: { ...base.exploration, ...(raw.exploration || {}) },
+        legacy: { ...base.legacy, ...(raw.legacy || {}) },
         inventory: { ...base.inventory, ...(raw.inventory || {}) },
         combat: {
           ...base.combat,
@@ -2878,10 +3112,26 @@
       }
       safe.tech = Object.fromEntries(Object.keys(TECHS).map(key => [key, Boolean(safe.tech[key])]));
       safe.prestigeTree = Object.fromEntries(Object.keys(PRESTIGE_NODES).map(key => [key, Boolean(safe.prestigeTree[key])]));
+      safe.contracts.activeId = CONTRACTS[safe.contracts.activeId] ? safe.contracts.activeId : null;
+      safe.contracts.progress = Object.fromEntries(Object.keys(ITEMS).map(kind => [kind, Math.max(0, Number(safe.contracts.progress[kind]) || 0)]));
+      safe.contracts.completedThisRun = [...new Set(Array.isArray(safe.contracts.completedThisRun)
+        ? safe.contracts.completedThisRun.filter(key => CONTRACTS[key])
+        : [])];
+      safe.contracts.reputation = Math.max(0, Math.floor(Number(safe.contracts.reputation) || 0));
+      safe.contracts.lifetimeCompleted = Math.max(0, Math.floor(Number(safe.contracts.lifetimeCompleted) || 0));
+      safe.abilities.cooldowns = Object.fromEntries(Object.keys(ABILITIES).map(key => [key, Math.max(0, Number(safe.abilities.cooldowns[key]) || 0)]));
+      safe.abilities.scannerFor = Math.max(0, Number(safe.abilities.scannerFor) || 0);
+      safe.abilities.scannerTarget = EXPLORATION_SITES.some(site => site.id === safe.abilities.scannerTarget) ? safe.abilities.scannerTarget : null;
+      safe.exploration.found = [...new Set(Array.isArray(safe.exploration.found)
+        ? safe.exploration.found.filter(id => EXPLORATION_SITES.some(site => site.id === id))
+        : [])];
+      safe.exploration.scans = Math.max(0, Math.floor(Number(safe.exploration.scans) || 0));
+      safe.legacy.anchorX = clamp(Math.round(Number(safe.legacy.anchorX) || HUB.x), 2, WORLD_W - 3);
+      safe.legacy.anchorY = clamp(Math.round(Number(safe.legacy.anchorY) || HUB.y), 2, WORLD_H - 3);
       safe.lastSavedAt = Number(safe.lastSavedAt) || Date.now();
       safe.nextId = Math.max(1, Math.floor(Number(safe.nextId) || 1));
 
-      const validTypes = new Set(["miner", "belt", "crafter", "furnace", "assembler", "splitter", "underground", "merger", "wall", "turret", "cannon", "railgun", "beacon", "deepDrill", "repairStation", "tesla"]);
+      const validTypes = new Set(["miner", "belt", "crafter", "furnace", "assembler", "terminal", "splitter", "underground", "merger", "wall", "turret", "cannon", "railgun", "beacon", "deepDrill", "repairStation", "tesla"]);
       safe.buildings = Array.isArray(raw.buildings) ? raw.buildings.filter(b => {
         return b && validTypes.has(b.type) && inBounds(Number(b.x), Number(b.y)) && !isHub(Number(b.x), Number(b.y));
       }).map(b => {
@@ -2916,6 +3166,8 @@
           level,
           hp: clamp(Number.isFinite(Number(b.hp)) ? Number(b.hp) : maximumHp, 0, maximumHp),
           cooldown: Math.max(0, Number(b.cooldown) || 0),
+          disabledFor: Math.max(0, Number(b.disabledFor) || 0),
+          boostFor: Math.max(0, Number(b.boostFor) || 0),
           progress: Math.max(0, Number(b.progress) || 0),
           buffer,
           outputCount: Math.max(0, Math.floor(Number(b.outputCount) || 0)),
@@ -2980,6 +3232,12 @@
       safe.combat.threat.speedMultiplier = clamp(Number(safe.combat.threat.speedMultiplier) || 1, 1, 1.75);
       safe.combat.threat.countBonus = clamp(Math.floor(Number(safe.combat.threat.countBonus) || 0), 0, 24);
       safe.combat.threat.rewardMultiplier = clamp(Number(safe.combat.threat.rewardMultiplier) || 1, 1, 4);
+      safe.combat.threat.adaptations = [...new Set(Array.isArray(safe.combat.threat.adaptations)
+        ? safe.combat.threat.adaptations.filter(key => ENEMY_ADAPTATIONS[key])
+        : [])].slice(0, 2);
+      safe.combat.threat.profile = safe.combat.threat.profile && typeof safe.combat.threat.profile === "object"
+        ? { ...safe.combat.threat.profile }
+        : {};
       safe.combat.threat.sampledAt = Math.max(0, Number(safe.combat.threat.sampledAt) || 0);
       safe.stats.lastResourcesPerHour = Math.max(0, Number(safe.stats.lastResourcesPerHour) || 0);
       safe.stats.lastCreditsPerHour = Math.max(0, Number(safe.stats.lastCreditsPerHour) || 0);
@@ -2989,6 +3247,8 @@
         safe.combat.threat.score,
         Math.round(Number(safe.stats.peakThreatScore) || 0)
       );
+      safe.stats.sabotagesSuffered = Math.max(0, Math.floor(Number(safe.stats.sabotagesSuffered) || 0));
+      safe.stats.fieldCachesFound = Math.max(safe.exploration.found.length, Math.floor(Number(safe.stats.fieldCachesFound) || 0));
       if (!hadCombat && safe.economy.tier >= 2) {
         safe.combat.phase = "prep";
         safe.combat.timer = FIRST_WAVE_PREP;
@@ -3008,7 +3268,7 @@
       safe.enemies = Array.isArray(raw.enemies) ? raw.enemies.filter(enemy => {
         return enemy && inBounds(Number(enemy.x), Number(enemy.y));
       }).map(enemy => {
-        const kind = ["raider", "runner", "tank"].includes(enemy.kind) ? enemy.kind : "raider";
+        const kind = ["raider", "runner", "tank", "breacher", "armored", "disperser", "swarm", "saboteur"].includes(enemy.kind) ? enemy.kind : "raider";
         const maximumHp = Math.max(1, Number(enemy.maxHp) || 40);
         return {
           id: String(enemy.id || `e${safe.nextId++}`),
@@ -3022,7 +3282,10 @@
           maxHp: maximumHp,
           speed: clamp(Number(enemy.speed) || 1, 0.25, 4),
           damage: Math.max(1, Number(enemy.damage) || 6),
-          attackCooldown: Math.max(0, Number(enemy.attackCooldown) || 0)
+          attackCooldown: Math.max(0, Number(enemy.attackCooldown) || 0),
+          stunnedFor: Math.max(0, Number(enemy.stunnedFor) || 0),
+          sabotageTargetId: enemy.sabotageTargetId != null ? String(enemy.sabotageTargetId) : null,
+          sabotageCooldown: Math.max(0, Number(enemy.sabotageCooldown) || 0)
         };
       }) : [];
       if (safe.combat.phase !== "active") safe.enemies = [];
@@ -3152,7 +3415,7 @@
       if (!building || !(building.type === "miner" || building.type === "deepDrill" || building.type === "furnace" || building.type === "assembler")) return 1;
       let totalBonus = 0;
       for (const beacon of state.buildings) {
-        if (beacon.type !== "beacon" || beacon.hp <= 0) continue;
+        if (beacon.type !== "beacon" || beacon.hp <= 0 || beacon.disabledFor > 0) continue;
         if (Math.hypot(beacon.x - building.x, beacon.y - building.y) <= beaconRange(beacon)) {
           totalBonus += beaconSpeedBonus(beacon);
         }
@@ -3184,6 +3447,7 @@
       if (processed && hasTech("market1")) multiplier *= 1.20;
       if (hasTech("market2")) multiplier *= 1.35;
       if (hasPrestigeNode("omnifactory")) multiplier *= 1.50;
+      multiplier *= 1 + Math.min(0.30, Math.max(0, Number(state.contracts?.reputation) || 0) * 0.01);
       return item.value * multiplier;
     }
 
@@ -3205,6 +3469,7 @@
     }
 
     function buildingSpeedMultiplier(building) {
+      if (!building || Number(building.disabledFor) > 0) return 0;
       const level = 1 + (Math.max(1, Number(building.level) || 1) - 1) * LEVEL_SPEED_BONUS;
       let technology = 1;
       if (building.type === "miner" || building.type === "deepDrill") {
@@ -3242,7 +3507,8 @@
         if (hasPrestigeNode("advancedMetallurgyP")) technology *= 1.75;
         if (hasPrestigeNode("matterBoreP")) technology *= 1.50;
       }
-      return machineMultiplier() * level * technology * beaconMultiplierFor(building);
+      const fieldBoost = Number(building.boostFor) > 0 ? (hasPrestigeNode("fieldDoctrineP") ? 2.75 : 2.00) : 1;
+      return machineMultiplier() * level * technology * beaconMultiplierFor(building) * fieldBoost;
     }
 
     function inputBufferCapacity() {
@@ -3304,6 +3570,141 @@
       return true;
     }
 
+    function abilityUnlockProblem(key) {
+      const ability = ABILITIES[key];
+      if (!ability) return "Operação desconhecida.";
+      if (state.economy.tier < ability.tier) return `Requer Tier ${ability.tier}.`;
+      if (ability.tech && !hasTech(ability.tech)) return `Requer ${TECHS[ability.tech]?.label || "uma tecnologia"}.`;
+      return null;
+    }
+
+    function abilityCooldownDuration(key) {
+      const base = ABILITIES[key]?.cooldown || 30;
+      return base * (hasPrestigeNode("fieldDoctrineP") ? 0.65 : 1);
+    }
+
+    function abilityRadius(key) {
+      const base = ABILITIES[key]?.radius || 0;
+      return base + (base > 0 && hasPrestigeNode("fieldDoctrineP") ? 2 : 0);
+    }
+
+    function findNearestUnopenedSite() {
+      const unopened = EXPLORATION_SITES.filter(site => !state.exploration.found.includes(site.id));
+      unopened.sort((a, b) => Math.hypot(a.x - state.player.x, a.y - state.player.y) - Math.hypot(b.x - state.player.x, b.y - state.player.y));
+      return unopened[0] || null;
+    }
+
+    function checkExplorationDiscovery() {
+      const site = EXPLORATION_SITES.find(entry => entry.x === state.player.x && entry.y === state.player.y && !state.exploration.found.includes(entry.id));
+      if (!site) return false;
+      state.exploration.found.push(site.id);
+      state.stats.fieldCachesFound += 1;
+      state.economy.credits += site.credits;
+      state.economy.runEarned += site.credits;
+      state.economy.lifetimeEarned += site.credits;
+      state.economy.researchPoints += site.research;
+      for (const [kind, amount] of Object.entries(site.items || {})) {
+        if (ITEMS[kind]) state.inventory[kind] += amount;
+      }
+      if (state.abilities.scannerTarget === site.id) {
+        state.abilities.scannerTarget = null;
+        state.abilities.scannerFor = 0;
+      }
+      cachedNetwork = null;
+      updateTier(false);
+      const cargo = Object.entries(site.items || {}).map(([kind, amount]) => `${amount}× ${ITEMS[kind].label}`).join(" • ");
+      showToast(`${site.label} encontrado: +${site.credits} Cr, +${site.research} Pesquisa${cargo ? ` • ${cargo}` : ""}.`);
+      return true;
+    }
+
+    function useAbility(key) {
+      const ability = ABILITIES[key];
+      const problem = abilityUnlockProblem(key);
+      if (problem) {
+        showToast(problem);
+        return false;
+      }
+      const remaining = Math.max(0, Number(state.abilities.cooldowns[key]) || 0);
+      if (remaining > 0) {
+        showToast(`${ability.label} recarrega em ${Math.ceil(remaining)} s.`);
+        return false;
+      }
+
+      const px = state.player.x;
+      const py = state.player.y;
+      let result = "";
+      if (key === "overclock") {
+        const radius = abilityRadius(key);
+        const duration = hasPrestigeNode("fieldDoctrineP") ? 24 : 16;
+        const targets = state.buildings.filter(building => building.type !== "wall" && Math.hypot(building.x - px, building.y - py) <= radius);
+        for (const building of targets) building.boostFor = Math.max(Number(building.boostFor) || 0, duration);
+        result = `${targets.length} construções aceleradas por ${duration} s.`;
+      } else if (key === "repair") {
+        const radius = abilityRadius(key);
+        const fraction = hasPrestigeNode("fieldDoctrineP") ? 0.70 : 0.45;
+        const targets = state.buildings.filter(building => Math.hypot(building.x - px, building.y - py) <= radius);
+        for (const building of targets) {
+          const maximum = maxBuildingHp(building.type, building.level);
+          building.hp = Math.min(maximum, building.hp + maximum * fraction);
+          building.disabledFor = 0;
+        }
+        result = `${targets.length} construções reparadas e reativadas.`;
+      } else if (key === "emp") {
+        const radius = abilityRadius(key);
+        const stun = hasPrestigeNode("fieldDoctrineP") ? 8 : 5;
+        const damage = hasPrestigeNode("fieldDoctrineP") ? 150 : 90;
+        const enemies = state.enemies.filter(enemy => enemy.hp > 0 && Math.hypot(enemyVisualPosition(enemy).x - px, enemyVisualPosition(enemy).y - py) <= radius);
+        enemies.forEach(enemy => {
+          enemy.stunnedFor = Math.max(Number(enemy.stunnedFor) || 0, stun);
+          damageEnemy(enemy, damage, "emp");
+        });
+        const restored = state.buildings.filter(building => building.disabledFor > 0 && Math.hypot(building.x - px, building.y - py) <= radius);
+        restored.forEach(building => { building.disabledFor = 0; });
+        result = `${enemies.length} inimigos atordoados; ${restored.length} construções reativadas.`;
+      } else if (key === "scanner") {
+        const site = findNearestUnopenedSite();
+        if (!site) {
+          showToast("Todos os pontos de exploração desta rodada já foram encontrados.");
+          return false;
+        }
+        state.abilities.scannerTarget = site.id;
+        state.abilities.scannerFor = hasPrestigeNode("fieldDoctrineP") ? 35 : 24;
+        state.exploration.scans += 1;
+        result = `${site.label} marcado a ${Math.round(Math.hypot(site.x - px, site.y - py))} tiles.`;
+      } else if (key === "recall") {
+        state.player.x = HUB.x;
+        state.player.y = HUB.y - 2;
+        state.player.tx = state.player.x;
+        state.player.ty = state.player.y;
+        state.player.moving = false;
+        state.player.moveProgress = 0;
+        snapCameraToPlayer();
+        result = "retorno imediato ao Hub concluído.";
+      }
+
+      state.abilities.cooldowns[key] = abilityCooldownDuration(key);
+      cachedNetwork = null;
+      updateUI(true);
+      showToast(`${ability.label}: ${result}`);
+      return true;
+    }
+
+    function updateStatusTimers(dt) {
+      for (const key of Object.keys(ABILITIES)) {
+        state.abilities.cooldowns[key] = Math.max(0, (Number(state.abilities.cooldowns[key]) || 0) - dt);
+      }
+      state.abilities.scannerFor = Math.max(0, (Number(state.abilities.scannerFor) || 0) - dt);
+      if (state.abilities.scannerFor <= 0) state.abilities.scannerTarget = null;
+      for (const building of state.buildings) {
+        building.disabledFor = Math.max(0, (Number(building.disabledFor) || 0) - dt);
+        building.boostFor = Math.max(0, (Number(building.boostFor) || 0) - dt);
+      }
+      for (const enemy of state.enemies) {
+        enemy.stunnedFor = Math.max(0, (Number(enemy.stunnedFor) || 0) - dt);
+        enemy.sabotageCooldown = Math.max(0, (Number(enemy.sabotageCooldown) || 0) - dt);
+      }
+    }
+
     function updatePlayer(dt) {
       const player = state.player;
       if (player.moving) {
@@ -3313,6 +3714,7 @@
           player.y = player.ty;
           player.moveProgress = 0;
           player.moving = false;
+          checkExplorationDiscovery();
         }
       }
       if (!player.moving && heldMoveDir !== null) attemptMove(heldMoveDir);
@@ -3393,6 +3795,107 @@
       return Boolean(building && (building.type === "furnace" || building.type === "assembler"));
     }
 
+    function isConfigurableBuilding(building) {
+      return isConfigurableMachine(building) || Boolean(building && building.type === "terminal");
+    }
+
+    function contractUnlockProblem(key) {
+      const contract = CONTRACTS[key];
+      if (!contract) return "Contrato inválido.";
+      if (!hasTech("market1")) return `Requer ${TECHS.market1.label}.`;
+      if (state.economy.tier < contract.tier) return `Requer Tier ${contract.tier}.`;
+      if (contract.tech && !hasTech(contract.tech)) return `Requer ${TECHS[contract.tech]?.label || "uma tecnologia"}.`;
+      return null;
+    }
+
+    function scaledContractRequirements(key) {
+      const contract = CONTRACTS[key];
+      if (!contract) return {};
+      const scale = 1 + Math.min(1.8, state.economy.prestigeRuns * 0.12);
+      return Object.fromEntries(Object.entries(contract.requirements).map(([kind, amount]) => [kind, Math.max(1, Math.ceil(amount * scale))]));
+    }
+
+    function contractRewardMultiplier() {
+      let multiplier = 1 + Math.min(2.5, state.economy.prestigeRuns * 0.20);
+      const bestTerminalLevel = state.buildings.filter(building => building.type === "terminal").reduce((best, building) => Math.max(best, building.level || 1), 1);
+      multiplier *= 1 + Math.max(0, bestTerminalLevel - 1) * 0.02;
+      if (hasTech("market2")) multiplier *= 1.50;
+      if (hasPrestigeNode("omnifactory")) multiplier *= 1.50;
+      return multiplier;
+    }
+
+    function activeContract() {
+      return state.contracts.activeId ? CONTRACTS[state.contracts.activeId] || null : null;
+    }
+
+    function contractRemaining(kind) {
+      const key = state.contracts.activeId;
+      const required = scaledContractRequirements(key)[kind] || 0;
+      return Math.max(0, required - (Number(state.contracts.progress[kind]) || 0));
+    }
+
+    function contractAccepts(building, kind) {
+      return Boolean(building && building.type === "terminal" && building.disabledFor <= 0 && activeContract() && contractRemaining(kind) > 0);
+    }
+
+    function contractIsComplete() {
+      const key = state.contracts.activeId;
+      if (!key || !CONTRACTS[key]) return false;
+      const requirements = scaledContractRequirements(key);
+      return Object.keys(requirements).every(kind => (Number(state.contracts.progress[kind]) || 0) + 1e-9 >= requirements[kind]);
+    }
+
+    function completeActiveContract(quiet = false) {
+      const key = state.contracts.activeId;
+      const contract = CONTRACTS[key];
+      if (!contract || !contractIsComplete()) return false;
+      const multiplier = contractRewardMultiplier();
+      const credits = Math.round(contract.credits * multiplier);
+      const research = Math.round(contract.research * multiplier * 10) / 10;
+      state.economy.credits += credits;
+      state.economy.runEarned += credits;
+      state.economy.lifetimeEarned += credits;
+      state.economy.researchPoints += research;
+      state.contracts.reputation += contract.reputation;
+      state.contracts.lifetimeCompleted += 1;
+      if (!state.contracts.completedThisRun.includes(key)) state.contracts.completedThisRun.push(key);
+      state.contracts.activeId = null;
+      state.contracts.progress = Object.fromEntries(Object.keys(ITEMS).map(kind => [kind, 0]));
+      cachedNetwork = null;
+      updateTier(quiet);
+      if (!quiet) showToast(`${contract.label} concluído: +${formatNumber(credits)} Cr, +${formatNumber(research)} Pesquisa e +${contract.reputation} reputação.`);
+      return true;
+    }
+
+    function applyContractDelivery(kind, quantity = 1, quiet = false) {
+      if (!ITEMS[kind] || !activeContract()) return 0;
+      const accepted = Math.min(Math.max(0, Number(quantity) || 0), contractRemaining(kind));
+      if (!(accepted > 0)) return 0;
+      state.contracts.progress[kind] = (Number(state.contracts.progress[kind]) || 0) + accepted;
+      state.stats.delivered[kind] += accepted;
+      completeActiveContract(quiet);
+      return accepted;
+    }
+
+    function selectContract(key) {
+      const problem = contractUnlockProblem(key);
+      if (problem) {
+        showToast(problem);
+        return false;
+      }
+      if (state.contracts.completedThisRun.includes(key)) {
+        showToast("Este contrato já foi concluído nesta rodada.");
+        return false;
+      }
+      state.contracts.activeId = key;
+      state.contracts.progress = Object.fromEntries(Object.keys(ITEMS).map(kind => [kind, 0]));
+      cachedNetwork = null;
+      updateUI(true);
+      saveGame(false);
+      showToast(`${CONTRACTS[key].label} aceito. Conecte as esteiras diretamente ao Terminal.`);
+      return true;
+    }
+
     function inputSideFromSource(building, sourceX, sourceY) {
       if (!Number.isFinite(sourceX) || !Number.isFinite(sourceY)) return null;
       const dx = sourceX - building.x;
@@ -3408,6 +3911,7 @@
     }
 
     function acceptInput(building, kind, sourceX = null, sourceY = null) {
+      if (contractAccepts(building, kind)) return applyContractDelivery(kind, 1, false) > 0;
       if (!machineAcceptsFrom(building, kind, sourceX, sourceY)) return false;
       const current = Math.max(0, Number(building.buffer[kind]) || 0);
       if (current >= inputBufferCapacity()) return false;
@@ -3474,6 +3978,7 @@
     function updateMachines(dt) {
       for (const building of state.buildings) {
         if (isTransportBuilding(building)) continue;
+        if (building.disabledFor > 0) continue;
         const multiplier = buildingSpeedMultiplier(building);
 
         if (building.type === "miner" || building.type === "deepDrill") {
@@ -3675,6 +4180,10 @@
     }
 
     function nextEnemyTile(enemy) {
+      const sabotageTarget = enemy.kind === "saboteur" && enemy.sabotageTargetId
+        ? buildingById.get(String(enemy.sabotageTargetId))
+        : null;
+      if (enemy.kind === "saboteur" && enemy.sabotageTargetId && !sabotageTarget) enemy.sabotageTargetId = null;
       let best = null;
       let bestScore = Infinity;
       for (let index = 0; index < DIRS.length; index++) {
@@ -3683,7 +4192,11 @@
         const y = enemy.y + dir.y;
         if (!defenseTerrainPassable(x, y)) continue;
         const distance = defenseDistanceAt(x, y);
-        const score = distance + defenseTileCost(x, y) + index * 0.0001;
+        const score = sabotageTarget
+          ? (x === sabotageTarget.x && y === sabotageTarget.y
+              ? -1000
+              : (Math.abs(x - sabotageTarget.x) + Math.abs(y - sabotageTarget.y)) * 3 + defenseTileCost(x, y) * 0.15 + index * 0.0001)
+          : distance + defenseTileCost(x, y) + index * 0.0001;
         if (score < bestScore) {
           bestScore = score;
           best = { x, y };
@@ -3737,10 +4250,14 @@
       return rate;
     }
 
+    function fieldOperationSpeed(building) {
+      return Number(building?.boostFor) > 0 ? (hasPrestigeNode("fieldDoctrineP") ? 2.25 : 1.65) : 1;
+    }
+
     function updateRepairStations(dt) {
-      for (const station of state.buildings.filter(building => building.type === "repairStation" && building.hp > 0)) {
+      for (const station of state.buildings.filter(building => building.type === "repairStation" && building.hp > 0 && building.disabledFor <= 0)) {
         const range = repairStationRange(station);
-        const amount = repairStationRate(station) * dt;
+        const amount = repairStationRate(station) * dt * fieldOperationSpeed(station);
         for (const target of state.buildings) {
           if (target.id === station.id || target.hp <= 0) continue;
           if (Math.hypot(target.x - station.x, target.y - station.y) > range) continue;
@@ -3855,9 +4372,13 @@
       return heavyWeaponAmmoMultiplier();
     }
 
-    function damageEnemy(enemy, damage) {
+    function damageEnemy(enemy, damage, source = "generic", splash = false) {
       if (!enemy || enemy.hp <= 0) return false;
-      enemy.hp -= Math.max(0, damage);
+      let multiplier = 1;
+      if (enemy.kind === "armored" && source === "turret") multiplier *= 0.55;
+      if (enemy.kind === "armored" && source === "tesla") multiplier *= 0.80;
+      if (enemy.kind === "disperser" && source === "cannon") multiplier *= splash ? 0.50 : 0.78;
+      enemy.hp -= Math.max(0, damage) * multiplier;
       if (enemy.hp > 0) return false;
       enemy.hp = 0;
       state.combat.kills += 1;
@@ -3865,8 +4386,8 @@
     }
 
     function updateTurrets(dt) {
-      for (const turret of state.buildings.filter(building => building.type === "turret")) {
-        turret.cooldown = Math.max(0, (Number(turret.cooldown) || 0) - dt);
+      for (const turret of state.buildings.filter(building => building.type === "turret" && building.disabledFor <= 0)) {
+        turret.cooldown = Math.max(0, (Number(turret.cooldown) || 0) - dt * fieldOperationSpeed(turret));
         turret.shotFlash = Math.max(0, (Number(turret.shotFlash) || 0) - dt);
         if (turret.cooldown > 0 || state.inventory.ammo + 1e-9 < turretAmmoCost()) continue;
 
@@ -3892,13 +4413,13 @@
         turret.targetId = target.id;
         turret.cooldown = turretFireInterval(turret);
         state.inventory.ammo = Math.max(0, state.inventory.ammo - turretAmmoCost());
-        damageEnemy(target, turretDamage(turret));
+        damageEnemy(target, turretDamage(turret), "turret");
       }
     }
 
     function updateTeslaTowers(dt) {
-      for (const tower of state.buildings.filter(building => building.type === "tesla")) {
-        tower.cooldown = Math.max(0, (Number(tower.cooldown) || 0) - dt);
+      for (const tower of state.buildings.filter(building => building.type === "tesla" && building.disabledFor <= 0)) {
+        tower.cooldown = Math.max(0, (Number(tower.cooldown) || 0) - dt * fieldOperationSpeed(tower));
         tower.shotFlash = Math.max(0, (Number(tower.shotFlash) || 0) - dt);
         if (tower.cooldown > 0 || state.inventory.circuit + 1e-9 < teslaCircuitCost()) continue;
 
@@ -3915,13 +4436,13 @@
         tower.cooldown = teslaFireInterval(tower);
         tower.shotFlash = 0.18;
         tower.shotTargets = targets.map(entry => ({ x: entry.position.x, y: entry.position.y }));
-        targets.forEach((entry, index) => damageEnemy(entry.enemy, teslaDamage(tower) * Math.pow(0.72, index)));
+        targets.forEach((entry, index) => damageEnemy(entry.enemy, teslaDamage(tower) * Math.pow(0.72, index), "tesla"));
       }
     }
 
     function updateCannons(dt) {
-      for (const cannon of state.buildings.filter(building => building.type === "cannon")) {
-        cannon.cooldown = Math.max(0, (Number(cannon.cooldown) || 0) - dt);
+      for (const cannon of state.buildings.filter(building => building.type === "cannon" && building.disabledFor <= 0)) {
+        cannon.cooldown = Math.max(0, (Number(cannon.cooldown) || 0) - dt * fieldOperationSpeed(cannon));
         cannon.shotFlash = Math.max(0, (Number(cannon.shotFlash) || 0) - dt);
         if (cannon.cooldown > 0 || state.inventory.shell + 1e-9 < cannonShellCost()) continue;
 
@@ -3959,14 +4480,14 @@
           const damage = enemy.id === target.enemy.id
             ? baseDamage
             : baseDamage * cannonSplashFactor() * (1 - 0.30 * distance / Math.max(0.1, splash));
-          damageEnemy(enemy, damage);
+          damageEnemy(enemy, damage, "cannon", enemy.id !== target.enemy.id);
         }
       }
     }
 
     function updateRailguns(dt) {
-      for (const railgun of state.buildings.filter(building => building.type === "railgun")) {
-        railgun.cooldown = Math.max(0, (Number(railgun.cooldown) || 0) - dt);
+      for (const railgun of state.buildings.filter(building => building.type === "railgun" && building.disabledFor <= 0)) {
+        railgun.cooldown = Math.max(0, (Number(railgun.cooldown) || 0) - dt * fieldOperationSpeed(railgun));
         railgun.shotFlash = Math.max(0, (Number(railgun.shotFlash) || 0) - dt);
         if (railgun.cooldown > 0 || state.inventory.railSlug + 1e-9 < railgunSlugCost()) continue;
 
@@ -4004,12 +4525,23 @@
         railgun.cooldown = railgunFireInterval(railgun);
         state.inventory.railSlug = Math.max(0, state.inventory.railSlug - railgunSlugCost());
         const baseDamage = railgunDamage(railgun);
-        hits.forEach((entry, index) => damageEnemy(entry.enemy, baseDamage * Math.pow(railgunPierceFactor(), index)));
+        hits.forEach((entry, index) => damageEnemy(entry.enemy, baseDamage * Math.pow(railgunPierceFactor(), index), "railgun"));
       }
     }
 
     function waveEnemyCount(wave, threat = defaultThreatSnapshot()) {
-      return Math.min(72, 5 + wave * 2 + Math.max(0, Math.floor(threat.countBonus || 0)));
+      const base = 5 + wave * 2 + Math.max(0, Math.floor(threat.countBonus || 0));
+      return Math.min(90, Math.ceil(base * ((threat.adaptations || []).includes("swarm") ? 1.25 : 1)));
+    }
+
+    function pickSabotageTarget(index = 0) {
+      const targets = state.buildings.filter(building => ["belt", "splitter", "merger", "underground", "miner", "deepDrill", "furnace", "assembler", "terminal", "beacon"].includes(building.type));
+      targets.sort((a, b) => {
+        const aPriority = ["assembler", "furnace", "terminal", "beacon"].includes(a.type) ? 0 : isTransportBuilding(a) ? 1 : 2;
+        const bPriority = ["assembler", "furnace", "terminal", "beacon"].includes(b.type) ? 0 : isTransportBuilding(b) ? 1 : 2;
+        return aPriority - bPriority || b.level - a.level || a.id.localeCompare(b.id);
+      });
+      return targets.length ? targets[index % targets.length] : null;
     }
 
     function spawnWaveEnemy() {
@@ -4018,12 +4550,27 @@
       const index = state.combat.spawnedThisWave;
       const spawn = ENEMY_SPAWNS[(wave + index) % ENEMY_SPAWNS.length];
       const sequence = index + 1;
-      const kind = sequence % 7 === 0 ? "tank" : sequence % 4 === 0 ? "runner" : "raider";
+      const adaptations = Array.isArray(threat.adaptations) ? threat.adaptations : [];
+      let kind = sequence % 7 === 0 ? "tank" : sequence % 4 === 0 ? "runner" : "raider";
+      if (adaptations.length && sequence % 3 === 0) {
+        kind = ENEMY_ADAPTATIONS[adaptations[(Math.floor(sequence / 3) - 1) % adaptations.length]]?.kind || kind;
+      }
       const scale = Math.pow(1.16, wave - 1);
-      const kindHp = kind === "tank" ? 2.8 : kind === "runner" ? 0.68 : 1;
-      const kindSpeed = kind === "tank" ? 0.68 : kind === "runner" ? 1.55 : 1;
-      const kindDamage = kind === "tank" ? 1.9 : kind === "runner" ? 0.72 : 1;
+      const kindStats = {
+        raider: { hp: 1, speed: 1, damage: 1 },
+        runner: { hp: 0.68, speed: 1.55, damage: 0.72 },
+        tank: { hp: 2.8, speed: 0.68, damage: 1.9 },
+        breacher: { hp: 1.15, speed: 0.92, damage: 1.15 },
+        armored: { hp: 2.05, speed: 0.76, damage: 1.10 },
+        disperser: { hp: 0.88, speed: 1.24, damage: 0.90 },
+        swarm: { hp: 0.46, speed: 1.78, damage: 0.55 },
+        saboteur: { hp: 0.82, speed: 1.36, damage: 0.42 }
+      }[kind] || { hp: 1, speed: 1, damage: 1 };
+      const kindHp = kindStats.hp;
+      const kindSpeed = kindStats.speed;
+      const kindDamage = kindStats.damage;
       const maximumHp = Math.round(46 * scale * kindHp * threat.hpMultiplier);
+      const sabotageTarget = kind === "saboteur" ? pickSabotageTarget(index) : null;
       state.enemies.push({
         id: `e${state.nextId++}`,
         kind,
@@ -4036,7 +4583,10 @@
         maxHp: maximumHp,
         speed: Math.min(4, 1.05 * kindSpeed * Math.min(1.45, 1 + wave * 0.012) * threat.speedMultiplier),
         damage: 8 * Math.pow(1.11, wave - 1) * kindDamage * threat.damageMultiplier,
-        attackCooldown: 0
+        attackCooldown: 0,
+        stunnedFor: 0,
+        sabotageTargetId: sabotageTarget?.id || null,
+        sabotageCooldown: 0
       });
       state.combat.spawnedThisWave += 1;
       state.combat.spawnRemaining = Math.max(0, state.combat.spawnRemaining - 1);
@@ -4070,7 +4620,8 @@
       state.combat.spawnedThisWave = 0;
       state.combat.spawnCooldown = 0;
       state.enemies = [];
-      showToast(`Wave ${state.combat.wave}: ${state.combat.spawnRemaining} inimigos • ameaça nível ${state.combat.threat.score} travada.`);
+      const adaptationText = (state.combat.threat.adaptations || []).map(key => ENEMY_ADAPTATIONS[key].label).join(" + ");
+      showToast(`Wave ${state.combat.wave}: ${state.combat.spawnRemaining} inimigos • ameaça ${state.combat.threat.score}${adaptationText ? ` • ${adaptationText}` : ""} travada.`);
       updateUI(true);
       return true;
     }
@@ -4107,10 +4658,33 @@
       updateUI(true);
     }
 
+    function sabotageBuilding(building, enemy) {
+      if (!building || building.type === "wall" || ["turret", "cannon", "railgun", "tesla", "repairStation"].includes(building.type)) return false;
+      const firstHit = building.disabledFor <= 0;
+      building.disabledFor = Math.max(Number(building.disabledFor) || 0, hasPrestigeNode("fieldDoctrineP") ? 7 : 11);
+      building.boostFor = 0;
+      if (building.buffer && typeof building.buffer === "object") {
+        for (const kind of Object.keys(building.buffer)) building.buffer[kind] = Math.floor((Number(building.buffer[kind]) || 0) * 0.70);
+      }
+      if (building.outputCount) building.outputCount = Math.floor(building.outputCount * 0.70);
+      const stranded = itemAt(building.x, building.y);
+      if (stranded) {
+        state.items = state.items.filter(item => item.id !== stranded.id);
+        itemByPos.delete(posKey(building.x, building.y));
+      }
+      enemy.sabotageTargetId = null;
+      enemy.sabotageCooldown = 8;
+      state.stats.sabotagesSuffered += 1;
+      cachedNetwork = null;
+      if (firstHit) showToast(`${buildingLabel(building)} sabotada: produção interrompida. Use J para reparar ou K para emitir EMP.`);
+      return true;
+    }
+
     function updateEnemies(dt) {
       for (const enemy of state.enemies) {
         if (enemy.hp <= 0) continue;
         enemy.attackCooldown = Math.max(0, enemy.attackCooldown - dt);
+        if (enemy.stunnedFor > 0) continue;
 
         if (enemy.tx != null && enemy.ty != null) {
           enemy.progress += dt * enemy.speed;
@@ -4140,8 +4714,15 @@
 
         const blocker = buildingAt(next.x, next.y);
         if (blocker) {
+          if (enemy.kind === "saboteur" && enemy.sabotageCooldown <= 0 && sabotageBuilding(blocker, enemy)) {
+            enemy.tx = next.x;
+            enemy.ty = next.y;
+            enemy.progress = 0;
+            continue;
+          }
           if (enemy.attackCooldown <= 0) {
-            blocker.hp = Math.max(0, (Number(blocker.hp) || maxBuildingHp(blocker.type, blocker.level)) - enemy.damage);
+            const structureDamage = enemy.damage * (enemy.kind === "breacher" && blocker.type === "wall" ? 3 : 1);
+            blocker.hp = Math.max(0, (Number(blocker.hp) || maxBuildingHp(blocker.type, blocker.level)) - structureDamage);
             enemy.attackCooldown = ENEMY_ATTACK_INTERVAL;
             if (blocker.hp <= 0) destroyBuildingByCombat(blocker);
           }
@@ -4169,7 +4750,10 @@
       state.combat.spawnCooldown -= dt;
       if (state.combat.spawnRemaining > 0 && state.combat.spawnCooldown <= 0) {
         spawnWaveEnemy();
-        state.combat.spawnCooldown = Math.max(0.38, 1.15 - state.combat.wave * 0.025);
+        let cadence = Math.max(0.38, 1.15 - state.combat.wave * 0.025);
+        if ((state.combat.threat.adaptations || []).includes("disperser")) cadence *= 1.35;
+        if ((state.combat.threat.adaptations || []).includes("swarm")) cadence *= 0.72;
+        state.combat.spawnCooldown = cadence;
       }
       updateTurrets(dt);
       updateTeslaTowers(dt);
@@ -4186,6 +4770,7 @@
       state.combat.timer = Math.max(25, state.combat.timer || 0);
       state.combat.spawnRemaining = 0;
       state.combat.spawnCooldown = 0;
+      for (const building of state.buildings) building.disabledFor = 0;
       return true;
     }
 
@@ -4193,6 +4778,7 @@
       simClock += dt;
       state.stats.onlineSeconds += dt;
       rebuildItemIndex();
+      updateStatusTimers(dt);
       updatePlayer(dt);
       updateMachines(dt);
       updateBelts(dt);
@@ -4227,7 +4813,7 @@
     }
 
     function isDirectionlessType(type) {
-      return type === "wall" || type === "turret" || type === "cannon" || type === "railgun" || type === "beacon" || type === "repairStation" || type === "tesla";
+      return type === "terminal" || type === "wall" || type === "turret" || type === "cannon" || type === "railgun" || type === "beacon" || type === "repairStation" || type === "tesla";
     }
 
     function placementProblem(toolKey, x, y) {
@@ -4273,6 +4859,8 @@
         level: 1,
         hp: maxBuildingHp(tool.type, 1),
         cooldown: 0,
+        disabledFor: 0,
+        boostFor: 0,
         progress: 0,
         buffer: {},
         outputCount: 0,
@@ -4382,6 +4970,7 @@
       if (building.type === "merger") return "merger";
       if (building.type === "furnace") return "furnace";
       if (building.type === "assembler") return "assembler";
+      if (building.type === "terminal") return "terminal";
       if (building.type === "wall") return "wall";
       if (building.type === "turret") return "turret";
       if (building.type === "cannon") return "cannon";
@@ -4430,7 +5019,9 @@
       }
       cachedNetwork = null;
       markDefenseFlowDirty();
-      const upgradeEffect = building.type === "wall"
+      const upgradeEffect = building.type === "terminal"
+        ? `+${(building.level - 1) * 2}% nas recompensas de contratos`
+        : building.type === "wall"
         ? `${building.hp.toFixed(0)}/${nextMaximumHp} HP`
         : building.type === "turret"
           ? `${formatNumber(turretDamage(building))} dano • alcance ${formatNumber(turretRange(building))}`
@@ -4639,10 +5230,54 @@
       return state.inventory.circuit >= PRESTIGE_CIRCUITS;
     }
 
+    function legacyDistrictBounds(source = state) {
+      const anchorX = clamp(Math.round(Number(source.legacy?.anchorX) || HUB.x), 2, WORLD_W - 3);
+      const anchorY = clamp(Math.round(Number(source.legacy?.anchorY) || HUB.y), 2, WORLD_H - 3);
+      const x = clamp(anchorX - 2, 2, WORLD_W - 8);
+      const y = clamp(anchorY - 2, 2, WORLD_H - 8);
+      return { x, y, width: 6, height: 6, anchorX, anchorY };
+    }
+
+    function markLegacyDistrict() {
+      if (!hasPrestigeNode("districtInheritance")) {
+        showToast("Desbloqueie Distrito legado na Árvore de Prestígio.");
+        return false;
+      }
+      state.legacy.anchorX = state.player.x;
+      state.legacy.anchorY = state.player.y;
+      const bounds = legacyDistrictBounds(state);
+      const count = state.buildings.filter(building => building.x >= bounds.x && building.x < bounds.x + 6 && building.y >= bounds.y && building.y < bounds.y + 6).length;
+      saveGame(false);
+      updateUI(true);
+      showToast(`Distrito 6×6 marcado no personagem: ${count} construções serão herdadas.`);
+      return true;
+    }
+
+    function collectLegacyBuildings(source) {
+      if (!source.prestigeTree?.districtInheritance) return [];
+      const bounds = legacyDistrictBounds(source);
+      const inside = source.buildings.filter(building => building.x >= bounds.x && building.x < bounds.x + 6 && building.y >= bounds.y && building.y < bounds.y + 6 && !(building.x === HUB.x && building.y === HUB.y - 2));
+      const ids = new Set(inside.map(building => building.id));
+      return inside.filter(building => building.type !== "underground" || (building.pairId && ids.has(building.pairId))).map(building => ({
+        ...JSON.parse(JSON.stringify(building)),
+        hp: maxBuildingHp(building.type, building.level, source.tech, source.prestigeTree),
+        cooldown: 0,
+        disabledFor: 0,
+        boostFor: 0,
+        progress: 0,
+        buffer: {},
+        outputCount: 0,
+        shotFlash: 0,
+        shotTargets: [],
+        targetId: null
+      }));
+    }
+
     function performPrestige() {
       if (!prestigeAvailable()) return;
       const old = state;
       const gainedCores = prestigeCoreGain(old.inventory.circuit);
+      const inheritedBuildings = collectLegacyBuildings(old);
       const fresh = createNewState();
       fresh.economy.prestige = old.economy.prestige + gainedCores;
       fresh.economy.corePoints = old.economy.corePoints + gainedCores;
@@ -4651,6 +5286,13 @@
       fresh.economy.researchPoints = old.economy.researchPoints;
       fresh.tech = { ...old.tech };
       fresh.prestigeTree = { ...old.prestigeTree };
+      fresh.contracts.reputation = old.contracts.reputation;
+      fresh.contracts.lifetimeCompleted = old.contracts.lifetimeCompleted;
+      fresh.legacy = { ...old.legacy };
+      fresh.buildings = inheritedBuildings;
+      fresh.nextId = Math.max(fresh.nextId, old.nextId);
+      fresh.stats.fieldCachesFound = old.stats.fieldCachesFound;
+      fresh.stats.sabotagesSuffered = old.stats.sabotagesSuffered;
       fresh.ui.seenHelp = true;
       state = fresh;
       currentTool = null;
@@ -4663,7 +5305,7 @@
       markDefenseFlowDirty();
       snapCameraToPlayer();
       saveGame(false);
-      showToast(`Prestígio concluído: +${gainedCores} ${gainedCores === 1 ? "Núcleo" : "Núcleos"}. Abra P para investir na árvore permanente.`);
+      showToast(`Prestígio concluído: +${gainedCores} ${gainedCores === 1 ? "Núcleo" : "Núcleos"}${inheritedBuildings.length ? ` • distrito preservado com ${inheritedBuildings.length} construções` : ""}.`);
       updateUI(true);
     }
 
@@ -4742,6 +5384,7 @@
 
     function calculateNetworkRates() {
       const hubRates = EMPTY_INVENTORY();
+      const contractRates = EMPTY_INVENTORY();
       const inputs = new Map();
       const transportUsage = new Map();
 
@@ -4770,6 +5413,9 @@
           let accepted = false;
           if (endpoint.kind === "hub") {
             addRate(hubRates, kind, routedRate);
+            accepted = true;
+          } else if (contractAccepts(endpoint.building, kind)) {
+            addRate(contractRates, kind, routedRate);
             accepted = true;
           } else if (machineAcceptsFrom(endpoint.building, kind, endpoint.sourceX, endpoint.sourceY)) {
             addRate(inputBucket(endpoint.building), kind, routedRate);
@@ -4813,17 +5459,54 @@
       for (const [kind, rate] of Object.entries(hubRates)) {
         creditsPerSecond += rate * itemCreditValue(kind);
       }
-      return { itemRates: hubRates, creditsPerSecond };
+      return { itemRates: hubRates, contractRates, creditsPerSecond };
     }
 
     function hourlyFactoryMetrics(network) {
       const safeNetwork = network || { itemRates: {}, creditsPerSecond: 0 };
       const resourcesPerSecond = Object.values(safeNetwork.itemRates || {})
-        .reduce((total, rate) => total + Math.max(0, Number(rate) || 0), 0);
+        .reduce((total, rate) => total + Math.max(0, Number(rate) || 0), 0) +
+        Object.values(safeNetwork.contractRates || {}).reduce((total, rate) => total + Math.max(0, Number(rate) || 0), 0);
       return {
         resourcesPerHour: resourcesPerSecond * 3600,
         creditsPerHour: Math.max(0, Number(safeNetwork.creditsPerSecond) || 0) * 3600
       };
+    }
+
+    function analyzeFactoryProfile() {
+      const count = type => state.buildings.filter(building => building.type === type).length;
+      const logistics = state.buildings.filter(isTransportBuilding).length;
+      const machines = state.buildings.filter(building => ["miner", "deepDrill", "furnace", "assembler", "terminal"].includes(building.type)).length;
+      const xs = state.buildings.map(building => building.x);
+      const ys = state.buildings.map(building => building.y);
+      const footprint = xs.length
+        ? (Math.max(...xs) - Math.min(...xs) + 1) * (Math.max(...ys) - Math.min(...ys) + 1)
+        : 0;
+      return {
+        walls: count("wall"),
+        turrets: count("turret"),
+        cannons: count("cannon"),
+        railguns: count("railgun"),
+        teslas: count("tesla"),
+        logistics,
+        machines,
+        footprint
+      };
+    }
+
+    function predictEnemyAdaptations(profile = analyzeFactoryProfile()) {
+      const heavy = profile.cannons + profile.railguns + profile.teslas;
+      const candidates = [];
+      if (profile.walls >= 6) candidates.push({ key: "breacher", score: profile.walls * 1.35 });
+      if (profile.turrets >= 3) candidates.push({ key: "armored", score: profile.turrets * 2.2 - heavy * 0.5 });
+      if (profile.cannons >= 2) candidates.push({ key: "disperser", score: 7 + profile.cannons * 3.5 });
+      if (profile.railguns >= 2) candidates.push({ key: "swarm", score: 7 + profile.railguns * 3.8 });
+      if (profile.logistics >= 14 || profile.machines >= 10 || profile.footprint >= 420) {
+        candidates.push({ key: "saboteur", score: profile.logistics * 0.45 + profile.machines * 0.8 + profile.footprint / 100 });
+      }
+      candidates.sort((a, b) => b.score - a.score || a.key.localeCompare(b.key));
+      const limit = state.combat.wave >= 6 || state.economy.prestigeRuns > 0 ? 2 : 1;
+      return candidates.filter(candidate => candidate.score >= 6).slice(0, limit).map(candidate => candidate.key);
     }
 
     function evaluateFactoryThreat(network, recordPeak = false) {
@@ -4862,6 +5545,8 @@
       const calculatedScore = Math.max(0, Math.round(progressScore + productionScore));
       const score = Math.max(calculatedScore, state.stats.peakThreatScore);
       if (recordPeak) state.stats.peakThreatScore = Math.max(state.stats.peakThreatScore, score);
+      const profile = analyzeFactoryProfile();
+      const adaptations = predictEnemyAdaptations(profile);
 
       return {
         score,
@@ -4874,6 +5559,8 @@
         speedMultiplier: clamp(1 + score / 650, 1, 1.75),
         countBonus: Math.min(24, Math.floor(score / 25)),
         rewardMultiplier: clamp(1 + score / 220, 1, 4),
+        adaptations,
+        profile,
         sampledAt: Date.now()
       };
     }
@@ -4883,7 +5570,9 @@
       if (usedSeconds < 2) return null;
       const network = calculateNetworkRates();
       const produced = EMPTY_INVENTORY();
+      const contractDelivered = EMPTY_INVENTORY();
       let earned = 0;
+      const creditsBefore = state.economy.credits;
       const researchBefore = state.economy.researchPoints;
 
       for (const [kind, rate] of Object.entries(network.itemRates)) {
@@ -4894,14 +5583,22 @@
         earned += quantity * itemCreditValue(kind);
       }
 
+      for (const [kind, rate] of Object.entries(network.contractRates || {})) {
+        const quantity = Math.floor(rate * usedSeconds);
+        if (quantity <= 0) continue;
+        contractDelivered[kind] = applyContractDelivery(kind, quantity, true);
+      }
+
       state.stats.offlineSeconds += usedSeconds;
       updateTier(true);
+      earned = state.economy.credits - creditsBefore;
       return {
         realSeconds,
         usedSeconds,
         capped: realSeconds > usedSeconds + 0.5,
         ticks: Math.floor(usedSeconds / SIM_STEP),
         produced,
+        contractDelivered,
         earned,
         researchEarned: state.economy.researchPoints - researchBefore
       };
@@ -5409,6 +6106,33 @@
       drawProgressBar(px, py, building.progress / recipe.duration, recipe.tint);
     }
 
+    function drawContractTerminal(building, time) {
+      const px = building.x * TILE;
+      const py = building.y * TILE;
+      drawMachineBase(px, py, "#5d765b", "#263a2b");
+      const active = activeContract();
+      ctx.fillStyle = "#101d16";
+      ctx.fillRect(px + 8, py + 8, 24, 19);
+      ctx.strokeStyle = active ? "#f0c75e" : "#6d8572";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(px + 8, py + 8, 24, 19);
+      ctx.fillStyle = active ? `rgba(112,213,141,${0.66 + Math.sin(time * 5) * 0.18})` : "#718177";
+      ctx.font = "bold 10px ui-monospace, monospace";
+      ctx.textAlign = "center";
+      ctx.fillText(active ? "CT" : "--", px + 20, py + 21);
+      ctx.fillStyle = "#66b6d9";
+      ctx.fillRect(px + 17, py + 1, 6, 4);
+      ctx.fillRect(px + 17, py + 35, 6, 4);
+      ctx.fillRect(px + 1, py + 17, 4, 6);
+      ctx.fillRect(px + 35, py + 17, 4, 6);
+      if (active) {
+        const requirements = scaledContractRequirements(state.contracts.activeId);
+        const required = Object.values(requirements).reduce((sum, amount) => sum + amount, 0);
+        const delivered = Object.entries(requirements).reduce((sum, [kind, amount]) => sum + Math.min(amount, Number(state.contracts.progress[kind]) || 0), 0);
+        drawProgressBar(px, py, required > 0 ? delivered / required : 0, "#70d58d");
+      }
+    }
+
     function drawWall(building) {
       const px = building.x * TILE;
       const py = building.y * TILE;
@@ -5742,6 +6466,7 @@
       else if (building.type === "miner") drawMiner(building, time);
       else if (building.type === "furnace") drawFurnace(building, time);
       else if (building.type === "assembler") drawAssembler(building, time);
+      else if (building.type === "terminal") drawContractTerminal(building, time);
       else if (building.type === "wall") drawWall(building);
       else if (building.type === "turret") drawTurret(building, time);
       else if (building.type === "cannon") drawCannon(building, time);
@@ -5750,6 +6475,24 @@
       else if (building.type === "deepDrill") drawDeepDrill(building, time);
       else if (building.type === "repairStation") drawRepairStation(building, time);
       else if (building.type === "tesla") drawTesla(building, time);
+
+      if (building.boostFor > 0) {
+        const px = building.x * TILE;
+        const py = building.y * TILE;
+        ctx.strokeStyle = `rgba(255,225,112,${0.55 + Math.sin(time * 9) * 0.25})`;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(px + 3, py + 3, TILE - 6, TILE - 6);
+      }
+      if (building.disabledFor > 0) {
+        const px = building.x * TILE;
+        const py = building.y * TILE;
+        ctx.fillStyle = "rgba(35,18,34,.62)";
+        ctx.fillRect(px + 2, py + 2, TILE - 4, TILE - 4);
+        ctx.fillStyle = "#f18bd7";
+        ctx.font = "bold 13px ui-monospace, monospace";
+        ctx.textAlign = "center";
+        ctx.fillText("!", px + 20, py + 24);
+      }
 
       const maximumHp = maxBuildingHp(building.type, building.level);
       if (building.hp < maximumHp - 0.5) {
@@ -5848,22 +6591,39 @@
       const cy = (position.y + 0.5) * TILE;
       const tank = enemy.kind === "tank";
       const runner = enemy.kind === "runner";
-      const size = tank ? 14 : runner ? 9 : 11;
+      const armored = enemy.kind === "armored";
+      const swarm = enemy.kind === "swarm";
+      const saboteur = enemy.kind === "saboteur";
+      const breacher = enemy.kind === "breacher";
+      const disperser = enemy.kind === "disperser";
+      const size = tank || armored ? 14 : runner || swarm ? 9 : 11;
       const bob = Math.sin(time * (runner ? 10 : 6) + Number(enemy.id.slice(1))) * 1.3;
       ctx.fillStyle = "rgba(25,5,5,.38)";
       ctx.beginPath();
       ctx.ellipse(cx, cy + size * 0.7, size, 4, 0, 0, Math.PI * 2);
       ctx.fill();
-      ctx.fillStyle = tank ? "#743f45" : runner ? "#9b4f68" : "#87464c";
+      ctx.fillStyle = armored ? "#485b68" : saboteur ? "#71477c" : breacher ? "#8b522f" : disperser ? "#725988" : swarm ? "#a5475a" : tank ? "#743f45" : runner ? "#9b4f68" : "#87464c";
       ctx.fillRect(cx - size / 2, cy - size / 2 + bob, size, size);
-      ctx.fillStyle = tank ? "#a76359" : "#bd6b62";
+      ctx.fillStyle = armored ? "#8299a2" : saboteur ? "#bd78c5" : breacher ? "#cf8043" : disperser ? "#a989c4" : tank ? "#a76359" : "#bd6b62";
       ctx.fillRect(cx - size / 2 + 2, cy - size / 2 + 2 + bob, size - 4, Math.max(4, size - 6));
       ctx.fillStyle = "#ffe06f";
       ctx.fillRect(cx - 4, cy - 2 + bob, 2, 2);
       ctx.fillRect(cx + 2, cy - 2 + bob, 2, 2);
-      if (tank) {
+      if (tank || armored) {
         ctx.fillStyle = "#4c3434";
         ctx.fillRect(cx - 10, cy - 9 + bob, 20, 4);
+      }
+      if (saboteur) {
+        ctx.fillStyle = "#f4a4df";
+        ctx.font = "bold 7px ui-monospace, monospace";
+        ctx.textAlign = "center";
+        ctx.fillText("S", cx, cy + 4 + bob);
+      }
+      if (enemy.stunnedFor > 0) {
+        ctx.fillStyle = "#bff3ff";
+        ctx.font = "bold 10px ui-monospace, monospace";
+        ctx.textAlign = "center";
+        ctx.fillText("✦", cx, cy - size / 2 - 10 + bob);
       }
       const hpRatio = clamp(enemy.hp / enemy.maxHp, 0, 1);
       ctx.fillStyle = "#28100f";
@@ -5948,6 +6708,7 @@
         : tool.type === "miner" ? "⛏"
         : tool.type === "furnace" ? "♨"
         : tool.type === "assembler" ? "◆"
+        : tool.type === "terminal" ? "CT"
         : tool.type === "splitter" ? "1→2"
         : tool.type === "underground" ? (pendingUnderground ? "OUT" : "IN")
         : tool.type === "merger" ? "2→1"
@@ -5968,6 +6729,8 @@
         const tunnelDirection = pendingUnderground ? pendingUnderground.dir : buildDir;
         ghostBuilding.dir = tunnelDirection;
         drawTransportPorts(ghostBuilding, pendingUnderground ? [] : [(tunnelDirection + 2) % 4], pendingUnderground ? [tunnelDirection] : []);
+      } else if (tool.type === "terminal") {
+        drawTransportPorts(ghostBuilding, [0, 1, 2, 3], []);
       } else if (tool.type !== "belt" && !isDirectionlessType(tool.type)) {
         drawMachinePorts({ x: hoverTile.x, y: hoverTile.y, dir: buildDir }, !(tool.type === "miner" || tool.type === "deepDrill"));
       }
@@ -5982,6 +6745,65 @@
       ctx.font = "bold 8px ui-monospace, monospace";
       ctx.textAlign = "center";
       ctx.fillText(text, x * TILE, y * TILE);
+    }
+
+    function drawExplorationSites(time) {
+      const player = playerVisualTile();
+      for (const site of EXPLORATION_SITES) {
+        if (state.exploration.found.includes(site.id)) continue;
+        const scanned = state.abilities.scannerTarget === site.id && state.abilities.scannerFor > 0;
+        const nearby = Math.hypot(site.x - player.x, site.y - player.y) <= 4.5;
+        if (!scanned && !nearby) continue;
+        const cx = (site.x + 0.5) * TILE;
+        const cy = (site.y + 0.5) * TILE;
+        const pulse = 0.65 + Math.sin(time * 5) * 0.22;
+        if (scanned) {
+          ctx.save();
+          ctx.strokeStyle = `rgba(116,225,242,${pulse})`;
+          ctx.lineWidth = 2;
+          ctx.setLineDash([7, 6]);
+          ctx.beginPath();
+          ctx.moveTo((player.x + 0.5) * TILE, (player.y + 0.5) * TILE);
+          ctx.lineTo(cx, cy);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.beginPath();
+          ctx.arc(cx, cy, (18 + Math.sin(time * 4) * 4), 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+        }
+        ctx.fillStyle = "rgba(5,12,8,.45)";
+        ctx.fillRect(cx - 13, cy - 9, 28, 22);
+        ctx.fillStyle = scanned ? "#4fa4b7" : "#755c32";
+        ctx.fillRect(cx - 13, cy - 11, 26, 21);
+        ctx.strokeStyle = scanned ? "#b9f4ff" : "#d5b66c";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(cx - 13, cy - 11, 26, 21);
+        ctx.fillStyle = "#fff0ad";
+        ctx.font = "bold 10px ui-monospace, monospace";
+        ctx.textAlign = "center";
+        ctx.fillText("?", cx, cy + 3);
+      }
+    }
+
+    function drawLegacyDistrict() {
+      if (!hasPrestigeNode("districtInheritance")) return;
+      const bounds = legacyDistrictBounds(state);
+      ctx.save();
+      ctx.fillStyle = "rgba(240,199,94,.055)";
+      ctx.fillRect(bounds.x * TILE, bounds.y * TILE, bounds.width * TILE, bounds.height * TILE);
+      ctx.strokeStyle = "rgba(255,226,126,.72)";
+      ctx.lineWidth = 2;
+      ctx.setLineDash([8, 6]);
+      ctx.strokeRect(bounds.x * TILE + 1, bounds.y * TILE + 1, bounds.width * TILE - 2, bounds.height * TILE - 2);
+      ctx.setLineDash([]);
+      ctx.fillStyle = "rgba(12,24,17,.84)";
+      ctx.fillRect(bounds.x * TILE + 5, bounds.y * TILE + 5, 104, 16);
+      ctx.fillStyle = "#ffe28b";
+      ctx.font = "bold 8px ui-monospace, monospace";
+      ctx.textAlign = "left";
+      ctx.fillText("DISTRITO LEGADO 6×6", bounds.x * TILE + 9, bounds.y * TILE + 16);
+      ctx.restore();
     }
 
     function render(renderDt) {
@@ -6003,8 +6825,12 @@
 
       drawMapLabel(16.5, 14.8, "FERRO", "#d4ddda");
       drawMapLabel(32.5, 17.8, "COBRE", "#f0a16a");
+      drawMapLabel(14.5, 22.8, "CARVÃO", "#bac3be");
+      drawMapLabel(35.5, 7.8, "TUNGSTÊNIO", "#b7e5f5");
       drawEnemySpawns(simClock);
       drawHub(simClock);
+      drawExplorationSites(simClock);
+      drawLegacyDistrict();
 
       for (const building of state.buildings) {
         if (building.x >= minX - 1 && building.x <= maxX + 1 && building.y >= minY - 1 && building.y <= maxY + 1) {
@@ -6040,6 +6866,7 @@
     const invertBtn = document.getElementById("invertBtn");
     const invertLabel = document.getElementById("invertLabel");
     const recipeBtn = document.getElementById("recipeBtn");
+    const configLabel = document.getElementById("configLabel");
     const deleteBtn = document.getElementById("deleteBtn");
     const upgradeBtn = document.getElementById("upgradeBtn");
     const upgradeLabel = document.getElementById("upgradeLabel");
@@ -6200,6 +7027,7 @@
       if (building.type === "underground") return building.role === "entrance" ? "Túnel subterrâneo — IN" : "Túnel subterrâneo — OUT";
       if (building.type === "furnace") return `Fornalha — ${RECIPES[building.recipe]?.label || "sem receita"}`;
       if (building.type === "assembler") return `Montadora — ${RECIPES[building.recipe]?.label || "sem receita"}`;
+      if (building.type === "terminal") return "Terminal de contratos";
       if (building.type === "wall") return "Parede defensiva";
       if (building.type === "turret") return "Torreta automática";
       if (building.type === "cannon") return "Canhão automático";
@@ -6242,6 +7070,12 @@
       }
       if (building.type === "deepDrill") {
         return `<span style="color:var(--output)">SAI ${DIRS[building.dir].arrow}</span>: alterna ${deepDrillKinds().map(kind => ITEMS[kind].label).join(", ")}`;
+      }
+      if (building.type === "terminal") {
+        const contract = activeContract();
+        return contract
+          ? `<span style="color:var(--input)">ENTRA por qualquer lado:</span> somente itens ainda pedidos por <strong>${contract.label}</strong><br><span style="color:var(--output)">CONCLUI:</span> recompensa automática ao receber o lote inteiro`
+          : `<span style="color:var(--input)">ENTRA por qualquer lado:</span> itens do contrato selecionado<br><span style="color:var(--output)">CONFIGURE:</span> pressione C para escolher um pedido`;
       }
       if (building.type === "wall") {
         return `<span style="color:var(--output)">BLOQUEIO:</span> força os inimigos a contornar ou destruir esta parede`;
@@ -6295,6 +7129,9 @@
       if (tool.type === "assembler") {
         return `<strong>Montadora</strong> • escolha fios, circuitos ou componentes balísticos após construir • ${tool.cost} Cr`;
       }
+      if (tool.type === "terminal") {
+        return `<strong>Terminal de contratos</strong> • recebe pelas quatro laterais • pressione C para aceitar um pedido • ${tool.cost} Cr`;
+      }
       if (tool.type === "miner") {
         return `<strong>${tool.label}</strong> • sem entrada • <span style="color:var(--output)">SAI ${DIRS[buildDir].arrow}: minério</span> • ${tool.cost} Cr`;
       }
@@ -6327,6 +7164,14 @@
     }
 
     function describeSelection(building) {
+      const disruption = building.disabledFor > 0 ? `<br><span class="bad"><strong>SABOTADA:</strong> volta em ${Math.ceil(building.disabledFor)} s; J ou K reativa imediatamente.</span>` : "";
+      if (building.type === "terminal") {
+        const contract = activeContract();
+        if (!contract) return `<strong>Nível ${building.level || 1}</strong> • ${formatNumber(building.hp)} / ${formatNumber(maxBuildingHp("terminal", building.level))} HP<br>${machineFlowHTML(building)}${disruption}`;
+        const requirements = scaledContractRequirements(state.contracts.activeId);
+        const progress = Object.entries(requirements).map(([kind, amount]) => `${ITEMS[kind].label}: ${Math.floor(state.contracts.progress[kind] || 0)}/${amount}`).join(" • ");
+        return `<strong>Nível ${building.level || 1}</strong> • ${formatNumber(building.hp)} / ${formatNumber(maxBuildingHp("terminal", building.level))} HP<br>${machineFlowHTML(building)}<br>${progress}${disruption}`;
+      }
       if (building.type === "wall") {
         const maximum = maxBuildingHp("wall", building.level);
         return `<strong>Nível ${building.level || 1}</strong> • ${formatNumber(building.hp)} / ${formatNumber(maximum)} HP<br>${machineFlowHTML(building)}<br>Reparo automático durante a preparação${hasTech("fortification2") ? " (acelerado)" : ""}.`;
@@ -6383,6 +7228,7 @@
       const slugAssemblers = state.buildings.filter(b => b.type === "assembler" && b.recipe === "railSlug");
       const cannons = state.buildings.filter(b => b.type === "cannon");
       const railguns = state.buildings.filter(b => b.type === "railgun");
+      const terminals = state.buildings.filter(b => b.type === "terminal");
       const walls = state.buildings.filter(b => b.type === "wall");
       const turrets = state.buildings.filter(b => b.type === "turret");
       const anyRate = network.creditsPerSecond > 0.0001;
@@ -6433,6 +7279,17 @@
       if (!circuitAssemblers.length) {
         return "Tier 3: configure outra Montadora para <strong>Circuito</strong> e envie Placa de Ferro + Fio de Cobre pelos lados azuis.";
       }
+      if (hasTech("market1") && !terminals.length) {
+        return "Contratos liberados: construa um <strong>Terminal (O)</strong>. Pedidos só avançam com itens entregues fisicamente por esteiras.";
+      }
+      if (terminals.length && !activeContract()) {
+        const available = Object.keys(CONTRACTS).find(key => !state.contracts.completedThisRun.includes(key) && !contractUnlockProblem(key));
+        if (available) return `Selecione o <strong>Terminal</strong>, pressione <strong>C</strong> e aceite ${CONTRACTS[available].label}. Reputação atual: <strong>${state.contracts.reputation}</strong>.`;
+      }
+      if (terminals.length && activeContract()) {
+        const remaining = Object.entries(scaledContractRequirements(state.contracts.activeId)).map(([kind, amount]) => `${ITEMS[kind].short} ${Math.max(0, amount - Math.floor(state.contracts.progress[kind] || 0))}`).join(" • ");
+        return `<strong>Contrato físico: ${activeContract().label}</strong> • faltam ${remaining}. Alimente o Terminal pelas quatro laterais.`;
+      }
       if (hasTech("steelProcessing") && !coalMiners.length) {
         return "Nova jazida liberada: encontre o <strong>Carvão ao sudoeste</strong>, instale um Minerador e leve-o à área industrial.";
       }
@@ -6478,10 +7335,23 @@
       baseText.textContent = `${basePercent}%`;
       ammoText.textContent = formatNumber(state.inventory.ammo);
       threatText.textContent = `NÍVEL ${visibleThreat.score}`;
-      threatText.title = `HP ${formatNumber(visibleThreat.hpMultiplier)}× • dano ${formatNumber(visibleThreat.damageMultiplier)}× • velocidade ${formatNumber(visibleThreat.speedMultiplier)}×`;
+      const visibleAdaptations = (visibleThreat.adaptations || []).map(key => ENEMY_ADAPTATIONS[key]?.label).filter(Boolean).join(" + ");
+      threatText.title = `HP ${formatNumber(visibleThreat.hpMultiplier)}× • dano ${formatNumber(visibleThreat.damageMultiplier)}× • velocidade ${formatNumber(visibleThreat.speedMultiplier)}×${visibleAdaptations ? ` • adaptação: ${visibleAdaptations}` : ""}`;
       defenseBtn.setAttribute("aria-label", `Defesa da wave ${state.combat.wave}; ameaça nível ${visibleThreat.score}`);
       defenseBtn.classList.toggle("active-wave", state.combat.phase === "active");
       defenseBtn.classList.toggle("base-critical", basePercent <= 30);
+
+      for (const button of document.querySelectorAll(".ability-btn[data-ability]")) {
+        const key = button.dataset.ability;
+        const problem = abilityUnlockProblem(key);
+        const remaining = Math.max(0, Number(state.abilities.cooldowns[key]) || 0);
+        button.classList.toggle("locked", Boolean(problem));
+        button.classList.toggle("ready", !problem && remaining <= 0);
+        button.disabled = Boolean(problem || remaining > 0);
+        button.title = problem || `${ABILITIES[key].label}${remaining > 0 ? ` • ${Math.ceil(remaining)} s` : " • pronta"} • tecla ${ABILITIES[key].hotkey}`;
+        const cooldown = button.querySelector(".ability-cooldown");
+        if (cooldown) cooldown.textContent = problem ? "BLOQ" : remaining > 0 ? `${Math.ceil(remaining)}s` : "PRONTA";
+      }
 
       const selected = buildingById.get(selectedBuildingId);
       document.body.classList.toggle("has-selection", Boolean(selected));
@@ -6493,7 +7363,8 @@
       syncBuildDrawerUI();
       if (selected) {
         selectionInfo.hidden = false;
-        selectionText.innerHTML = `<strong>${buildingLabel(selected)}</strong><br>${describeSelection(selected)}`;
+        const disabledLine = selected.disabledFor > 0 && selected.type !== "terminal" ? `<br><span class="bad"><strong>SABOTADA:</strong> ${Math.ceil(selected.disabledFor)} s sem operar • use J ou K.</span>` : "";
+        selectionText.innerHTML = `<strong>${buildingLabel(selected)}</strong><br>${describeSelection(selected)}${disabledLine}`;
       } else {
         selectionInfo.hidden = true;
         selectionText.textContent = "";
@@ -6540,10 +7411,13 @@
         invertLabel.textContent = "Inverter";
         invertBtn.title = "Disponível para Divisor e Combinador";
       }
-      const canSelectRecipe = Boolean(!currentTool && isConfigurableMachine(selected));
+      const canSelectRecipe = Boolean(!currentTool && isConfigurableBuilding(selected));
       document.body.classList.toggle("can-select-recipe", canSelectRecipe);
       recipeBtn.disabled = !canSelectRecipe;
-      recipeBtn.title = canSelectRecipe ? `Receita atual: ${RECIPES[selected.recipe]?.label || "nenhuma"} • tecla C` : "Selecione uma Fornalha ou Montadora";
+      configLabel.textContent = selected?.type === "terminal" ? "Contratos · C" : "Receitas · C";
+      recipeBtn.title = canSelectRecipe
+        ? selected.type === "terminal" ? "Abrir painel de contratos • tecla C" : `Receita atual: ${RECIPES[selected.recipe]?.label || "nenhuma"} • tecla C`
+        : "Selecione uma Fornalha, Montadora ou Terminal";
       deleteBtn.disabled = !selected;
       upgradeBtn.disabled = !selected || selected.level >= MAX_BUILDING_LEVEL;
       if (!selected) {
@@ -6563,13 +7437,13 @@
         const rotates = !isDirectionlessType(TOOLS[currentTool].type);
         modeHint.innerHTML = `${toolFlowHTML(currentTool)}${rotates ? " • <strong>R</strong> gira" : ""} • <strong>botão direito</strong> remove • <strong>B</strong> fecha`;
       } else if (selected) {
-        modeHint.innerHTML = `${machineFlowHTML(selected)}${isConfigurableMachine(selected) ? " • <strong>C</strong> receitas" : ""} • <strong>U</strong> melhora • <strong>Del</strong> remove${desktopBuildOpen && !mobileLayout ? " • <strong>botão direito</strong> remove sob o cursor" : ""}`;
+        modeHint.innerHTML = `${machineFlowHTML(selected)}${isConfigurableBuilding(selected) ? ` • <strong>C</strong> ${selected.type === "terminal" ? "contratos" : "receitas"}` : ""} • <strong>U</strong> melhora • <strong>Del</strong> remove${desktopBuildOpen && !mobileLayout ? " • <strong>botão direito</strong> remove sob o cursor" : ""}`;
       } else if (mobileLayout && buildDrawerOpen) {
         modeHint.textContent = "Escolha uma peça • a barra fecha ao selecionar • use MAIS/VOLTAR para trocar a página";
       } else if (!mobileLayout && desktopBuildOpen) {
-        modeHint.innerHTML = `<strong>MODO BUILD</strong> • 1–9 / Q E Z X escolhem peças • botão direito remove • B fecha`;
+        modeHint.innerHTML = `<strong>MODO BUILD</strong> • 1–9 / O Q E Z X V G escolhem peças • botão direito remove • B fecha`;
       } else {
-        modeHint.textContent = "WASD/setas: andar • B: BUILD • T: tecnologias • P: prestígio • M: menu • clique: selecionar";
+        modeHint.textContent = "WASD/setas: andar • Y/J/K/L/N: operações de campo • B: BUILD • T: TEC • P: prestígio • M: menu";
       }
       updateToolPageButtons();
     }
@@ -6808,19 +7682,25 @@
 
       const currentGain = prestigeCoreGain();
       const nextRequirement = nextPrestigeGainRequirement();
+      const district = legacyDistrictBounds(state);
+      const districtCount = state.buildings.filter(building => building.x >= district.x && building.x < district.x + 6 && building.y >= district.y && building.y < district.y + 6).length;
+      const prestigeActions = [
+        { label: prestigeAvailable() ? `Prestigiar por +${currentGain} ✦` : `Prestígio ${Math.floor(state.inventory.circuit)}/${PRESTIGE_CIRCUITS}`, disabled: !prestigeAvailable(), kind: prestigeAvailable() ? "primary" : "", onClick: showPrestigeConfirmation }
+      ];
+      if (hasPrestigeNode("districtInheritance")) {
+        prestigeActions.push({ label: `Marcar distrito no jogador (${districtCount} atuais)`, onClick: markLegacyDistrict });
+      }
+      prestigeActions.push({ label: "Fechar árvore", kind: "primary" });
       openModal(
         "Árvore de Prestígio",
         `<div class="prestige-summary">
           <div class="prestige-currency"><span>Núcleos livres</span><strong>✦ ${state.economy.corePoints}</strong></div>
-          <div class="prestige-explainer"><strong>Como funciona:</strong> Núcleos são gastos nesta árvore e nunca somem. Cada prestígio mantém Pesquisa, tecnologias e estes nós.<br>A rodada atual rende <strong>${currentGain} ${currentGain === 1 ? "Núcleo" : "Núcleos"}</strong> com ${Math.floor(state.inventory.circuit)} Circuitos; o próximo ganho aumenta em ${nextRequirement} Circuitos.</div>
+          <div class="prestige-explainer"><strong>Como funciona:</strong> Núcleos são gastos nesta árvore e nunca somem. Cada prestígio mantém Pesquisa, tecnologias, reputação de contratos e estes nós.<br>A rodada atual rende <strong>${currentGain} ${currentGain === 1 ? "Núcleo" : "Núcleos"}</strong> com ${Math.floor(state.inventory.circuit)} Circuitos; o próximo ganho aumenta em ${nextRequirement} Circuitos.${hasPrestigeNode("districtInheritance") ? `<br><strong>Distrito legado:</strong> área 6×6 marcada em (${district.anchorX}, ${district.anchorY}) preserva ${districtCount} construções e seus níveis.` : ""}</div>
           <div class="prestige-total"><span>Total obtido</span><strong>${state.economy.prestige}</strong><span>${state.economy.prestigeRuns} ciclos</span></div>
         </div>
         <div class="prestige-tree-grid">${branches}</div>
         <section class="prestige-capstone">${prestigeNodeHTML("omnifactory")}</section>`,
-        [
-          { label: prestigeAvailable() ? `Prestigiar por +${currentGain} ✦` : `Prestígio ${Math.floor(state.inventory.circuit)}/${PRESTIGE_CIRCUITS}`, disabled: !prestigeAvailable(), kind: prestigeAvailable() ? "primary" : "", onClick: showPrestigeConfirmation },
-          { label: "Fechar árvore", kind: "primary" }
-        ]
+        prestigeActions
       );
       modalOverlay.classList.add("prestige-open");
       for (const button of modalBody.querySelectorAll("[data-prestige-node]")) {
@@ -6926,6 +7806,72 @@
       }
     }
 
+    function requestContract(key, terminalId) {
+      const current = state.contracts.activeId;
+      const delivered = Object.values(state.contracts.progress || {}).reduce((sum, amount) => sum + Math.max(0, Number(amount) || 0), 0);
+      if (current && current !== key && delivered > 0) {
+        openModal(
+          "Trocar contrato em andamento?",
+          `<div class="box">Trocar <strong>${CONTRACTS[current].label}</strong> por <strong>${CONTRACTS[key].label}</strong> descarta ${formatNumber(delivered)} itens já entregues ao Terminal.</div>`,
+          [
+            { label: "Manter contrato", onClick: () => showContractTerminal(terminalId) },
+            { label: "Descartar e trocar", kind: "danger", onClick: () => {
+              selectContract(key);
+              showContractTerminal(terminalId);
+            } }
+          ]
+        );
+        return;
+      }
+      selectContract(key);
+      showContractTerminal(terminalId);
+    }
+
+    function showContractTerminal(buildingId) {
+      const terminal = buildingById.get(String(buildingId));
+      if (!terminal || terminal.type !== "terminal") {
+        showToast("Selecione um Terminal de contratos.");
+        return;
+      }
+      const rewardMultiplier = contractRewardMultiplier();
+      const cards = Object.entries(CONTRACTS).map(([key, contract]) => {
+        const active = state.contracts.activeId === key;
+        const done = state.contracts.completedThisRun.includes(key);
+        const problem = contractUnlockProblem(key);
+        const requirements = scaledContractRequirements(key);
+        const requirementRows = Object.entries(requirements).map(([kind, amount]) => {
+          const delivered = active ? Math.min(amount, Number(state.contracts.progress[kind]) || 0) : 0;
+          const ratio = amount > 0 ? delivered / amount : 0;
+          return `<div><span><b>${ITEMS[kind].short} ${ITEMS[kind].label}</b><em>${formatNumber(delivered)} / ${formatNumber(amount)}</em></span><div class="contract-progress"><i style="width:${Math.round(ratio * 100)}%"></i></div></div>`;
+        }).join("");
+        const credits = Math.round(contract.credits * rewardMultiplier);
+        const research = Math.round(contract.research * rewardMultiplier * 10) / 10;
+        const buttonLabel = done ? "CONCLUÍDO NESTA RODADA" : active ? "CONTRATO ATIVO" : problem ? problem.toUpperCase() : "ACEITAR CONTRATO";
+        return `<article class="contract-card ${active ? "active" : ""} ${done ? "done" : ""} ${problem ? "locked" : ""}">
+          <strong>▣ ${contract.label}</strong>
+          <small>${contract.description}</small>
+          <div class="contract-requirement">${requirementRows}</div>
+          <small>Recompensa: <b>${formatNumber(credits)} Cr • ${formatNumber(research)} Pesquisa • +${contract.reputation} reputação</b></small>
+          <button class="contract-select" data-contract="${key}" ${active || done || problem ? "disabled" : ""}>${buttonLabel}</button>
+        </article>`;
+      }).join("");
+      openModal(
+        "Terminal de contratos",
+        `<div class="recipe-machine-summary"><div class="recipe-machine-icon">▣</div><p><strong>Entrega física, não pelo inventário:</strong> conecte qualquer lateral do Terminal a uma esteira. Ele só aceita itens ainda pedidos pelo contrato ativo.<br><strong>Reputação ${state.contracts.reputation}:</strong> +${Math.round(Math.min(0.30, state.contracts.reputation * 0.01) * 100)}% no valor de todas as entregas ao Hub • ${state.contracts.lifetimeCompleted} contratos vitalícios.</p></div>
+         <div class="contract-grid">${cards}</div>`,
+        [{ label: "Fechar contratos", kind: "primary" }]
+      );
+      for (const button of modalBody.querySelectorAll("[data-contract]")) {
+        button.addEventListener("click", () => requestContract(button.dataset.contract, terminal.id));
+      }
+    }
+
+    function showBuildingConfiguration(buildingId) {
+      const building = buildingById.get(String(buildingId));
+      if (building?.type === "terminal") showContractTerminal(building.id);
+      else showMachineRecipes(buildingId);
+    }
+
     function showHelp(firstRun = false) {
       openModal(
         "Como jogar",
@@ -6939,10 +7885,14 @@
            <li><strong>3 Fornalha:</strong> produz placas básicas e, após pesquisar, Aço e Tungstênio. <strong>4 Montadora:</strong> explore fios, circuitos, balística e artilharia. Use <strong>C ou Receitas</strong> para reconfigurar.</li>
            <li><strong>5 Divisor:</strong> uma entrada e duas saídas alternadas. <strong>6 Túnel:</strong> clique IN e depois OUT, em linha reta; o alcance cresce de 6 para até 20 tiles no Prestígio. <strong>7 Combinador:</strong> duas entradas azuis convergem em uma saída amarela. Use <strong>F ou Inverter</strong> para trocar o lado auxiliar.</li>
            <li><strong>8 Parede:</strong> clique e arraste para formar muralhas. <strong>9 Torreta:</strong> usa Munição. <strong>V Canhão:</strong> usa Obuses e explode grupos. <strong>G Railgun:</strong> usa Dardos e perfura inimigos alinhados.</li>
+           <li>Pesquise <strong>Contratos industriais</strong> e construa o <strong>Terminal (O)</strong>. Selecione-o com C, aceite um pedido e conecte esteiras às quatro laterais; itens no inventário não contam.</li>
+           <li>O personagem opera a fábrica: <strong>Y Overclock</strong>, <strong>J Reparo</strong>, <strong>K EMP</strong>, <strong>L Scanner</strong> e <strong>N Retorno ao Hub</strong>. A barra inferior mostra recargas.</li>
+           <li>Explore as quatro estradas e regiões de minério. Caixas de campo aparecem quando você se aproxima; o Scanner marca a mais próxima e os prêmios reiniciam a cada prestígio.</li>
            <li>Selecione uma construção e use <strong>Melhorar</strong>: cada nível dá +20% local, mas o custo cresce.</li>
            <li>Só materiais processados e circuitos entregues geram <strong>Pesquisa</strong>; minério bruto não gera. Abra <strong>TEC</strong>, arraste o mapa e toque nos nós para ver os caminhos permanentes.</li>
            <li>Ao entregar pelo menos <strong>${PRESTIGE_CIRCUITS} Circuitos</strong>, faça Prestígio para receber Núcleos. Pressione <strong>P</strong> para investi-los permanentemente em Indústria, Logística ou Defesa.</li>
            <li>A Árvore de Prestígio libera <strong>Q Beacon</strong>, <strong>E Sonda Profunda</strong>, <strong>Z Estação de Reparo</strong> e <strong>X Torre Tesla</strong>; os novos estágios melhoram metalurgia, munição avançada e armas pesadas.</li>
+           <li><strong>Distrito legado:</strong> depois de comprar o nó, abra P e marque no personagem uma área 6×6. Construções e níveis dentro dela sobrevivem ao próximo prestígio.</li>
            <li>Clique numa construção para selecioná-la. Use Delete ou, no modo BUILD, clique nela com o botão direito. A remoção devolve 70% do custo.</li>
          </ol>
          <div class="box"><strong>Receitas</strong><br>
@@ -6961,9 +7911,10 @@
            tungstênio + aço + circuito → dardo de Railgun
          </div>
          <p><strong>Waves:</strong> são liberadas no Tier 2. Inimigos entram pelas quatro estradas, atacam obstáculos e tentam destruir o Hub. Clique no painel WAVE/HUB/MUNIÇÃO/AMEAÇA para ver detalhes ou iniciar a próxima wave antes.</p>
-         <p><strong>Diretor de Ameaça:</strong> mede o pico de itens/h e Cr/h entregues ao Hub, além de Tier, créditos da rodada, tamanho e níveis da fábrica, tecnologias e Prestígio. O nível fica travado quando a wave começa; desconectar esteiras não reduz a formação atual. A recompensa cresce junto com a dificuldade.</p>
+         <p><strong>Diretor de Ameaça:</strong> mede o pico de itens/h e Cr/h, além de Tier, créditos, tamanho, tecnologias e Prestígio. Antes da wave ele também mostra sua adaptação: Demolidores contra muralhas, Blindados contra Torretas, formação dispersa contra Canhões, Enxame contra Railguns ou Sabotadores contra fábricas extensas. O plano fica travado quando a wave começa.</p>
+         <p><strong>Sabotagem:</strong> Sabotadores atravessam a malha, descartam parte dos buffers e param uma construção temporariamente. J repara e reativa tudo perto do personagem; K também limpa a pane enquanto atordoa inimigos.</p>
          <p><strong>Offline:</strong> ao voltar, o jogo calcula em lote a vazão das rotas conectadas. Limite inicial de 24 h, ampliável pela árvore tecnológica.</p>
-         <p><strong>Atalhos desktop:</strong> B modo BUILD • botão direito remove • 1–9/V/G/Q/E/Z/X construções • C receitas • R girar • F inverter lado • U melhorar • Del remover • T tecnologias • P prestígio • M menu • Esc cancelar.</p>`,
+         <p><strong>Atalhos desktop:</strong> B BUILD • botão direito remove • 1–9/O/V/G/Q/E/Z/X construções • C receitas/contratos • Y/J/K/L/N operações • R girar • F inverter • U melhorar • Del remover • T tecnologias • P prestígio • M menu • Esc cancelar.</p>`,
         [{
           label: firstRun ? "Começar" : "Voltar ao jogo",
           kind: "primary",
@@ -6983,8 +7934,12 @@
         .filter(([, amount]) => amount > 0)
         .map(([kind, amount]) => `<li>${ITEMS[kind].label}: <strong>${formatNumber(amount)}</strong></li>`)
         .join("");
-      const result = producedLines
-        ? `<ul>${producedLines}</ul><p class="good">+${formatNumber(summary.earned)} créditos • +${formatNumber(summary.researchEarned)} Pesquisa</p>`
+      const contractLines = Object.entries(summary.contractDelivered || {})
+        .filter(([, amount]) => amount > 0)
+        .map(([kind, amount]) => `<li>${ITEMS[kind].label}: <strong>${formatNumber(amount)}</strong> no Terminal</li>`)
+        .join("");
+      const result = producedLines || contractLines
+        ? `${producedLines ? `<div class="box"><strong>Entregue ao Hub</strong><ul>${producedLines}</ul></div>` : ""}${contractLines ? `<div class="box"><strong>Entregue ao contrato</strong><ul>${contractLines}</ul></div>` : ""}<p class="good">+${formatNumber(summary.earned)} créditos • +${formatNumber(summary.researchEarned)} Pesquisa</p>`
         : `<div class="box">Nenhuma produção entregue. Verifique se as setas formam uma rota completa até o Hub.</div>`;
       openModal(
         "Produção offline",
@@ -7006,6 +7961,8 @@
         Pico desta rodada: <strong>${formatNumber(state.stats.peakResourcesPerHour)} itens/h • ${formatNumber(state.stats.peakCreditsPerHour)} Cr/h</strong><br>
         Pesquisa disponível: <strong>${formatNumber(state.economy.researchPoints)}</strong><br>
         Tecnologias: <strong>${Object.keys(TECHS).filter(key => hasTech(key)).length}/${Object.keys(TECHS).length}</strong><br>
+        Contratos: <strong>${state.contracts.reputation} reputação • ${state.contracts.lifetimeCompleted} concluídos • ${activeContract()?.label || "nenhum ativo"}</strong><br>
+        Exploração: <strong>${state.exploration.found.length}/${EXPLORATION_SITES.length} caixas nesta rodada</strong><br>
         Prestígio: <strong>${state.economy.prestige} Núcleos totais • ${state.economy.corePoints} livres • ${Object.keys(PRESTIGE_NODES).filter(key => hasPrestigeNode(key)).length}/${Object.keys(PRESTIGE_NODES).length} nós</strong><br>
         Multiplicador global: <strong>${formatNumber(machineMultiplier())}×</strong></p>`;
     }
@@ -7027,6 +7984,10 @@
       const teslaCount = state.buildings.filter(building => building.type === "tesla").length;
       const nextCount = waveEnemyCount(state.combat.wave, threat);
       const formationLabel = state.combat.phase === "active" ? "Formação travada" : "Próxima formação";
+      const adaptationKeys = Array.isArray(threat.adaptations) ? threat.adaptations : [];
+      const adaptationHTML = adaptationKeys.length
+        ? adaptationKeys.map(key => `<strong>${ENEMY_ADAPTATIONS[key].label}:</strong> ${ENEMY_ADAPTATIONS[key].description}`).join("<br>")
+        : "Nenhuma especialização detectada; a formação usa invasores básicos.";
       const peakWasUsed = threat.resourcesPerHour > state.stats.lastResourcesPerHour + 0.5 || threat.creditsPerHour > state.stats.lastCreditsPerHour + 0.5;
       const actions = [];
       if (state.combat.phase === "prep") {
@@ -7042,7 +8003,8 @@
          Pico usado: ${formatNumber(threat.resourcesPerHour)} itens/h • ${formatNumber(threat.creditsPerHour)} Cr/h${peakWasUsed ? "<br><span class=\"bad\">O pico da rodada foi preservado.</span>" : ""}<br>
          Inimigos: <strong>${formatNumber(threat.hpMultiplier)}× HP • ${formatNumber(threat.damageMultiplier)}× dano • ${formatNumber(threat.speedMultiplier)}× velocidade • +${threat.countBonus} unidades</strong><br>
          Recompensa da wave: <strong>${formatNumber(threat.rewardMultiplier)}×</strong></div>
-         <p><strong>${formationLabel}:</strong> ${nextCount} invasores, com corredores a cada 4º inimigo e tanques a cada 7º. Eles entram pelas quatro estradas e procuram o caminho de menor resistência até o Hub.</p>
+         <div class="box"><strong>${formationLabel} • adaptação visível</strong><br>${adaptationHTML}<br><br>Leitura usada: ${threat.profile?.walls || 0} paredes • ${threat.profile?.turrets || 0} torretas • ${threat.profile?.cannons || 0} canhões • ${threat.profile?.railguns || 0} railguns • ${threat.profile?.logistics || 0} peças logísticas • área ${threat.profile?.footprint || 0} tiles².<br><span class="good">O Diretor reage à composição atual da fábrica, mas este plano só é congelado quando a wave começa.</span></div>
+         <p><strong>Composição:</strong> ${nextCount} invasores. Corredores e tanques continuam presentes; unidades adaptadas entram a cada terceiro spawn. Eles entram pelas quatro estradas e procuram o caminho de menor resistência até o Hub.</p>
          <p><strong>Sua defesa:</strong> ${wallCount} paredes • ${turretCount} torretas • ${cannonCount} canhões • ${railgunCount} railguns • ${repairCount} reparadores • ${teslaCount} Teslas<br>
          Torreta: <strong>${formatNumber(turretAmmoCost())} Munição</strong> • Canhão: <strong>${formatNumber(cannonShellCost())} Obus</strong> • Railgun: <strong>${formatNumber(railgunSlugCost())} Dardo</strong> • Tesla: <strong>${formatNumber(teslaCircuitCost())} Circuito</strong>.</p>
          <div class="box"><strong>Cadeia de munição</strong><br>
@@ -7053,7 +8015,7 @@
          Carvão + Ferro → Aço; Carvão + Cobre → Propelente<br>
          Aço + Propelente → Obus → Canhão<br>
          Tungstênio + Aço + Circuito → Dardo → Railgun</div>
-         <p>Waves vencidas: <strong>${state.combat.victories}</strong> • eliminações: <strong>${state.combat.kills}</strong> • derrotas: <strong>${state.combat.defeats}</strong></p>
+         <p>Waves vencidas: <strong>${state.combat.victories}</strong> • eliminações: <strong>${state.combat.kills}</strong> • derrotas: <strong>${state.combat.defeats}</strong> • sabotagens sofridas: <strong>${state.stats.sabotagesSuffered}</strong></p>
          <p><strong>Regra anti-exploit:</strong> a maior produção observada na rodada nunca diminui. Ao iniciar a wave, o Diretor salva um snapshot; mudanças na fábrica só afetam a próxima formação.</p>
          <p><strong>Offline justo:</strong> a fábrica continua produzindo com a aba fechada, mas uma wave ativa volta para preparação; o Hub não é destruído offline.</p>`,
         actions
@@ -7063,10 +8025,11 @@
     function showPrestigeConfirmation() {
       const gain = prestigeCoreGain();
       const nextRequirement = nextPrestigeGainRequirement();
+      const inheritedCount = collectLegacyBuildings(state).length;
       openModal(
         "Confirmar prestígio",
-        `<p>Isso remove máquinas, upgrades locais, itens, créditos e entregas da rodada.</p>
-         <div class="box"><strong>Você mantém:</strong> Pesquisa, tecnologias e toda a Árvore de Prestígio.<br><strong>Você recebe agora:</strong> +${gain} ${gain === 1 ? "Núcleo" : "Núcleos"}, totalizando ${state.economy.prestige + gain}.<br><strong>Rodadas longas rendem mais:</strong> alcance ${nextRequirement} Circuitos para receber ${gain + 1} Núcleos no próximo cálculo.</div>`,
+        `<p>Isso reinicia máquinas, upgrades locais, itens, créditos e entregas da rodada, exceto o Distrito legado quando desbloqueado.</p>
+         <div class="box"><strong>Você mantém:</strong> Pesquisa, tecnologias, reputação de contratos e toda a Árvore de Prestígio.${hasPrestigeNode("districtInheritance") ? `<br><strong>Distrito legado:</strong> ${inheritedCount} construções do quadrado 6×6 permanecem com seus níveis; estoques internos são esvaziados.` : ""}<br><strong>Você recebe agora:</strong> +${gain} ${gain === 1 ? "Núcleo" : "Núcleos"}, totalizando ${state.economy.prestige + gain}.<br><strong>Rodadas longas rendem mais:</strong> alcance ${nextRequirement} Circuitos para receber ${gain + 1} Núcleos no próximo cálculo.</div>`,
         [
           { label: "Cancelar" },
           { label: "Prestigiar", kind: "primary", onClick: performPrestige }
@@ -7085,7 +8048,28 @@
       );
     }
 
+    function showFieldOperations() {
+      const cards = Object.entries(ABILITIES).map(([key, ability]) => {
+        const problem = abilityUnlockProblem(key);
+        const remaining = Math.max(0, Number(state.abilities.cooldowns[key]) || 0);
+        const effect = key === "overclock" ? `Acelera máquinas em ${formatNumber(abilityRadius(key))} tiles.`
+          : key === "repair" ? `Repara e reativa construções em ${formatNumber(abilityRadius(key))} tiles.`
+          : key === "emp" ? `Danifica e atordoa inimigos em ${formatNumber(abilityRadius(key))} tiles; limpa sabotagem.`
+          : key === "scanner" ? "Marca a caixa de exploração não encontrada mais próxima."
+          : "Teleporta o personagem de volta à área segura do Hub.";
+        return `<div class="box"><strong>${ability.hotkey} • ${ability.label}</strong><br>${effect}<br>Status: ${problem ? `<span class="bad">${problem}</span>` : remaining > 0 ? `${Math.ceil(remaining)} s de recarga` : `<span class="good">PRONTA</span>`}</div>`;
+      }).join("");
+      const actions = Object.keys(ABILITIES).map(key => ({
+        label: `${ABILITIES[key].hotkey} • ${ABILITIES[key].label}`,
+        disabled: Boolean(abilityUnlockProblem(key) || state.abilities.cooldowns[key] > 0),
+        onClick: () => useAbility(key)
+      }));
+      actions.push({ label: "Fechar", kind: "primary" });
+      openModal("Operações de campo", `${cards}<p>Posicione o personagem onde a operação terá maior impacto. A Doutrina de campo no Prestígio reduz recargas e aumenta os efeitos.</p>`, actions);
+    }
+
     function showMenu() {
+      const terminal = state.buildings.find(building => building.type === "terminal");
       openModal(
         "Fábrica e save",
         inventoryHTML(),
@@ -7094,6 +8078,9 @@
           { label: `Tecnologias (${formatNumber(state.economy.researchPoints)} ⚗)`, onClick: showTechTree },
           { label: `Árvore de Prestígio (${state.economy.corePoints} ✦ livres)`, onClick: showPrestigeTree },
           { label: `Defesa • Wave ${state.combat.wave}`, onClick: showDefenseStatus },
+          { label: "Operações de campo • Y/J/K/L/N", onClick: showFieldOperations },
+          { label: `Contratos • ${state.contracts.reputation} reputação`, disabled: !terminal, onClick: () => showContractTerminal(terminal?.id) },
+          { label: "Marcar Distrito legado no personagem", disabled: !hasPrestigeNode("districtInheritance"), onClick: markLegacyDistrict },
           { label: "Como jogar", onClick: () => showHelp(false) },
           {
             label: prestigeAvailable() ? `Prestigiar por +${prestigeCoreGain()} ✦` : `Prestígio ${Math.floor(state.inventory.circuit)}/${PRESTIGE_CIRCUITS}`,
@@ -7217,7 +8204,7 @@
 
     rotateBtn.addEventListener("click", rotateCurrentTarget);
     invertBtn.addEventListener("click", invertCurrentTarget);
-    recipeBtn.addEventListener("click", () => showMachineRecipes(selectedBuildingId));
+    recipeBtn.addEventListener("click", () => showBuildingConfiguration(selectedBuildingId));
     deleteBtn.addEventListener("click", removeSelectedBuilding);
     upgradeBtn.addEventListener("click", upgradeSelectedBuilding);
     cancelBtn.addEventListener("click", clearSelection);
@@ -7227,6 +8214,9 @@
     document.getElementById("helpBtn").addEventListener("click", () => showHelp(false));
     menuBtn.addEventListener("click", showMenu);
     buildModeBtn.addEventListener("click", () => setDesktopBuildMode(!desktopBuildOpen));
+    for (const button of document.querySelectorAll(".ability-btn[data-ability]")) {
+      button.addEventListener("click", () => useAbility(button.dataset.ability));
+    }
 
     for (const key of document.querySelectorAll(".dkey[data-dir]")) {
       const startMove = event => {
@@ -7295,6 +8285,7 @@
       ["Digit2", "belt"],
       ["Digit3", "furnace"],
       ["Digit4", "assembler"],
+      ["KeyO", "terminal"],
       ["Digit5", "splitter"],
       ["Digit6", "underground"],
       ["Digit7", "merger"],
@@ -7342,10 +8333,25 @@
         invertCurrentTarget();
       } else if (event.code === "KeyC") {
         const selected = buildingById.get(selectedBuildingId);
-        if (isConfigurableMachine(selected)) {
+        if (isConfigurableBuilding(selected)) {
           event.preventDefault();
-          showMachineRecipes(selected.id);
+          showBuildingConfiguration(selected.id);
         }
+      } else if (event.code === "KeyY") {
+        event.preventDefault();
+        useAbility("overclock");
+      } else if (event.code === "KeyJ") {
+        event.preventDefault();
+        useAbility("repair");
+      } else if (event.code === "KeyK") {
+        event.preventDefault();
+        useAbility("emp");
+      } else if (event.code === "KeyL") {
+        event.preventDefault();
+        useAbility("scanner");
+      } else if (event.code === "KeyN") {
+        event.preventDefault();
+        useAbility("recall");
       } else if (event.code === "Delete" || event.code === "Backspace") {
         event.preventDefault();
         if (selectedBuildingId) removeSelectedBuilding();
@@ -7474,7 +8480,10 @@
         tools: Object.keys(TOOLS),
         techs: Object.keys(TECHS),
         prestigeNodes: Object.keys(PRESTIGE_NODES),
-        techLayout: Object.keys(TECH_LAYOUT)
+        techLayout: Object.keys(TECH_LAYOUT),
+        contracts: Object.keys(CONTRACTS),
+        abilities: Object.keys(ABILITIES),
+        adaptations: Object.keys(ENEMY_ADAPTATIONS)
       }),
       validateCatalog: () => {
         const errors = [];
@@ -7496,6 +8505,13 @@
           if (tool.tech && !TECHS[tool.tech]) errors.push(`Ferramenta ${key} usa tech inválida`);
           if (tool.prestige && !PRESTIGE_NODES[tool.prestige]) errors.push(`Ferramenta ${key} usa Prestígio inválido`);
         }
+        for (const [key, contract] of Object.entries(CONTRACTS)) {
+          for (const kind of Object.keys(contract.requirements)) if (!ITEMS[kind]) errors.push(`Contrato ${key} usa ${kind} inválido`);
+          if (contract.tech && !TECHS[contract.tech]) errors.push(`Contrato ${key} usa tech inválida`);
+        }
+        for (const [key, ability] of Object.entries(ABILITIES)) {
+          if (ability.tech && !TECHS[ability.tech]) errors.push(`Habilidade ${key} usa tech inválida`);
+        }
         return errors;
       },
       roundTripState: () => JSON.parse(JSON.stringify(sanitizeState(JSON.parse(JSON.stringify(state))))),
@@ -7503,7 +8519,9 @@
         deepDrillKinds: deepDrillKinds(),
         recipeOutputs: Object.fromEntries(Object.entries(RECIPES).map(([key, recipe]) => [key, recipeOutputQuantity(recipe)])),
         cannon: { damage: cannonDamage({ level: 1 }), range: cannonRange({ level: 1 }), interval: cannonFireInterval({ level: 1 }), ammoCost: cannonShellCost(), splash: cannonSplashRadius() },
-        railgun: { damage: railgunDamage({ level: 1 }), range: railgunRange({ level: 1 }), interval: railgunFireInterval({ level: 1 }), ammoCost: railgunSlugCost(), pierce: railgunPierceCount() }
+        railgun: { damage: railgunDamage({ level: 1 }), range: railgunRange({ level: 1 }), interval: railgunFireInterval({ level: 1 }), ammoCost: railgunSlugCost(), pierce: railgunPierceCount() },
+        operations: Object.fromEntries(Object.keys(ABILITIES).map(key => [key, { cooldown: abilityCooldownDuration(key), radius: abilityRadius(key) }])),
+        contractRewardMultiplier: contractRewardMultiplier()
       }),
       renderOnce: () => {
         render(0.016);
@@ -7561,6 +8579,18 @@
         updateUI(true);
       },
       buyPrestige: key => buyPrestigeNode(String(key)),
+      selectContract: key => selectContract(String(key)),
+      deliverContract: (kind, amount) => applyContractDelivery(String(kind), Number(amount) || 0, true),
+      useAbility: key => useAbility(String(key)),
+      markDistrict: () => markLegacyDistrict(),
+      movePlayer: (x, y) => {
+        state.player.x = clamp(Math.floor(Number(x) || HUB.x), 2, WORLD_W - 3);
+        state.player.y = clamp(Math.floor(Number(y) || HUB.y), 2, WORLD_H - 3);
+        state.player.tx = state.player.x;
+        state.player.ty = state.player.y;
+        state.player.moving = false;
+        return checkExplorationDiscovery();
+      },
       damageBuilding: (id, amount) => {
         const building = buildingById.get(String(id));
         if (!building) return false;
@@ -7571,7 +8601,7 @@
       spawnEnemy: (x, y, hp = 1000, kind = "raider") => {
         const enemy = {
           id: `e${state.nextId++}`,
-          kind: ["raider", "runner", "tank"].includes(kind) ? kind : "raider",
+          kind: ["raider", "runner", "tank", "breacher", "armored", "disperser", "swarm", "saboteur"].includes(kind) ? kind : "raider",
           x: clamp(Math.floor(Number(x) || HUB.x), 0, WORLD_W - 1),
           y: clamp(Math.floor(Number(y) || HUB.y), 0, WORLD_H - 1),
           tx: null,
@@ -7581,10 +8611,22 @@
           maxHp: Math.max(1, Number(hp) || 1000),
           speed: 1,
           damage: 1,
-          attackCooldown: 0
+          attackCooldown: 0,
+          stunnedFor: 0,
+          sabotageTargetId: kind === "saboteur" ? pickSabotageTarget(0)?.id || null : null,
+          sabotageCooldown: 0
         };
         state.enemies.push(enemy);
         return enemy.id;
+      },
+      setEnemyTarget: (enemyId, buildingId) => {
+        const enemy = state.enemies.find(entry => entry.id === String(enemyId));
+        const building = buildingById.get(String(buildingId));
+        if (!enemy || !building) return false;
+        enemy.kind = "saboteur";
+        enemy.sabotageTargetId = building.id;
+        enemy.sabotageCooldown = 0;
+        return true;
       },
       combat: () => JSON.parse(JSON.stringify({ combat: state.combat, enemies: state.enemies })),
       grantResearch: amount => {
