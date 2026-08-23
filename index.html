@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
   <meta name="theme-color" content="#13241b">
+  <link rel="icon" href="data:,">
   <title>Factory Grid — Desktop</title>
   <style>
     :root {
@@ -2061,6 +2062,31 @@
     });
     const BUILDING_SPRITES = Object.freeze(Object.fromEntries(
       Object.entries(BUILDING_SPRITE_URLS).map(([key, url]) => {
+        const image = new Image();
+        image.decoding = "async";
+        image.src = url;
+        return [key, image];
+      })
+    ));
+
+    const WORLD_SPRITE_URLS = Object.freeze({
+      grass: "assets/world/grass.png",
+      water: "assets/world/water.png",
+      road: "assets/world/road.png",
+      tree: "assets/world/tree.png",
+      rock: "assets/world/rock.png",
+      ironOre: "assets/world/deposit_iron.png",
+      copperOre: "assets/world/deposit_copper.png",
+      coal: "assets/world/deposit_coal.png",
+      tungstenOre: "assets/world/deposit_tungsten.png",
+      enemy: "assets/world/enemy.png",
+      playerNorth: "assets/world/player_north.png",
+      playerEast: "assets/world/player_east.png",
+      playerSouth: "assets/world/player_south.png",
+      playerWest: "assets/world/player_west.png"
+    });
+    const WORLD_SPRITES = Object.freeze(Object.fromEntries(
+      Object.entries(WORLD_SPRITE_URLS).map(([key, url]) => {
         const image = new Image();
         image.decoding = "async";
         image.src = url;
@@ -5855,6 +5881,36 @@
       context.closePath();
     }
 
+    function spriteReady(image) {
+      return Boolean(image && image.complete && image.naturalWidth);
+    }
+
+    function drawTileTexture(image, px, py, noise, alpha = 1) {
+      if (!spriteReady(image)) return false;
+      const flipX = noise > 0.5;
+      const flipY = noise > 0.78 || noise < 0.16;
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.translate(px + (flipX ? TILE : 0), py + (flipY ? TILE : 0));
+      ctx.scale(flipX ? -1 : 1, flipY ? -1 : 1);
+      ctx.drawImage(image, 0, 0, TILE, TILE);
+      ctx.restore();
+      return true;
+    }
+
+    function drawWaterEdge(x, y, px, py) {
+      const edgeColor = "rgba(181,206,91,.62)";
+      const shadowColor = "rgba(11,67,77,.48)";
+      ctx.fillStyle = edgeColor;
+      if (y === 0 || terrain[y - 1][x] !== 2) ctx.fillRect(px, py, TILE, 2);
+      if (x === WORLD_W - 1 || terrain[y][x + 1] !== 2) ctx.fillRect(px + TILE - 2, py, 2, TILE);
+      if (y === WORLD_H - 1 || terrain[y + 1][x] !== 2) ctx.fillRect(px, py + TILE - 2, TILE, 2);
+      if (x === 0 || terrain[y][x - 1] !== 2) ctx.fillRect(px, py, 2, TILE);
+      ctx.fillStyle = shadowColor;
+      if (y > 0 && terrain[y - 1][x] !== 2) ctx.fillRect(px, py + 2, TILE, 1);
+      if (x > 0 && terrain[y][x - 1] !== 2) ctx.fillRect(px + 2, py, 1, TILE);
+    }
+
     function drawTerrainTile(x, y, time) {
       const px = x * TILE;
       const py = y * TILE;
@@ -5862,29 +5918,30 @@
       const noise = hash2(x, y);
 
       if (tile === 2) {
-        ctx.fillStyle = noise > 0.5 ? "#2c6f78" : "#2a6772";
+        ctx.fillStyle = noise > 0.5 ? "#08758c" : "#086c83";
         ctx.fillRect(px, py, TILE, TILE);
-        ctx.strokeStyle = "rgba(150,224,214,.24)";
-        ctx.lineWidth = 2;
-        const wave = ((time * 15 + x * 7 + y * 11) % 18) - 4;
+        drawTileTexture(WORLD_SPRITES.water, px, py, noise, 0.78);
+        const shimmer = ((time * 11 + x * 5 + y * 9) % 24) - 8;
+        ctx.strokeStyle = "rgba(167,244,255,.38)";
+        ctx.lineWidth = 1.5;
         ctx.beginPath();
-        ctx.moveTo(px + 5 + wave, py + 12);
-        ctx.lineTo(px + 17 + wave, py + 12);
-        ctx.moveTo(px + 12 - wave * 0.4, py + 28);
-        ctx.lineTo(px + 24 - wave * 0.4, py + 28);
+        ctx.moveTo(px + 5 + shimmer, py + 13);
+        ctx.lineTo(px + 14 + shimmer, py + 13);
         ctx.stroke();
+        drawWaterEdge(x, y, px, py);
       } else if (tile === 1) {
-        ctx.fillStyle = noise > 0.5 ? "#9b8155" : "#947a50";
+        ctx.fillStyle = noise > 0.5 ? "#b8813f" : "#aa7138";
         ctx.fillRect(px, py, TILE, TILE);
-        ctx.fillStyle = "rgba(74,56,32,.18)";
-        ctx.fillRect(px + 7 + Math.floor(noise * 9), py + 9, 3, 2);
-        ctx.fillRect(px + 23, py + 27 - Math.floor(noise * 5), 4, 2);
+        drawTileTexture(WORLD_SPRITES.road, px, py, noise, 0.3);
+        ctx.fillStyle = "rgba(92,53,24,.18)";
+        ctx.fillRect(px + 5, py + 11 + Math.floor(noise * 8), TILE - 10, 1);
+        ctx.fillRect(px + 8, py + 28 - Math.floor(noise * 6), TILE - 16, 1);
       } else {
-        ctx.fillStyle = noise > 0.55 ? "#4f8c57" : "#4a8552";
+        ctx.fillStyle = noise > 0.55 ? "#72a94c" : "#68a047";
         ctx.fillRect(px, py, TILE, TILE);
-        ctx.fillStyle = noise > 0.4 ? "rgba(164,207,113,.22)" : "rgba(29,89,48,.2)";
-        ctx.fillRect(px + 5 + Math.floor(noise * 17), py + 7 + Math.floor(noise * 13), 3, 4);
-        ctx.fillRect(px + 28 - Math.floor(noise * 8), py + 29, 2, 3);
+        drawTileTexture(WORLD_SPRITES.grass, px, py, noise, 0.08);
+        ctx.fillStyle = noise > 0.4 ? "rgba(211,236,99,.24)" : "rgba(24,103,44,.18)";
+        ctx.fillRect(px + 6 + Math.floor(noise * 16), py + 8 + Math.floor(noise * 12), 2, 3);
       }
 
       if (tile === 3) drawTree(px, py, noise);
@@ -5892,12 +5949,16 @@
       const deposit = getDeposit(x, y);
       if (deposit) drawDeposit(px, py, deposit, noise);
 
-      ctx.strokeStyle = "rgba(16,46,29,.15)";
+      ctx.strokeStyle = tile === 2 ? "rgba(4,48,66,.18)" : "rgba(42,77,30,.09)";
       ctx.lineWidth = 1;
       ctx.strokeRect(px + 0.5, py + 0.5, TILE - 1, TILE - 1);
     }
 
     function drawTree(px, py, noise) {
+      if (spriteReady(WORLD_SPRITES.tree)) {
+        ctx.drawImage(WORLD_SPRITES.tree, px, py - 3, TILE, TILE);
+        return;
+      }
       ctx.fillStyle = "#63482c";
       ctx.fillRect(px + 17, py + 21, 7, 15);
       ctx.fillStyle = "#1e5c35";
@@ -5913,6 +5974,10 @@
     }
 
     function drawRock(px, py, fill, edge, noise = 0.5) {
+      if (spriteReady(WORLD_SPRITES.rock)) {
+        ctx.drawImage(WORLD_SPRITES.rock, px, py, TILE, TILE);
+        return;
+      }
       ctx.fillStyle = edge;
       ctx.beginPath();
       ctx.moveTo(px + 7, py + 29);
@@ -5937,6 +6002,15 @@
 
     function drawDeposit(px, py, kind, noise) {
       const item = ITEMS[kind];
+      const sprite = WORLD_SPRITES[kind];
+      if (spriteReady(sprite)) {
+        ctx.fillStyle = item.deposit || "rgba(103,119,114,.22)";
+        ctx.beginPath();
+        ctx.ellipse(px + TILE / 2, py + TILE / 2 + 4, 17, 12, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.drawImage(sprite, px, py, TILE, TILE);
+        return;
+      }
       ctx.fillStyle = item.deposit || "rgba(103,119,114,.22)";
       ctx.fillRect(px + 2, py + 2, TILE - 4, TILE - 4);
       const dots = [
@@ -6892,6 +6966,18 @@
       ctx.beginPath();
       ctx.ellipse(cx, cy + 12, 11, 5, 0, 0, Math.PI * 2);
       ctx.fill();
+      const playerSprites = [
+        WORLD_SPRITES.playerNorth,
+        WORLD_SPRITES.playerEast,
+        WORLD_SPRITES.playerSouth,
+        WORLD_SPRITES.playerWest
+      ];
+      const sprite = playerSprites[state.player.dir] || playerSprites[2];
+      if (spriteReady(sprite)) {
+        const playerSize = 52;
+        ctx.drawImage(sprite, cx - playerSize / 2, cy - playerSize / 2 - 3 + bob, playerSize, playerSize);
+        return;
+      }
       ctx.fillStyle = "#263b62";
       ctx.fillRect(cx - 8, cy + 1 + bob, 16, 13);
       ctx.fillStyle = "#4e8fd0";
@@ -6931,6 +7017,34 @@
       ctx.beginPath();
       ctx.ellipse(cx, cy + size * 0.7, size, 4, 0, 0, Math.PI * 2);
       ctx.fill();
+      if (spriteReady(WORLD_SPRITES.enemy)) {
+        const drawSize = tank || armored ? 44 : runner || swarm ? 32 : 38;
+        const filters = {
+          tank: "saturate(.72) brightness(.78)",
+          runner: "hue-rotate(22deg) saturate(1.3) brightness(1.12)",
+          armored: "hue-rotate(165deg) saturate(.55) brightness(1.05)",
+          swarm: "hue-rotate(325deg) saturate(1.25)",
+          saboteur: "hue-rotate(255deg) saturate(1.2)",
+          breacher: "hue-rotate(35deg) saturate(1.25)",
+          disperser: "hue-rotate(275deg) saturate(.9)"
+        };
+        ctx.save();
+        ctx.filter = filters[enemy.kind] || "none";
+        ctx.drawImage(WORLD_SPRITES.enemy, cx - drawSize / 2, cy - drawSize / 2 - 2 + bob, drawSize, drawSize);
+        ctx.restore();
+        if (enemy.stunnedFor > 0) {
+          ctx.fillStyle = "#bff3ff";
+          ctx.font = "bold 10px ui-monospace, monospace";
+          ctx.textAlign = "center";
+          ctx.fillText("✦", cx, cy - drawSize / 2 - 7 + bob);
+        }
+        const hpRatio = clamp(enemy.hp / enemy.maxHp, 0, 1);
+        ctx.fillStyle = "#28100f";
+        ctx.fillRect(cx - 12, cy - drawSize / 2 - 4 + bob, 24, 4);
+        ctx.fillStyle = hpRatio > 0.5 ? "#e16764" : "#f0a05d";
+        ctx.fillRect(cx - 11, cy - drawSize / 2 - 3 + bob, 22 * hpRatio, 2);
+        return;
+      }
       ctx.fillStyle = armored ? "#485b68" : saboteur ? "#71477c" : breacher ? "#8b522f" : disperser ? "#725988" : swarm ? "#a5475a" : tank ? "#743f45" : runner ? "#9b4f68" : "#87464c";
       ctx.fillRect(cx - size / 2, cy - size / 2 + bob, size, size);
       ctx.fillStyle = armored ? "#8299a2" : saboteur ? "#bd78c5" : breacher ? "#cf8043" : disperser ? "#a989c4" : tank ? "#a76359" : "#bd6b62";
