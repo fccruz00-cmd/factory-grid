@@ -1858,6 +1858,629 @@
       body.desktop-edition #actions { bottom: 12px; }
       body.desktop-edition #modeHint { bottom: 76px; }
     }
+
+    /* Industrial control interface */
+    :root {
+      --ink: #edf3ef;
+      --muted: #95a39c;
+      --panel: rgba(16, 23, 21, .94);
+      --panel-2: rgba(23, 32, 29, .97);
+      --line: rgba(205, 222, 213, .16);
+      --line-strong: rgba(205, 222, 213, .28);
+      --accent: #f1b45f;
+      --accent-soft: rgba(241, 180, 95, .12);
+      --good: #77d3a2;
+      --bad: #ef776f;
+      --blue: #73b5d1;
+      --input: #78bad5;
+      --output: #efc76f;
+      --shadow: rgba(2, 7, 5, .48);
+    }
+
+    html,
+    body {
+      background: #0c1210;
+      color: var(--ink);
+      font-family: "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, sans-serif;
+      font-feature-settings: "tnum" 1, "ss01" 1;
+    }
+
+    .ui-icon {
+      width: 20px;
+      height: 20px;
+      display: block;
+      overflow: visible;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.75;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      pointer-events: none;
+    }
+
+    button {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(22, 31, 28, .96);
+      color: #dce6e0;
+      box-shadow: 0 6px 18px rgba(1, 5, 3, .22);
+      transition: border-color .15s ease, background-color .15s ease, color .15s ease, transform .1s ease;
+    }
+
+    button:active,
+    button.pressed {
+      transform: translateY(1px);
+      background: #222f2b;
+      box-shadow: 0 2px 8px rgba(1, 5, 3, .24);
+      filter: none;
+    }
+
+    button:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    button:disabled { opacity: .36; }
+
+    .logo,
+    .pill,
+    #objective,
+    #selectionInfo {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      box-shadow: 0 10px 26px var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    .logo {
+      position: relative;
+      padding-left: 15px;
+      border-radius: 10px;
+      color: #f4f7f5;
+      font-size: 12px;
+      font-weight: 720;
+      letter-spacing: 1.4px;
+    }
+
+    .logo::before {
+      content: "";
+      position: absolute;
+      top: 9px;
+      bottom: 9px;
+      left: 0;
+      width: 3px;
+      border-radius: 0 2px 2px 0;
+      background: var(--accent);
+    }
+
+    .logo small {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 7px;
+      font-weight: 650;
+      letter-spacing: 1.25px;
+    }
+
+    #statPills {
+      gap: 0;
+      padding: 4px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--panel);
+      box-shadow: 0 10px 26px var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    .pill {
+      position: relative;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      box-shadow: none;
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: .2px;
+    }
+
+    .pill + .pill::before {
+      content: "";
+      position: absolute;
+      top: 7px;
+      bottom: 7px;
+      left: 0;
+      width: 1px;
+      background: var(--line);
+    }
+
+    .pill strong {
+      margin-left: 3px;
+      color: #f4f7f5;
+      font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+      font-weight: 700;
+    }
+
+    .pill.rate strong { color: var(--good); }
+
+    .top-actions {
+      gap: 5px;
+      padding: 4px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--panel);
+      box-shadow: 0 10px 26px var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    .icon-btn {
+      width: 52px;
+      height: 44px;
+      gap: 3px;
+      border-color: transparent;
+      border-radius: 7px;
+      background: transparent;
+      box-shadow: none;
+      color: #b8c5be;
+    }
+
+    .icon-btn .icon-glyph {
+      width: 17px;
+      height: 17px;
+      margin: auto;
+    }
+
+    .icon-label {
+      margin: 0;
+      color: var(--muted);
+      font-size: 6px;
+      font-weight: 750;
+      letter-spacing: .55px;
+    }
+
+    #buildModeBtn > kbd {
+      position: absolute;
+      top: 3px;
+      right: 4px;
+      color: #78877f;
+      font: 700 6px/1 ui-monospace, monospace;
+    }
+
+    #buildModeBtn.active {
+      border-color: rgba(241, 180, 95, .42);
+      background: var(--accent-soft);
+      color: var(--accent);
+      box-shadow: none;
+    }
+
+    #buildModeBtn.active .icon-label { color: var(--accent); }
+
+    .tech-badge {
+      right: -5px;
+      top: -7px;
+      min-width: 18px;
+      height: 18px;
+      border: 2px solid #111916;
+      background: #367c92;
+      font: 700 7px/1 ui-monospace, monospace;
+      box-shadow: none;
+    }
+
+    #coreBadge { background: #9a6c35; }
+
+    #objective,
+    #selectionInfo {
+      position: relative;
+      padding: 12px 14px 13px 16px;
+      border-radius: 10px;
+      color: #bec9c3;
+      font-size: 9px;
+      line-height: 1.5;
+    }
+
+    #objective::before,
+    #selectionInfo::before {
+      content: "";
+      position: absolute;
+      top: 12px;
+      bottom: 12px;
+      left: 0;
+      width: 2px;
+      background: var(--accent);
+    }
+
+    #selectionInfo::before { background: var(--blue); }
+
+    #objective b,
+    #selectionInfo b {
+      margin-bottom: 5px;
+      color: #f0f4f2;
+      font-size: 8px;
+      font-weight: 750;
+      letter-spacing: 1.15px;
+    }
+
+    #defenseBtn,
+    #pauseWaveBtn {
+      border-color: var(--line);
+      border-radius: 9px;
+      background: var(--panel);
+      box-shadow: 0 10px 26px var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    #defenseBtn .defense-chip {
+      border-right-color: var(--line);
+      color: var(--muted);
+      font-size: 6px;
+      font-weight: 700;
+      letter-spacing: .85px;
+    }
+
+    #defenseBtn strong {
+      color: #dfe7e2;
+      font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+      font-size: 8px;
+    }
+
+    #defenseBtn.active-wave {
+      border-color: rgba(239, 119, 111, .5);
+      background: rgba(50, 25, 24, .96);
+    }
+
+    #defenseBtn.paused-wave {
+      border-color: rgba(115, 181, 209, .48);
+      background: rgba(21, 38, 44, .96);
+    }
+
+    #pauseWaveBtn {
+      color: #d8e2dc;
+      font-weight: 700;
+    }
+
+    #pauseWaveBtn.paused {
+      border-color: rgba(115, 181, 209, .55);
+      background: rgba(25, 48, 56, .96);
+      box-shadow: 0 10px 26px var(--shadow);
+    }
+
+    #buildBar,
+    #abilityBar,
+    #actions,
+    #buildDock {
+      border-color: var(--line);
+      background: var(--panel);
+      box-shadow: 0 14px 34px var(--shadow);
+      backdrop-filter: blur(12px);
+    }
+
+    .tool {
+      border-color: transparent;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, .025);
+      box-shadow: none;
+      color: #d8e1dc;
+    }
+
+    .tool.selected {
+      border-color: rgba(241, 180, 95, .5);
+      background: var(--accent-soft);
+      box-shadow: inset 3px 0 0 var(--accent);
+    }
+
+    .tool .tool-icon {
+      width: 28px;
+      height: 28px;
+      margin: 0 auto 3px;
+      padding: 5px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: rgba(255, 255, 255, .025);
+      color: #aab8b1;
+    }
+
+    .tool.selected .tool-icon {
+      border-color: rgba(241, 180, 95, .35);
+      color: var(--accent);
+    }
+
+    .tool .tool-name { font-weight: 700; }
+    .tool .tool-cost { color: var(--accent); font-family: ui-monospace, monospace; }
+    .tool .tool-recipe { color: #84968d; }
+
+    .tool .lock {
+      border-radius: 7px;
+      background: rgba(9, 14, 12, .86);
+      color: #87958e;
+      font-weight: 700;
+    }
+
+    .tool.locked:disabled { opacity: .56; }
+
+    .tool-hotkey {
+      border-color: var(--line-strong) !important;
+      border-radius: 5px !important;
+      background: #17211e !important;
+      color: #aebbb4 !important;
+      box-shadow: none !important;
+    }
+
+    #abilityBar {
+      gap: 2px;
+      padding: 4px;
+      border-radius: 10px;
+    }
+
+    .ability-btn {
+      width: 60px;
+      height: 52px;
+      gap: 2px;
+      border-color: transparent;
+      background: transparent;
+      box-shadow: none;
+    }
+
+    .ability-btn .ability-icon {
+      width: 18px;
+      height: 18px;
+      color: #a9b8b0;
+    }
+
+    .ability-btn .ability-key {
+      color: #899a91;
+      font: 700 6px/1 ui-monospace, monospace;
+      letter-spacing: .25px;
+    }
+
+    .ability-btn.ready {
+      border-color: transparent;
+      background: rgba(119, 211, 162, .07);
+    }
+
+    .ability-btn.ready .ability-icon { color: var(--good); }
+
+    .ability-btn .ability-cooldown {
+      min-height: 14px;
+      background: rgba(7, 11, 9, .82);
+      color: var(--accent);
+      font: 700 7px/1 ui-monospace, monospace;
+    }
+
+    #actions {
+      border-radius: 11px;
+    }
+
+    .action-btn {
+      border-color: var(--line);
+      background: rgba(255, 255, 255, .025);
+      box-shadow: none;
+      color: #b9c6bf;
+    }
+
+    .action-btn .big {
+      width: 19px;
+      height: 19px;
+      margin: 0 auto 4px;
+    }
+
+    #modeHint,
+    #zoomIndicator,
+    #toast {
+      border-color: var(--line);
+      background: rgba(12, 18, 16, .9);
+      color: #a9b7b0;
+      box-shadow: 0 8px 24px var(--shadow);
+      backdrop-filter: blur(8px);
+    }
+
+    #modeHint {
+      border-radius: 8px;
+      font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+      font-size: 7px;
+      letter-spacing: .2px;
+    }
+
+    #modalOverlay {
+      background: rgba(5, 10, 8, .76);
+      backdrop-filter: blur(7px) saturate(.75);
+    }
+
+    .modal-card {
+      border: 1px solid var(--line-strong);
+      border-radius: 13px;
+      background: #121b18;
+      box-shadow: 0 30px 80px rgba(0, 0, 0, .58);
+    }
+
+    #modalTitle {
+      color: #f2f5f3;
+      font-size: 17px;
+      font-weight: 720;
+      letter-spacing: -.2px;
+    }
+
+    #modalBody { color: #bcc8c1; }
+
+    #modalBody .box,
+    .contract-card,
+    .recipe-machine-summary,
+    .recipe-chain-guide,
+    .recipe-card,
+    .prestige-currency,
+    .prestige-total,
+    .prestige-explainer,
+    .prestige-branch,
+    .prestige-capstone,
+    .tech-points,
+    .tech-source,
+    .tech-viewport,
+    .tech-details {
+      border-color: var(--line);
+      border-radius: 8px;
+      background: #17211e;
+      box-shadow: none;
+    }
+
+    .modal-action,
+    .contract-select,
+    .recipe-select,
+    .tech-buy,
+    .prestige-node,
+    .tech-map-node {
+      border-color: var(--line);
+      background: #1b2723;
+      box-shadow: none;
+    }
+
+    .tech-map-node {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #1a2521;
+      box-shadow: 0 8px 20px rgba(2, 7, 5, .24);
+    }
+
+    .tech-map-node.blocked { opacity: .48; filter: saturate(.55); }
+
+    .tech-map-node.available {
+      border-color: rgba(241, 180, 95, .56);
+      background: #2d2b20;
+      box-shadow: inset 3px 0 0 var(--accent), 0 8px 20px rgba(2, 7, 5, .24);
+    }
+
+    .tech-map-node.unlocked {
+      border-color: rgba(119, 211, 162, .48);
+      background: #1b3027;
+    }
+
+    .tech-map-node.selected {
+      outline: none;
+      filter: none;
+      box-shadow: inset 3px 0 0 var(--accent), 0 0 0 1px rgba(241, 180, 95, .28), 0 10px 24px rgba(2, 7, 5, .3);
+    }
+
+    .tech-node-icon {
+      border: 1px solid var(--line-strong);
+      background: #17211e;
+      box-shadow: none;
+    }
+
+    .tech-map-node.available .tech-node-icon {
+      border-color: rgba(241, 180, 95, .5);
+      color: var(--accent);
+    }
+
+    .tech-map-node.unlocked .tech-node-icon {
+      border-color: rgba(119, 211, 162, .45);
+      color: var(--good);
+    }
+
+    .tech-map {
+      background-color: #0f1714;
+      background-image:
+        linear-gradient(rgba(184, 205, 194, .045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(184, 205, 194, .045) 1px, transparent 1px),
+        linear-gradient(rgba(184, 205, 194, .018) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(184, 205, 194, .018) 1px, transparent 1px);
+    }
+
+    @media (min-width: 800px) {
+      body.desktop-edition .top-row { gap: 8px; }
+
+      body.desktop-edition .logo {
+        min-width: var(--desktop-left);
+        padding: 11px 14px 10px 16px;
+        font-size: 12px;
+      }
+
+      body.desktop-edition .pill { padding: 7px 10px; font-size: 9px; }
+      body.desktop-edition .top-actions { gap: 3px; }
+
+      body.desktop-edition .icon-btn {
+        width: 52px;
+        height: 44px;
+        border-radius: 7px;
+      }
+
+      body.desktop-edition #buildDock {
+        padding: 10px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: var(--panel);
+        box-shadow: 0 16px 42px var(--shadow);
+      }
+
+      body.desktop-edition #buildDock::before {
+        margin: 0 0 8px;
+        padding: 1px 3px 9px;
+        border-bottom: 1px solid var(--line);
+        color: #9dacA4;
+        font-size: 7px;
+        font-weight: 700;
+        letter-spacing: .7px;
+      }
+
+      body.desktop-edition #buildBar { gap: 5px; }
+
+      body.desktop-edition .tool {
+        min-height: 70px;
+        grid-template-columns: 40px minmax(0, 1fr) auto;
+        column-gap: 10px;
+        padding: 8px 9px 8px 12px;
+      }
+
+      body.desktop-edition .tool .tool-icon {
+        width: 38px;
+        height: 38px;
+        margin: 0;
+        padding: 8px;
+        border-radius: 7px;
+      }
+
+      body.desktop-edition .tool .tool-name { font-size: 9px; }
+      body.desktop-edition .tool .tool-recipe { font-size: 7px; }
+      body.desktop-edition .tool .tool-cost { font-size: 8px; }
+
+      body.desktop-edition #actions {
+        border: 1px solid var(--line);
+        border-radius: 11px;
+        background: var(--panel);
+        box-shadow: 0 14px 34px var(--shadow);
+      }
+
+      body.desktop-edition button:hover:not(:disabled) {
+        border-color: var(--line-strong);
+        background-color: rgba(37, 50, 45, .98);
+        filter: none;
+      }
+
+      body.desktop-edition .icon-btn:hover:not(:disabled) { background-color: rgba(255, 255, 255, .045); }
+      body.desktop-edition .tool.selected:hover { border-color: rgba(241, 180, 95, .58); }
+    }
+
+    @media (max-width: 760px) {
+      #statPills { gap: 2px; padding: 3px; }
+      .pill + .pill::before { display: none; }
+      .top-actions { padding: 3px; }
+      .icon-label { display: none; }
+      #buildModeBtn > kbd { display: none; }
+      .icon-btn .icon-glyph { width: 19px; height: 19px; }
+
+      #objective,
+      #selectionInfo { padding: 9px 11px 10px 14px; }
+
+      #buildBar {
+        border-color: var(--line);
+        border-radius: 10px;
+        background: var(--panel);
+      }
+
+      #buildToggleBtn {
+        border: 1px solid rgba(241, 180, 95, .42);
+        border-radius: 10px;
+        background: rgba(31, 38, 31, .96);
+        color: var(--accent);
+        box-shadow: 0 10px 26px var(--shadow);
+      }
+    }
   </style>
 </head>
 <body class="desktop-edition">
@@ -1865,7 +2488,7 @@
 
   <div id="hud">
     <div class="top-row">
-      <div class="logo">FACTORY GRID<small>EDIÇÃO DESKTOP</small></div>
+      <div class="logo">FACTORY GRID<small>CONTROLE INDUSTRIAL</small></div>
       <div id="statPills">
         <div class="pill">Cr <strong id="creditsText">0</strong></div>
         <div class="pill">Tier <strong id="tierText">1</strong></div>
@@ -1873,11 +2496,11 @@
         <div class="pill optional">Núcleo <strong id="coreText">0</strong></div>
       </div>
       <div class="top-actions">
-        <button id="buildModeBtn" class="icon-btn" aria-label="Abrir modo de construção, tecla B" aria-pressed="false"><span class="icon-glyph">⚒</span><span class="icon-label">BUILD · B</span></button>
-        <button id="techBtn" class="icon-btn" aria-label="Árvore tecnológica"><span class="icon-glyph">⚗</span><span class="icon-label">TEC</span><small id="researchBadge" class="tech-badge">0</small></button>
-        <button id="prestigeBtn" class="icon-btn" aria-label="Árvore de prestígio, tecla P"><span class="icon-glyph">✦</span><span class="icon-label">PREST · P</span><small id="coreBadge" class="tech-badge">0</small></button>
-        <button id="helpBtn" class="icon-btn" aria-label="Como jogar"><span class="icon-glyph">?</span><span class="icon-label">AJUDA</span></button>
-        <button id="menuBtn" class="icon-btn" aria-label="Menu"><span class="icon-glyph">☰</span><span class="icon-label">MENU</span></button>
+        <button id="buildModeBtn" class="icon-btn" aria-label="Abrir modo de construção, tecla B" aria-pressed="false"><svg class="icon-glyph ui-icon" aria-hidden="true"><use href="assets/ui/icons.svg#build"></use></svg><span class="icon-label">CONSTRUIR</span><kbd>B</kbd></button>
+        <button id="techBtn" class="icon-btn" aria-label="Árvore tecnológica"><svg class="icon-glyph ui-icon" aria-hidden="true"><use href="assets/ui/icons.svg#tech"></use></svg><span class="icon-label">PESQUISA</span><small id="researchBadge" class="tech-badge">0</small></button>
+        <button id="prestigeBtn" class="icon-btn" aria-label="Árvore de prestígio, tecla P"><svg class="icon-glyph ui-icon" aria-hidden="true"><use href="assets/ui/icons.svg#prestige"></use></svg><span class="icon-label">NÚCLEOS</span><small id="coreBadge" class="tech-badge">0</small></button>
+        <button id="helpBtn" class="icon-btn" aria-label="Como jogar"><svg class="icon-glyph ui-icon" aria-hidden="true"><use href="assets/ui/icons.svg#help"></use></svg><span class="icon-label">AJUDA</span></button>
+        <button id="menuBtn" class="icon-btn" aria-label="Menu"><svg class="icon-glyph ui-icon" aria-hidden="true"><use href="assets/ui/icons.svg#menu"></use></svg><span class="icon-label">MENU</span></button>
       </div>
     </div>
     <div id="sidePanel">
@@ -1906,52 +2529,52 @@
       <button id="toolPrevBtn" class="tool-page-btn" aria-label="Ferramentas anteriores" disabled><span>◀</span><small>VOLTAR</small></button>
       <div id="buildBar" aria-label="Ferramentas de construção">
         <button class="tool" data-tool="miner">
-          <kbd class="tool-hotkey">1</kbd><span class="tool-icon">⛏</span><span class="tool-name">Minerador</span><span class="tool-recipe">Jazida → Minério</span><span class="tool-cost">30 Cr</span><span class="lock">Tier 1</span>
+          <kbd class="tool-hotkey">1</kbd><svg class="tool-icon ui-icon" aria-hidden="true"><use href="assets/ui/icons.svg#miner"></use></svg><span class="tool-name">Minerador</span><span class="tool-recipe">Jazida → Minério</span><span class="tool-cost">30 Cr</span><span class="lock">Tier 1</span>
         </button>
         <button class="tool" data-tool="belt">
-          <kbd class="tool-hotkey">2</kbd><span class="tool-icon">➜</span><span class="tool-name">Esteira</span><span class="tool-recipe">Move na seta</span><span class="tool-cost">3 Cr</span><span class="lock">Tier 1</span>
+          <kbd class="tool-hotkey">2</kbd><svg class="tool-icon ui-icon" aria-hidden="true"><use href="assets/ui/icons.svg#belt"></use></svg><span class="tool-name">Esteira</span><span class="tool-recipe">Move na seta</span><span class="tool-cost">3 Cr</span><span class="lock">Tier 1</span>
         </button>
         <button class="tool" data-tool="furnace">
-          <kbd class="tool-hotkey">3</kbd><span class="tool-icon">♨</span><span class="tool-name">Fornalha</span><span class="tool-recipe">Placas básicas e ligas</span><span class="tool-cost">55 Cr</span><span class="lock">Tier 2</span>
+          <kbd class="tool-hotkey">3</kbd><svg class="tool-icon ui-icon" aria-hidden="true"><use href="assets/ui/icons.svg#furnace"></use></svg><span class="tool-name">Fornalha</span><span class="tool-recipe">Placas básicas e ligas</span><span class="tool-cost">55 Cr</span><span class="lock">Tier 2</span>
         </button>
         <button class="tool" data-tool="assembler">
-          <kbd class="tool-hotkey">4</kbd><span class="tool-icon">◆</span><span class="tool-name">Montadora</span><span class="tool-recipe">Fio / Circuito / Balística</span><span class="tool-cost">75 Cr</span><span class="lock">Tier 2</span>
+          <kbd class="tool-hotkey">4</kbd><svg class="tool-icon ui-icon" aria-hidden="true"><use href="assets/ui/icons.svg#assembler"></use></svg><span class="tool-name">Montadora</span><span class="tool-recipe">Fio / Circuito / Balística</span><span class="tool-cost">75 Cr</span><span class="lock">Tier 2</span>
         </button>
         <button class="tool" data-tool="terminal">
-          <kbd class="tool-hotkey">O</kbd><span class="tool-icon">▣</span><span class="tool-name">Terminal de contratos</span><span class="tool-recipe">Entregas físicas por esteira</span><span class="tool-cost">350 Cr</span><span class="lock">Tecnologia</span>
+          <kbd class="tool-hotkey">O</kbd><svg class="tool-icon ui-icon" aria-hidden="true"><use href="assets/ui/icons.svg#terminal"></use></svg><span class="tool-name">Terminal de contratos</span><span class="tool-recipe">Entregas físicas por esteira</span><span class="tool-cost">350 Cr</span><span class="lock">Tecnologia</span>
         </button>
         <button class="tool" data-tool="splitter">
-          <kbd class="tool-hotkey">5</kbd><span class="tool-icon">⑂</span><span class="tool-name">Divisor</span><span class="tool-recipe">1 entrada → 2 saídas</span><span class="tool-cost">18 Cr</span><span class="lock">Tier 2</span>
+          <kbd class="tool-hotkey">5</kbd><svg class="tool-icon ui-icon" aria-hidden="true"><use href="assets/ui/icons.svg#splitter"></use></svg><span class="tool-name">Divisor</span><span class="tool-recipe">1 entrada → 2 saídas</span><span class="tool-cost">18 Cr</span><span class="lock">Tier 2</span>
         </button>
         <button class="tool" data-tool="underground">
-          <kbd class="tool-hotkey">6</kbd><span class="tool-icon">⌒</span><span class="tool-name">Túnel</span><span class="tool-recipe">Par IN/OUT • alcance 6–20</span><span class="tool-cost">24 Cr</span><span class="lock">Tier 2</span>
+          <kbd class="tool-hotkey">6</kbd><svg class="tool-icon ui-icon" aria-hidden="true"><use href="assets/ui/icons.svg#underground"></use></svg><span class="tool-name">Túnel</span><span class="tool-recipe">Par IN/OUT • alcance 6–20</span><span class="tool-cost">24 Cr</span><span class="lock">Tier 2</span>
         </button>
         <button class="tool" data-tool="merger">
-          <kbd class="tool-hotkey">7</kbd><span class="tool-icon">⋈</span><span class="tool-name">Combinador</span><span class="tool-recipe">2 entradas → 1 saída</span><span class="tool-cost">18 Cr</span><span class="lock">Tier 2</span>
+          <kbd class="tool-hotkey">7</kbd><svg class="tool-icon ui-icon" aria-hidden="true"><use href="assets/ui/icons.svg#merger"></use></svg><span class="tool-name">Combinador</span><span class="tool-recipe">2 entradas → 1 saída</span><span class="tool-cost">18 Cr</span><span class="lock">Tier 2</span>
         </button>
         <button class="tool" data-tool="wall">
-          <kbd class="tool-hotkey">8</kbd><span class="tool-icon">▥</span><span class="tool-name">Parede</span><span class="tool-recipe">Bloqueia e absorve dano</span><span class="tool-cost">12 Cr</span><span class="lock">Tier 2</span>
+          <kbd class="tool-hotkey">8</kbd><svg class="tool-icon ui-icon" aria-hidden="true"><use href="assets/ui/icons.svg#wall"></use></svg><span class="tool-name">Parede</span><span class="tool-recipe">Bloqueia e absorve dano</span><span class="tool-cost">12 Cr</span><span class="lock">Tier 2</span>
         </button>
         <button class="tool" data-tool="turret">
-          <kbd class="tool-hotkey">9</kbd><span class="tool-icon">⌖</span><span class="tool-name">Torreta</span><span class="tool-recipe">Alcance 4 • usa munição</span><span class="tool-cost">100 Cr</span><span class="lock">Tier 2</span>
+          <kbd class="tool-hotkey">9</kbd><svg class="tool-icon ui-icon" aria-hidden="true"><use href="assets/ui/icons.svg#turret"></use></svg><span class="tool-name">Torreta</span><span class="tool-recipe">Alcance 4 • usa munição</span><span class="tool-cost">100 Cr</span><span class="lock">Tier 2</span>
         </button>
         <button class="tool" data-tool="cannon">
-          <kbd class="tool-hotkey">V</kbd><span class="tool-icon">◉</span><span class="tool-name">Canhão automático</span><span class="tool-recipe">Explosão em área • usa Obus</span><span class="tool-cost">650 Cr</span><span class="lock">Tecnologia</span>
+          <kbd class="tool-hotkey">V</kbd><svg class="tool-icon ui-icon" aria-hidden="true"><use href="assets/ui/icons.svg#cannon"></use></svg><span class="tool-name">Canhão automático</span><span class="tool-recipe">Explosão em área • usa Obus</span><span class="tool-cost">650 Cr</span><span class="lock">Tecnologia</span>
         </button>
         <button class="tool" data-tool="railgun">
-          <kbd class="tool-hotkey">G</kbd><span class="tool-icon">⇥</span><span class="tool-name">Railgun</span><span class="tool-recipe">Longo alcance • perfura alvos</span><span class="tool-cost">1.500 Cr</span><span class="lock">Tecnologia</span>
+          <kbd class="tool-hotkey">G</kbd><svg class="tool-icon ui-icon" aria-hidden="true"><use href="assets/ui/icons.svg#railgun"></use></svg><span class="tool-name">Railgun</span><span class="tool-recipe">Longo alcance • perfura alvos</span><span class="tool-cost">1.500 Cr</span><span class="lock">Tecnologia</span>
         </button>
         <button class="tool" data-tool="beacon">
-          <kbd class="tool-hotkey">Q</kbd><span class="tool-icon">◉</span><span class="tool-name">Beacon industrial</span><span class="tool-recipe">Acelera máquinas próximas</span><span class="tool-cost">500 Cr</span><span class="lock">Prestígio</span>
+          <kbd class="tool-hotkey">Q</kbd><svg class="tool-icon ui-icon" aria-hidden="true"><use href="assets/ui/icons.svg#beacon"></use></svg><span class="tool-name">Beacon industrial</span><span class="tool-recipe">Acelera máquinas próximas</span><span class="tool-cost">500 Cr</span><span class="lock">Prestígio</span>
         </button>
         <button class="tool" data-tool="deepDrill">
-          <kbd class="tool-hotkey">E</kbd><span class="tool-icon">✦</span><span class="tool-name">Sonda profunda</span><span class="tool-recipe">Fe/Cu • expande no Prestígio</span><span class="tool-cost">700 Cr</span><span class="lock">Prestígio</span>
+          <kbd class="tool-hotkey">E</kbd><svg class="tool-icon ui-icon" aria-hidden="true"><use href="assets/ui/icons.svg#drill"></use></svg><span class="tool-name">Sonda profunda</span><span class="tool-recipe">Fe/Cu • expande no Prestígio</span><span class="tool-cost">700 Cr</span><span class="lock">Prestígio</span>
         </button>
         <button class="tool" data-tool="repairStation">
-          <kbd class="tool-hotkey">Z</kbd><span class="tool-icon">✚</span><span class="tool-name">Estação de reparo</span><span class="tool-recipe">Regenera construções em combate</span><span class="tool-cost">600 Cr</span><span class="lock">Prestígio</span>
+          <kbd class="tool-hotkey">Z</kbd><svg class="tool-icon ui-icon" aria-hidden="true"><use href="assets/ui/icons.svg#repair-station"></use></svg><span class="tool-name">Estação de reparo</span><span class="tool-recipe">Regenera construções em combate</span><span class="tool-cost">600 Cr</span><span class="lock">Prestígio</span>
         </button>
         <button class="tool" data-tool="tesla">
-          <kbd class="tool-hotkey">X</kbd><span class="tool-icon">ϟ</span><span class="tool-name">Torre Tesla</span><span class="tool-recipe">Dano em cadeia • usa circuitos</span><span class="tool-cost">900 Cr</span><span class="lock">Prestígio</span>
+          <kbd class="tool-hotkey">X</kbd><svg class="tool-icon ui-icon" aria-hidden="true"><use href="assets/ui/icons.svg#tesla"></use></svg><span class="tool-name">Torre Tesla</span><span class="tool-recipe">Dano em cadeia • usa circuitos</span><span class="tool-cost">900 Cr</span><span class="lock">Prestígio</span>
         </button>
       </div>
       <button id="toolNextBtn" class="tool-page-btn" aria-label="Mais ferramentas"><span>▶</span><small>MAIS</small></button>
@@ -1972,21 +2595,21 @@
       </button>
 
       <div id="actions" aria-label="Ações de construção">
-        <button id="rotateBtn" class="action-btn"><span class="big">↻</span><span id="rotateLabel">Leste</span></button>
-        <button id="invertBtn" class="action-btn"><span class="big">⇆</span><span id="invertLabel">Inverter</span></button>
-        <button id="recipeBtn" class="action-btn"><span class="big">▤</span><span id="configLabel">Receitas · C</span></button>
-        <button id="deleteBtn" class="action-btn"><span class="big">⌫</span>Remover</button>
-        <button id="upgradeBtn" class="action-btn"><span class="big">⬆</span><span id="upgradeLabel">Selecione para melhorar</span></button>
+        <button id="rotateBtn" class="action-btn"><svg class="big ui-icon" aria-hidden="true"><use href="assets/ui/icons.svg#rotate"></use></svg><span id="rotateLabel">Leste</span></button>
+        <button id="invertBtn" class="action-btn"><svg class="big ui-icon" aria-hidden="true"><use href="assets/ui/icons.svg#invert"></use></svg><span id="invertLabel">Inverter</span></button>
+        <button id="recipeBtn" class="action-btn"><svg class="big ui-icon" aria-hidden="true"><use href="assets/ui/icons.svg#recipe"></use></svg><span id="configLabel">Receitas · C</span></button>
+        <button id="deleteBtn" class="action-btn"><svg class="big ui-icon" aria-hidden="true"><use href="assets/ui/icons.svg#delete"></use></svg>Remover</button>
+        <button id="upgradeBtn" class="action-btn"><svg class="big ui-icon" aria-hidden="true"><use href="assets/ui/icons.svg#upgrade"></use></svg><span id="upgradeLabel">Selecione para melhorar</span></button>
         <button id="cancelBtn" class="action-btn"><span id="cancelLabel">Limpar seleção</span></button>
       </div>
     </div>
   </div>
   <div id="abilityBar" aria-label="Operações de campo">
-    <button class="ability-btn" data-ability="overclock"><span class="ability-icon">⚡</span><span class="ability-key">Y • TURBO</span><span class="ability-cooldown"></span></button>
-    <button class="ability-btn" data-ability="repair"><span class="ability-icon">✚</span><span class="ability-key">J • REPARO</span><span class="ability-cooldown"></span></button>
-    <button class="ability-btn" data-ability="emp"><span class="ability-icon">◎</span><span class="ability-key">K • EMP</span><span class="ability-cooldown"></span></button>
-    <button class="ability-btn" data-ability="scanner"><span class="ability-icon">⌁</span><span class="ability-key">L • SCAN</span><span class="ability-cooldown"></span></button>
-    <button class="ability-btn" data-ability="recall"><span class="ability-icon">⌂</span><span class="ability-key">N • HUB</span><span class="ability-cooldown"></span></button>
+    <button class="ability-btn" data-ability="overclock"><svg class="ability-icon ui-icon" aria-hidden="true"><use href="assets/ui/icons.svg#overclock"></use></svg><span class="ability-key">Y • TURBO</span><span class="ability-cooldown"></span></button>
+    <button class="ability-btn" data-ability="repair"><svg class="ability-icon ui-icon" aria-hidden="true"><use href="assets/ui/icons.svg#repair"></use></svg><span class="ability-key">J • REPARO</span><span class="ability-cooldown"></span></button>
+    <button class="ability-btn" data-ability="emp"><svg class="ability-icon ui-icon" aria-hidden="true"><use href="assets/ui/icons.svg#emp"></use></svg><span class="ability-key">K • EMP</span><span class="ability-cooldown"></span></button>
+    <button class="ability-btn" data-ability="scanner"><svg class="ability-icon ui-icon" aria-hidden="true"><use href="assets/ui/icons.svg#scanner"></use></svg><span class="ability-key">L • SCAN</span><span class="ability-cooldown"></span></button>
+    <button class="ability-btn" data-ability="recall"><svg class="ability-icon ui-icon" aria-hidden="true"><use href="assets/ui/icons.svg#home"></use></svg><span class="ability-key">N • HUB</span><span class="ability-cooldown"></span></button>
   </div>
   <div id="toast" role="status" aria-live="polite"></div>
 
