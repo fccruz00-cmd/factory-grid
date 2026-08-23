@@ -2070,9 +2070,7 @@
     ));
 
     const WORLD_SPRITE_URLS = Object.freeze({
-      grass: "assets/world/grass.png",
-      water: "assets/world/water.png",
-      road: "assets/world/road.png",
+      coast: "assets/world/coast_tileset.png",
       tree: "assets/world/tree.png",
       rock: "assets/world/rock.png",
       ironOre: "assets/world/deposit_iron.png",
@@ -2093,6 +2091,12 @@
         return [key, image];
       })
     ));
+    const ROAD_SPRITES = Object.freeze(Array.from({ length: 17 }, (_, index) => {
+      const image = new Image();
+      image.decoding = "async";
+      image.src = `assets/world/road_tile_${index}.png`;
+      return image;
+    }));
 
     const ITEMS = Object.freeze({
       ironOre:   { label: "Minério de ferro", short: "Fe", color: "#9aa9a4", edge: "#596662", deposit: "rgba(103,119,114,.22)", value: 2, research: 0, raw: true },
@@ -5885,30 +5889,293 @@
       return Boolean(image && image.complete && image.naturalWidth);
     }
 
-    function drawTileTexture(image, px, py, noise, alpha = 1) {
-      if (!spriteReady(image)) return false;
-      const flipX = noise > 0.5;
-      const flipY = noise > 0.78 || noise < 0.16;
-      ctx.save();
-      ctx.globalAlpha = alpha;
-      ctx.translate(px + (flipX ? TILE : 0), py + (flipY ? TILE : 0));
-      ctx.scale(flipX ? -1 : 1, flipY ? -1 : 1);
-      ctx.drawImage(image, 0, 0, TILE, TILE);
-      ctx.restore();
-      return true;
+    let grassGroundGradient = "#70a84a";
+    let waterGroundGradient = "#087c99";
+    let roadGroundGradient = "#ad7b43";
+
+    const COAST_TILE_SIZE = 32;
+    const ROAD_TILE_BY_MASK = Object.freeze({
+      1: 2,
+      2: 3,
+      3: 10,
+      4: 4,
+      5: 7,
+      6: 8,
+      7: 14,
+      8: 5,
+      9: 11,
+      10: 6,
+      12: 9,
+      13: 13,
+      14: 12,
+      15: 16
+    });
+    const COAST_TILES = Object.freeze({
+      "0000": { x: 64, y: 64 },
+      "0001": { x: 96, y: 64 },
+      "0010": { x: 64, y: 128 },
+      "0011": { x: 32, y: 128 },
+      "0100": { x: 96, y: 64, flipY: true },
+      "0101": { x: 96, y: 96 },
+      "0111": { x: 96, y: 192 },
+      "1000": { x: 96, y: 64, flipX: true, flipY: true },
+      "1010": { x: 32, y: 0 },
+      "1011": { x: 0, y: 128 },
+      "1100": { x: 32, y: 128, flipY: true },
+      "1101": { x: 0, y: 128, flipX: true, flipY: true },
+      "1110": { x: 0, y: 128, flipY: true },
+      "1111": { x: 0, y: 160 }
+    });
+
+    function landAt(x, y) {
+      return terrainAt(x, y) !== 2 ? 1 : 0;
     }
 
-    function drawWaterEdge(x, y, px, py) {
-      const edgeColor = "rgba(181,206,91,.62)";
-      const shadowColor = "rgba(11,67,77,.48)";
-      ctx.fillStyle = edgeColor;
-      if (y === 0 || terrain[y - 1][x] !== 2) ctx.fillRect(px, py, TILE, 2);
-      if (x === WORLD_W - 1 || terrain[y][x + 1] !== 2) ctx.fillRect(px + TILE - 2, py, 2, TILE);
-      if (y === WORLD_H - 1 || terrain[y + 1][x] !== 2) ctx.fillRect(px, py + TILE - 2, TILE, 2);
-      if (x === 0 || terrain[y][x - 1] !== 2) ctx.fillRect(px, py, 2, TILE);
-      ctx.fillStyle = shadowColor;
-      if (y > 0 && terrain[y - 1][x] !== 2) ctx.fillRect(px, py + 2, TILE, 1);
-      if (x > 0 && terrain[y][x - 1] !== 2) ctx.fillRect(px + 2, py, 1, TILE);
+    function coastCornerKey(x, y) {
+      const current = landAt(x, y);
+      const corners = [
+        current + landAt(x - 1, y) + landAt(x, y - 1) + landAt(x - 1, y - 1),
+        current + landAt(x + 1, y) + landAt(x, y - 1) + landAt(x + 1, y - 1),
+        current + landAt(x - 1, y) + landAt(x, y + 1) + landAt(x - 1, y + 1),
+        current + landAt(x + 1, y) + landAt(x, y + 1) + landAt(x + 1, y + 1)
+      ];
+      return corners.map((count) => count >= 2 ? "1" : "0").join("");
+    }
+
+    function drawCoastTile(x, y, px, py) {
+      const image = WORLD_SPRITES.coast;
+      if (!spriteReady(image)) return null;
+      let key = coastCornerKey(x, y);
+      if (key === "1001" || key === "0110") key = landAt(x, y) ? "1111" : "0000";
+      if (key === "0000" || key === "1111") return null;
+      const tile = COAST_TILES[key];
+      if (!tile) return null;
+      ctx.save();
+      ctx.translate(px + (tile.flipX ? TILE : 0), py + (tile.flipY ? TILE : 0));
+      ctx.scale(tile.flipX ? -1 : 1, tile.flipY ? -1 : 1);
+      ctx.drawImage(image, tile.x, tile.y, COAST_TILE_SIZE, COAST_TILE_SIZE, 0, 0, TILE, TILE);
+      ctx.restore();
+      return key;
+    }
+
+    function terrainAt(x, y) {
+      if (x < 0 || y < 0 || x >= WORLD_W || y >= WORLD_H) return 2;
+      return terrain[y][x];
+    }
+
+    function drawGrassGround(x, y, px, py, noise) {
+      ctx.fillStyle = grassGroundGradient;
+      ctx.fillRect(px, py, TILE, TILE);
+
+      const tuftCount = noise > 0.72 ? 3 : noise > 0.28 ? 2 : 1;
+      for (let i = 0; i < tuftCount; i++) {
+        const detail = hash2(x * 17 + i * 13, y * 19 + i * 7);
+        const tx = px + 6 + Math.floor(detail * 27);
+        const ty = py + 8 + Math.floor(hash2(x * 23 + i, y * 29 + i * 5) * 25);
+        ctx.strokeStyle = detail > 0.48 ? "rgba(38,119,50,.42)" : "rgba(176,211,74,.40)";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(tx, ty + 3);
+        ctx.lineTo(tx - 1, ty);
+        ctx.moveTo(tx, ty + 3);
+        ctx.lineTo(tx + 2, ty - 1);
+        ctx.stroke();
+      }
+
+      if (hash2(x + 101, y + 233) > 0.92) {
+        const fx = px + 9 + Math.floor(hash2(x + 55, y + 71) * 21);
+        const fy = py + 9 + Math.floor(hash2(x + 81, y + 37) * 20);
+        ctx.fillStyle = hash2(x + 12, y + 98) > 0.5 ? "#ffe88a" : "#f5d4ef";
+        ctx.fillRect(fx - 1, fy, 3, 1);
+        ctx.fillRect(fx, fy - 1, 1, 3);
+        ctx.fillStyle = "#f4b84f";
+        ctx.fillRect(fx, fy, 1, 1);
+      }
+    }
+
+    function drawWaterGround(x, y, px, py, time, paintBase = true) {
+      if (paintBase) {
+        ctx.fillStyle = waterGroundGradient;
+        ctx.fillRect(px, py, TILE, TILE);
+      }
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(px, py, TILE, TILE);
+      ctx.clip();
+      ctx.lineCap = "round";
+      for (let band = -1; band <= 3; band++) {
+        const baseY = Math.floor(py / 14) * 14 + band * 14;
+        ctx.strokeStyle = band % 2 === 0 ? "rgba(120,229,236,.34)" : "rgba(25,154,190,.42)";
+        ctx.lineWidth = band % 2 === 0 ? 1.4 : 1;
+        ctx.beginPath();
+        for (let gx = px - 2; gx <= px + TILE + 2; gx += 2) {
+          const gy = baseY + Math.sin((gx + time * 8) * 0.13 + baseY * 0.055) * 2.2;
+          if (gx === px - 2) ctx.moveTo(gx, gy);
+          else ctx.lineTo(gx, gy);
+        }
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      const sparkle = hash2(x + 311, y + 127);
+      if (sparkle > 0.8) {
+        const sx = px + 8 + Math.floor(sparkle * 19);
+        const sy = py + 8 + Math.floor(hash2(x + 91, y + 43) * 22);
+        ctx.fillStyle = `rgba(211,255,248,${0.28 + Math.sin(time * 2.4 + x) * 0.12})`;
+        ctx.fillRect(sx - 3, sy, 7, 1);
+        ctx.fillRect(sx, sy - 1, 1, 3);
+      }
+    }
+
+    function drawWaterShore(x, y, px, py) {
+      const bank = "#80643a";
+      const foam = "rgba(174,242,220,.70)";
+      const deep = "rgba(3,61,83,.56)";
+      if (terrainAt(x, y - 1) !== 2) {
+        ctx.fillStyle = deep;
+        ctx.fillRect(px, py, TILE, 5);
+        ctx.fillStyle = bank;
+        ctx.fillRect(px, py, TILE, 2);
+        ctx.fillStyle = foam;
+        ctx.fillRect(px + 3, py + 4, 9, 1);
+        ctx.fillRect(px + 20, py + 3, 13, 1);
+      }
+      if (terrainAt(x, y + 1) !== 2) {
+        ctx.fillStyle = deep;
+        ctx.fillRect(px, py + TILE - 5, TILE, 5);
+        ctx.fillStyle = bank;
+        ctx.fillRect(px, py + TILE - 2, TILE, 2);
+        ctx.fillStyle = foam;
+        ctx.fillRect(px + 6, py + TILE - 5, 12, 1);
+        ctx.fillRect(px + 27, py + TILE - 4, 9, 1);
+      }
+      if (terrainAt(x - 1, y) !== 2) {
+        ctx.fillStyle = deep;
+        ctx.fillRect(px, py, 5, TILE);
+        ctx.fillStyle = bank;
+        ctx.fillRect(px, py, 2, TILE);
+        ctx.fillStyle = foam;
+        ctx.fillRect(px + 4, py + 5, 1, 10);
+        ctx.fillRect(px + 3, py + 23, 1, 12);
+      }
+      if (terrainAt(x + 1, y) !== 2) {
+        ctx.fillStyle = deep;
+        ctx.fillRect(px + TILE - 5, py, 5, TILE);
+        ctx.fillStyle = bank;
+        ctx.fillRect(px + TILE - 2, py, 2, TILE);
+        ctx.fillStyle = foam;
+        ctx.fillRect(px + TILE - 5, py + 8, 1, 11);
+        ctx.fillRect(px + TILE - 4, py + 28, 1, 8);
+      }
+    }
+
+    function drawLandBank(x, y, px, py) {
+      const earth = "#765630";
+      const rim = "#a27a3f";
+      const grass = "#91bf50";
+      const pebble = "#c39755";
+      const offset = 5 + Math.floor(hash2(x * 53 + 7, y * 59 + 3) * 27);
+      if (terrainAt(x, y - 1) === 2) {
+        ctx.fillStyle = earth;
+        ctx.fillRect(px, py, TILE, 4);
+        ctx.fillStyle = rim;
+        ctx.fillRect(px, py + 2, TILE, 2);
+        ctx.fillStyle = grass;
+        ctx.fillRect(px + 3, py + 4, 8, 2);
+        ctx.fillRect(px + 18, py + 4, 13, 1);
+        ctx.fillStyle = pebble;
+        ctx.fillRect(px + offset, py + 1, 3, 2);
+      }
+      if (terrainAt(x, y + 1) === 2) {
+        ctx.fillStyle = earth;
+        ctx.fillRect(px, py + TILE - 4, TILE, 4);
+        ctx.fillStyle = rim;
+        ctx.fillRect(px, py + TILE - 4, TILE, 2);
+        ctx.fillStyle = grass;
+        ctx.fillRect(px + 6, py + TILE - 6, 12, 2);
+        ctx.fillRect(px + 27, py + TILE - 5, 9, 1);
+        ctx.fillStyle = pebble;
+        ctx.fillRect(px + offset, py + TILE - 3, 3, 2);
+      }
+      if (terrainAt(x - 1, y) === 2) {
+        ctx.fillStyle = earth;
+        ctx.fillRect(px, py, 4, TILE);
+        ctx.fillStyle = rim;
+        ctx.fillRect(px + 2, py, 2, TILE);
+        ctx.fillStyle = grass;
+        ctx.fillRect(px + 4, py + 5, 2, 9);
+        ctx.fillRect(px + 4, py + 23, 1, 12);
+        ctx.fillStyle = pebble;
+        ctx.fillRect(px + 1, py + offset, 2, 3);
+      }
+      if (terrainAt(x + 1, y) === 2) {
+        ctx.fillStyle = earth;
+        ctx.fillRect(px + TILE - 4, py, 4, TILE);
+        ctx.fillStyle = rim;
+        ctx.fillRect(px + TILE - 4, py, 2, TILE);
+        ctx.fillStyle = grass;
+        ctx.fillRect(px + TILE - 6, py + 8, 2, 11);
+        ctx.fillRect(px + TILE - 5, py + 28, 1, 8);
+        ctx.fillStyle = pebble;
+        ctx.fillRect(px + TILE - 3, py + offset, 2, 3);
+      }
+    }
+
+    function drawRoadGround(x, y, px, py, noise) {
+      const mask =
+        (terrainAt(x, y - 1) === 1 ? 1 : 0) |
+        (terrainAt(x + 1, y) === 1 ? 2 : 0) |
+        (terrainAt(x, y + 1) === 1 ? 4 : 0) |
+        (terrainAt(x - 1, y) === 1 ? 8 : 0);
+      let tileIndex = ROAD_TILE_BY_MASK[mask];
+      if (mask === 7 && noise > 0.5) tileIndex = 15;
+      const sprite = ROAD_SPRITES[tileIndex];
+      if (spriteReady(sprite)) {
+        ctx.drawImage(sprite, 0, 0, 32, 32, px, py, TILE, TILE);
+        return;
+      }
+      ctx.fillStyle = roadGroundGradient;
+      ctx.fillRect(px, py, TILE, TILE);
+      ctx.fillStyle = "rgba(224,174,91,.14)";
+      ctx.fillRect(px, py + 5, TILE, TILE - 10);
+
+      const horizontal = terrainAt(x - 1, y) === 1 || terrainAt(x + 1, y) === 1;
+      const vertical = terrainAt(x, y - 1) === 1 || terrainAt(x, y + 1) === 1;
+      ctx.strokeStyle = "rgba(103,64,34,.24)";
+      ctx.lineWidth = 1;
+      ctx.setLineDash([6, 5]);
+      if (horizontal) {
+        ctx.beginPath();
+        ctx.moveTo(px, py + 12);
+        ctx.lineTo(px + TILE, py + 12);
+        ctx.moveTo(px, py + 28);
+        ctx.lineTo(px + TILE, py + 28);
+        ctx.stroke();
+      }
+      if (vertical) {
+        ctx.beginPath();
+        ctx.moveTo(px + 12, py);
+        ctx.lineTo(px + 12, py + TILE);
+        ctx.moveTo(px + 28, py);
+        ctx.lineTo(px + 28, py + TILE);
+        ctx.stroke();
+      }
+      ctx.setLineDash([]);
+
+      for (let i = 0; i < 3; i++) {
+        const stone = hash2(x * 31 + i * 7, y * 37 + i * 11);
+        const sx = px + 5 + Math.floor(stone * 29);
+        const sy = py + 7 + Math.floor(hash2(x * 41 + i, y * 43 + i) * 26);
+        ctx.fillStyle = stone > 0.52 ? "rgba(236,197,119,.42)" : "rgba(82,57,36,.28)";
+        ctx.fillRect(sx, sy, stone > 0.72 ? 3 : 2, 1);
+      }
+
+      ctx.fillStyle = "rgba(75,55,28,.32)";
+      if (terrainAt(x, y - 1) !== 1) ctx.fillRect(px, py, TILE, 2);
+      if (terrainAt(x, y + 1) !== 1) ctx.fillRect(px, py + TILE - 2, TILE, 2);
+      if (terrainAt(x - 1, y) !== 1) ctx.fillRect(px, py, 2, TILE);
+      if (terrainAt(x + 1, y) !== 1) ctx.fillRect(px + TILE - 2, py, 2, TILE);
     }
 
     function drawTerrainTile(x, y, time) {
@@ -5916,47 +6183,47 @@
       const py = y * TILE;
       const tile = terrain[y][x];
       const noise = hash2(x, y);
+      const coastKey = tile === 1 ? null : drawCoastTile(x, y, px, py);
 
       if (tile === 2) {
-        ctx.fillStyle = noise > 0.5 ? "#08758c" : "#086c83";
-        ctx.fillRect(px, py, TILE, TILE);
-        drawTileTexture(WORLD_SPRITES.water, px, py, noise, 0.78);
-        const shimmer = ((time * 11 + x * 5 + y * 9) % 24) - 8;
-        ctx.strokeStyle = "rgba(167,244,255,.38)";
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        ctx.moveTo(px + 5 + shimmer, py + 13);
-        ctx.lineTo(px + 14 + shimmer, py + 13);
-        ctx.stroke();
-        drawWaterEdge(x, y, px, py);
+        if (coastKey) {
+          if (coastKey === "0000") drawWaterGround(x, y, px, py, time, false);
+        } else {
+          drawWaterGround(x, y, px, py, time);
+          drawWaterShore(x, y, px, py);
+        }
       } else if (tile === 1) {
-        ctx.fillStyle = noise > 0.5 ? "#b8813f" : "#aa7138";
-        ctx.fillRect(px, py, TILE, TILE);
-        drawTileTexture(WORLD_SPRITES.road, px, py, noise, 0.3);
-        ctx.fillStyle = "rgba(92,53,24,.18)";
-        ctx.fillRect(px + 5, py + 11 + Math.floor(noise * 8), TILE - 10, 1);
-        ctx.fillRect(px + 8, py + 28 - Math.floor(noise * 6), TILE - 16, 1);
+        drawRoadGround(x, y, px, py, noise);
       } else {
-        ctx.fillStyle = noise > 0.55 ? "#72a94c" : "#68a047";
-        ctx.fillRect(px, py, TILE, TILE);
-        drawTileTexture(WORLD_SPRITES.grass, px, py, noise, 0.08);
-        ctx.fillStyle = noise > 0.4 ? "rgba(211,236,99,.24)" : "rgba(24,103,44,.18)";
-        ctx.fillRect(px + 6 + Math.floor(noise * 16), py + 8 + Math.floor(noise * 12), 2, 3);
+        if (!coastKey) {
+          drawGrassGround(x, y, px, py, noise);
+          drawLandBank(x, y, px, py);
+        }
       }
 
-      if (tile === 3) drawTree(px, py, noise);
-      if (tile === 4) drawRock(px, py, "#6d7773", "#3f4b47", noise);
-      const deposit = getDeposit(x, y);
-      if (deposit) drawDeposit(px, py, deposit, noise);
-
-      ctx.strokeStyle = tile === 2 ? "rgba(4,48,66,.18)" : "rgba(42,77,30,.09)";
+      ctx.strokeStyle = tile === 2 ? "rgba(5,62,79,.018)" : "rgba(28,71,31,.026)";
       ctx.lineWidth = 1;
       ctx.strokeRect(px + 0.5, py + 0.5, TILE - 1, TILE - 1);
     }
 
+    function drawTerrainProps(x, y) {
+      const px = x * TILE;
+      const py = y * TILE;
+      const tile = terrain[y][x];
+      const noise = hash2(x, y);
+      if (tile === 3) drawTree(px, py, noise);
+      if (tile === 4) drawRock(px, py, "#6d7773", "#3f4b47", noise);
+      const deposit = getDeposit(x, y);
+      if (deposit) drawDeposit(px, py, deposit, noise);
+    }
+
     function drawTree(px, py, noise) {
       if (spriteReady(WORLD_SPRITES.tree)) {
-        ctx.drawImage(WORLD_SPRITES.tree, px, py - 3, TILE, TILE);
+        ctx.fillStyle = "rgba(21,55,25,.30)";
+        ctx.beginPath();
+        ctx.ellipse(px + 23, py + 32, 14, 5, -0.15, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.drawImage(WORLD_SPRITES.tree, px - 3, py - 10, 48, 48);
         return;
       }
       ctx.fillStyle = "#63482c";
@@ -5975,7 +6242,11 @@
 
     function drawRock(px, py, fill, edge, noise = 0.5) {
       if (spriteReady(WORLD_SPRITES.rock)) {
-        ctx.drawImage(WORLD_SPRITES.rock, px, py, TILE, TILE);
+        ctx.fillStyle = "rgba(27,42,35,.28)";
+        ctx.beginPath();
+        ctx.ellipse(px + 22, py + 31, 15, 5, -0.08, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.drawImage(WORLD_SPRITES.rock, px - 2, py - 4, 45, 45);
         return;
       }
       ctx.fillStyle = edge;
@@ -6006,9 +6277,9 @@
       if (spriteReady(sprite)) {
         ctx.fillStyle = item.deposit || "rgba(103,119,114,.22)";
         ctx.beginPath();
-        ctx.ellipse(px + TILE / 2, py + TILE / 2 + 4, 17, 12, 0, 0, Math.PI * 2);
+        ctx.ellipse(px + TILE / 2 + 2, py + TILE / 2 + 7, 18, 11, 0, 0, Math.PI * 2);
         ctx.fill();
-        ctx.drawImage(sprite, px, py, TILE, TILE);
+        ctx.drawImage(sprite, px - 2, py - 3, 44, 44);
         return;
       }
       ctx.fillStyle = item.deposit || "rgba(103,119,114,.22)";
@@ -7265,8 +7536,24 @@
       const maxX = clamp(Math.ceil((camera.x + visibleW) / TILE) + 1, 0, WORLD_W - 1);
       const maxY = clamp(Math.ceil((camera.y + visibleH) / TILE) + 1, 0, WORLD_H - 1);
 
+      grassGroundGradient = ctx.createLinearGradient(0, 0, WORLD_W * TILE, WORLD_H * TILE);
+      grassGroundGradient.addColorStop(0, "#7eb34e");
+      grassGroundGradient.addColorStop(0.48, "#70a84a");
+      grassGroundGradient.addColorStop(1, "#5f9947");
+      waterGroundGradient = ctx.createLinearGradient(0, 0, 0, WORLD_H * TILE);
+      waterGroundGradient.addColorStop(0, "#0b91a8");
+      waterGroundGradient.addColorStop(0.55, "#087c99");
+      waterGroundGradient.addColorStop(1, "#05647f");
+      roadGroundGradient = ctx.createLinearGradient(0, 0, WORLD_W * TILE, WORLD_H * TILE);
+      roadGroundGradient.addColorStop(0, "#bd8a4c");
+      roadGroundGradient.addColorStop(0.55, "#ad7b43");
+      roadGroundGradient.addColorStop(1, "#96683b");
+
       for (let y = minY; y <= maxY; y++) {
         for (let x = minX; x <= maxX; x++) drawTerrainTile(x, y, simClock);
+      }
+      for (let y = minY; y <= maxY; y++) {
+        for (let x = minX; x <= maxX; x++) drawTerrainProps(x, y);
       }
 
       drawMapLabel(16.5, 14.8, "FERRO", "#d4ddda");
