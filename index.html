@@ -2039,6 +2039,35 @@
       { x: -1, y: 0, label: "Oeste", arrow: "←" }
     ]);
 
+    const BUILDING_SPRITE_URLS = Object.freeze({
+      hub: "assets/sprites/hub.png",
+      belt: "assets/sprites/belt.png",
+      splitter: "assets/sprites/splitter.png",
+      merger: "assets/sprites/merger.png",
+      underground_in: "assets/sprites/underground_in.png",
+      underground_out: "assets/sprites/underground_out.png",
+      miner: "assets/sprites/miner.png",
+      furnace: "assets/sprites/furnace.png",
+      assembler: "assets/sprites/assembler.png",
+      terminal: "assets/sprites/terminal.png",
+      wall: "assets/sprites/wall.png",
+      turret: "assets/sprites/turret.png",
+      cannon: "assets/sprites/cannon.png",
+      railgun: "assets/sprites/railgun.png",
+      beacon: "assets/sprites/beacon.png",
+      deepDrill: "assets/sprites/deep_drill.png",
+      repairStation: "assets/sprites/repair_station.png",
+      tesla: "assets/sprites/tesla.png"
+    });
+    const BUILDING_SPRITES = Object.freeze(Object.fromEntries(
+      Object.entries(BUILDING_SPRITE_URLS).map(([key, url]) => {
+        const image = new Image();
+        image.decoding = "async";
+        image.src = url;
+        return [key, image];
+      })
+    ));
+
     const ITEMS = Object.freeze({
       ironOre:   { label: "Minério de ferro", short: "Fe", color: "#9aa9a4", edge: "#596662", deposit: "rgba(103,119,114,.22)", value: 2, research: 0, raw: true },
       copperOre: { label: "Minério de cobre", short: "Cu", color: "#d88955", edge: "#7b442d", deposit: "rgba(176,91,47,.22)", value: 2.4, research: 0, raw: true },
@@ -5978,6 +6007,20 @@
     function drawHub(time) {
       const px = HUB.x * TILE;
       const py = HUB.y * TILE;
+      const sprite = BUILDING_SPRITES.hub;
+      if (sprite.complete && sprite.naturalWidth) {
+        ctx.drawImage(sprite, px, py, TILE, TILE);
+        ctx.fillStyle = "#fff2b0";
+        ctx.font = "bold 8px ui-monospace, monospace";
+        ctx.textAlign = "center";
+        ctx.fillText("HUB", px + TILE / 2, py - 3);
+        const hpRatio = clamp(state.combat.baseHp / HUB_MAX_HP, 0, 1);
+        ctx.fillStyle = "#271512";
+        ctx.fillRect(px + 3, py + TILE + 2, TILE - 6, 5);
+        ctx.fillStyle = hpRatio > 0.5 ? "#70d58d" : hpRatio > 0.25 ? "#e5b95b" : "#ef7168";
+        ctx.fillRect(px + 4, py + TILE + 3, (TILE - 8) * hpRatio, 3);
+        return;
+      }
       ctx.fillStyle = "rgba(3,10,7,.35)";
       ctx.fillRect(px + 5, py + 7, TILE - 7, TILE - 5);
       ctx.fillStyle = "#c49a42";
@@ -6589,8 +6632,163 @@
       }
     }
 
+    function generatedSpriteKey(building) {
+      if (building.type === "underground") {
+        return building.role === "entrance" ? "underground_in" : "underground_out";
+      }
+      return building.type;
+    }
+
+    function generatedSpriteRotation(building) {
+      if (building.type === "turret" || building.type === "cannon" || building.type === "railgun") {
+        return (Number(building.aimAngle) || -Math.PI / 2) + Math.PI / 2;
+      }
+      if (isDirectionlessType(building.type)) return 0;
+      return (Number(building.dir) || 0) * Math.PI / 2;
+    }
+
+    function drawGeneratedWeaponEffects(building, time, cx, cy) {
+      if (building.type === "turret" && building.shotFlash > 0) {
+        ctx.save();
+        ctx.globalAlpha = clamp(building.shotFlash / 0.13, 0, 1);
+        ctx.strokeStyle = "#ffe99a";
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo((building.shotX + 0.5) * TILE, (building.shotY + 0.5) * TILE);
+        ctx.stroke();
+        ctx.restore();
+      } else if (building.type === "cannon" && building.shotFlash > 0) {
+        const alpha = clamp(building.shotFlash / 0.28, 0, 1);
+        const tx = (Number(building.shotX) + 0.5) * TILE;
+        const ty = (Number(building.shotY) + 0.5) * TILE;
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.strokeStyle = "#ffe39a";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(tx, ty);
+        ctx.stroke();
+        ctx.strokeStyle = "#f1a84d";
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.arc(tx, ty, cannonSplashRadius() * TILE * (1.05 - alpha * 0.35), 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      } else if (building.type === "railgun" && building.shotFlash > 0 && Array.isArray(building.shotTargets) && building.shotTargets.length) {
+        const target = building.shotTargets[building.shotTargets.length - 1];
+        ctx.save();
+        ctx.globalAlpha = clamp(building.shotFlash / 0.22, 0, 1);
+        ctx.strokeStyle = "#d9fbff";
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo((target.x + 0.5) * TILE, (target.y + 0.5) * TILE);
+        ctx.stroke();
+        ctx.strokeStyle = "#56cfe9";
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        for (const hit of building.shotTargets) {
+          ctx.fillStyle = "#f2ffff";
+          ctx.beginPath();
+          ctx.arc((hit.x + 0.5) * TILE, (hit.y + 0.5) * TILE, 4, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      } else if (building.type === "tesla" && building.shotFlash > 0 && Array.isArray(building.shotTargets) && building.shotTargets.length) {
+        ctx.save();
+        ctx.globalAlpha = clamp(building.shotFlash / 0.18, 0, 1);
+        ctx.strokeStyle = "#baf2ff";
+        ctx.lineWidth = 2.5;
+        let fromX = cx;
+        let fromY = cy;
+        for (const target of building.shotTargets) {
+          const toX = (target.x + 0.5) * TILE;
+          const toY = (target.y + 0.5) * TILE;
+          const midX = (fromX + toX) / 2 + Math.sin(time * 37 + toX) * 5;
+          const midY = (fromY + toY) / 2 + Math.cos(time * 31 + toY) * 5;
+          ctx.beginPath();
+          ctx.moveTo(fromX, fromY);
+          ctx.lineTo(midX, midY);
+          ctx.lineTo(toX, toY);
+          ctx.stroke();
+          fromX = toX;
+          fromY = toY;
+        }
+        ctx.restore();
+      }
+    }
+
+    function drawGeneratedBuildingSprite(building, time) {
+      const image = BUILDING_SPRITES[generatedSpriteKey(building)];
+      if (!image || !image.complete || !image.naturalWidth) return false;
+
+      const px = building.x * TILE;
+      const py = building.y * TILE;
+      const cx = px + TILE / 2;
+      const cy = py + TILE / 2;
+
+      if (building.type === "underground" && building.role === "entrance") {
+        const pair = undergroundPair(building);
+        if (pair) {
+          ctx.save();
+          ctx.strokeStyle = "rgba(92,190,215,.32)";
+          ctx.lineWidth = 6;
+          ctx.setLineDash([5, 7]);
+          ctx.beginPath();
+          ctx.moveTo(cx, cy);
+          ctx.lineTo((pair.x + 0.5) * TILE, (pair.y + 0.5) * TILE);
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
+
+      if (building.type === "turret") drawAuraCircle(building, turretRange(building), "rgba(246,205,94,.34)");
+      else if (building.type === "cannon") drawAuraCircle(building, cannonRange(building), "rgba(237,179,76,.42)");
+      else if (building.type === "railgun") drawAuraCircle(building, railgunRange(building), "rgba(105,225,246,.40)");
+      else if (building.type === "beacon") drawAuraCircle(building, beaconRange(building), "rgba(255,210,91,.45)");
+      else if (building.type === "repairStation") drawAuraCircle(building, repairStationRange(building), "rgba(102,226,151,.42)");
+      else if (building.type === "tesla") drawAuraCircle(building, teslaRange(building), "rgba(112,205,255,.42)");
+
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(generatedSpriteRotation(building));
+      ctx.drawImage(image, -TILE / 2, -TILE / 2, TILE, TILE);
+      ctx.restore();
+
+      if (building.type === "splitter") {
+        drawTransportPorts(building, [(building.dir + 2) % 4], [building.dir, splitterSide(building)]);
+      } else if (building.type === "merger") {
+        drawTransportPorts(building, mergerInputSides(building), [building.dir]);
+      } else if (building.type === "underground") {
+        if (building.role === "entrance") drawTransportPorts(building, [(building.dir + 2) % 4], []);
+        else drawTransportPorts(building, [], [building.dir]);
+      } else if (building.type === "miner" || building.type === "deepDrill") {
+        drawMachinePorts(building, false);
+        drawProgressBar(px, py, building.cooldown / MINER_INTERVAL, building.type === "miner" ? "#f0cc65" : "#79d9e7");
+      } else if (building.type === "furnace" || building.type === "assembler") {
+        const recipe = RECIPES[building.recipe] || (building.type === "furnace" ? RECIPES.ironPlate : RECIPES.copperWire);
+        drawMachinePorts(building, true);
+        drawProgressBar(px, py, building.progress / recipe.duration, recipe.tint);
+      } else if (building.type === "terminal") {
+        const active = activeContract();
+        if (active) {
+          const requirements = scaledContractRequirements(state.contracts.activeId);
+          const required = Object.values(requirements).reduce((sum, amount) => sum + amount, 0);
+          const delivered = Object.entries(requirements).reduce((sum, [kind, amount]) => sum + Math.min(amount, Number(state.contracts.progress[kind]) || 0), 0);
+          drawProgressBar(px, py, required > 0 ? delivered / required : 0, "#70d58d");
+        }
+      }
+
+      drawGeneratedWeaponEffects(building, time, cx, cy);
+      return true;
+    }
+
     function drawBuilding(building, time) {
-      if (building.type === "belt") drawBelt(building, time);
+      if (drawGeneratedBuildingSprite(building, time)) {
+        // PixelLab sprite rendered; generic overlays below remain active.
+      } else if (building.type === "belt") drawBelt(building, time);
       else if (building.type === "splitter") drawSplitter(building, time);
       else if (building.type === "underground") drawUnderground(building, time);
       else if (building.type === "merger") drawMerger(building, time);

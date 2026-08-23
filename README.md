@@ -31,4 +31,8 @@ Jogo incremental de automação em Canvas 2D, inspirado em fábricas encadeadas 
 
 ## Tecnologia
 
-Single-file HTML, JavaScript puro e Canvas 2D, sem dependências externas.
+HTML, JavaScript puro e Canvas 2D, sem bibliotecas externas.
+
+## Arte
+
+As construções usam sprites cartoonescos de 40 × 40 px gerados com PixelLab. Os arquivos e o mapeamento ficam em `assets/sprites/`; o render vetorial anterior permanece como fallback durante o carregamento.
