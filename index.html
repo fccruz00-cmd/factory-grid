@@ -305,6 +305,27 @@
     }
     #pauseWaveBtn.paused span { color: #d9f9ff; }
 
+    #zoomIndicator {
+      position: fixed;
+      z-index: 16;
+      top: calc(108px + env(safe-area-inset-top));
+      left: 50%;
+      transform: translate(-50%, -4px);
+      padding: 5px 9px;
+      border: 1px solid rgba(116, 175, 191, .72);
+      border-radius: 999px;
+      background: rgba(10, 24, 27, .9);
+      color: #d8f8ff;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, .34);
+      font-size: 8px;
+      font-weight: 900;
+      letter-spacing: .45px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .12s, transform .12s;
+    }
+    #zoomIndicator.show { opacity: 1; transform: translate(-50%, 0); }
+
     @keyframes defensePulse {
       from { box-shadow: 0 5px 14px rgba(0,0,0,.42), 0 0 0 rgba(239,124,114,0); }
       to { box-shadow: 0 5px 14px rgba(0,0,0,.42), 0 0 15px rgba(239,124,114,.28); }
@@ -1875,6 +1896,7 @@
       <span id="pauseWaveIcon">Ⅱ</span><small id="pauseWaveLabel">PAUSAR · ESPAÇO</small>
     </button>
   </div>
+  <div id="zoomIndicator" aria-live="polite">ZOOM 100%</div>
 
   <div id="controlDeck">
     <div id="modeHint">D-pad para andar • toque no mapa para selecionar • escolha uma peça para construir</div>
@@ -1985,6 +2007,8 @@
     const canvas = document.getElementById("game");
     const ctx = canvas.getContext("2d", { alpha: false });
     const TILE = 40;
+    const MIN_ZOOM = 0.55;
+    const MAX_ZOOM = 1.8;
     const WORLD_W = 48;
     const WORLD_H = 34;
     const HUB = Object.freeze({ x: 24, y: 17 });
@@ -1992,7 +2016,7 @@
     const MAX_FRAME_DELTA = 0.25;
     const BASE_OFFLINE_MAX_SECONDS = 24 * 60 * 60;
     const SAVE_KEY = "factoryGridMVP_save_v1";
-    const SAVE_VERSION = 12;
+    const SAVE_VERSION = 13;
     const STARTING_CREDITS = 100;
     const MINER_INTERVAL = 1.5;
     const BELT_SPEED = 2.1;
@@ -3070,7 +3094,8 @@
           fieldCachesFound: 0
         },
         ui: {
-          seenHelp: false
+          seenHelp: false,
+          zoom: 1
         }
       };
     }
@@ -3121,6 +3146,7 @@
       safe.player.moving = false;
       safe.player.moveProgress = 0;
       safe.player.dir = clamp(Math.round(Number(safe.player.dir) || 0), 0, 3);
+      safe.ui.zoom = clamp(Number(safe.ui.zoom) || 1, MIN_ZOOM, MAX_ZOOM);
 
       for (const key of Object.keys(ITEMS)) {
         safe.inventory[key] = Math.max(0, Number(safe.inventory[key]) || 0);
@@ -5356,6 +5382,7 @@
       fresh.stats.fieldCachesFound = old.stats.fieldCachesFound;
       fresh.stats.sabotagesSuffered = old.stats.sabotagesSuffered;
       fresh.ui.seenHelp = true;
+      fresh.ui.zoom = old.ui.zoom;
       state = fresh;
       currentTool = null;
       buildMirrored = false;
@@ -5689,7 +5716,7 @@
     let viewW = window.innerWidth;
     let viewH = window.innerHeight;
     let dpr = 1;
-    const camera = { x: 0, y: 0 };
+    const camera = { x: 0, y: 0, zoom: 1, followPause: 0 };
 
     function resizeCanvas() {
       viewW = Math.max(1, window.innerWidth);
@@ -5717,14 +5744,50 @@
       };
     }
 
-    function cameraTarget() {
-      const player = playerVisualTile();
+    function cameraBounds() {
+      const visibleW = viewW / camera.zoom;
+      const visibleH = viewH / camera.zoom;
       const worldPixelsW = WORLD_W * TILE;
       const worldPixelsH = WORLD_H * TILE;
-      let x = (player.x + 0.5) * TILE - viewW / 2;
-      let y = (player.y + 0.5) * TILE - viewH / 2;
-      x = worldPixelsW <= viewW ? (worldPixelsW - viewW) / 2 : clamp(x, 0, worldPixelsW - viewW);
-      y = worldPixelsH <= viewH ? (worldPixelsH - viewH) / 2 : clamp(y, 0, worldPixelsH - viewH);
+      const centeredX = (worldPixelsW - visibleW) / 2;
+      const centeredY = (worldPixelsH - visibleH) / 2;
+      return {
+        minX: worldPixelsW <= visibleW ? centeredX : 0,
+        maxX: worldPixelsW <= visibleW ? centeredX : worldPixelsW - visibleW,
+        minY: worldPixelsH <= visibleH ? centeredY : 0,
+        maxY: worldPixelsH <= visibleH ? centeredY : worldPixelsH - visibleH,
+        visibleW,
+        visibleH
+      };
+    }
+
+    function clampCameraPosition() {
+      const bounds = cameraBounds();
+      camera.x = clamp(camera.x, bounds.minX, bounds.maxX);
+      camera.y = clamp(camera.y, bounds.minY, bounds.maxY);
+    }
+
+    function setCameraZoom(value, screenX = viewW / 2, screenY = viewH / 2) {
+      const nextZoom = Math.round(clamp(Number(value) || 1, MIN_ZOOM, MAX_ZOOM) * 1000) / 1000;
+      if (Math.abs(nextZoom - camera.zoom) < 0.0005) return camera.zoom;
+      const anchorX = camera.x + clamp(screenX, 0, viewW) / camera.zoom;
+      const anchorY = camera.y + clamp(screenY, 0, viewH) / camera.zoom;
+      camera.zoom = nextZoom;
+      camera.x = anchorX - clamp(screenX, 0, viewW) / camera.zoom;
+      camera.y = anchorY - clamp(screenY, 0, viewH) / camera.zoom;
+      camera.followPause = 0.65;
+      clampCameraPosition();
+      if (state) state.ui.zoom = camera.zoom;
+      return camera.zoom;
+    }
+
+    function cameraTarget() {
+      const player = playerVisualTile();
+      const bounds = cameraBounds();
+      let x = (player.x + 0.5) * TILE - bounds.visibleW / 2;
+      let y = (player.y + 0.5) * TILE - bounds.visibleH / 2;
+      x = clamp(x, bounds.minX, bounds.maxX);
+      y = clamp(y, bounds.minY, bounds.maxY);
       return { x, y };
     }
 
@@ -5733,9 +5796,15 @@
       const target = cameraTarget();
       camera.x = target.x;
       camera.y = target.y;
+      camera.followPause = 0;
     }
 
     function updateCamera(dt) {
+      if (camera.followPause > 0) {
+        camera.followPause = Math.max(0, camera.followPause - dt);
+        clampCameraPosition();
+        return;
+      }
       const target = cameraTarget();
       const follow = 1 - Math.exp(-dt * 9);
       camera.x += (target.x - camera.x) * follow;
@@ -6874,12 +6943,15 @@
       ctx.fillStyle = "#0e1b14";
       ctx.fillRect(0, 0, viewW, viewH);
       ctx.save();
-      ctx.translate(-Math.round(camera.x), -Math.round(camera.y));
+      ctx.scale(camera.zoom, camera.zoom);
+      ctx.translate(-camera.x, -camera.y);
 
+      const visibleW = viewW / camera.zoom;
+      const visibleH = viewH / camera.zoom;
       const minX = clamp(Math.floor(camera.x / TILE) - 1, 0, WORLD_W - 1);
       const minY = clamp(Math.floor(camera.y / TILE) - 1, 0, WORLD_H - 1);
-      const maxX = clamp(Math.ceil((camera.x + viewW) / TILE) + 1, 0, WORLD_W - 1);
-      const maxY = clamp(Math.ceil((camera.y + viewH) / TILE) + 1, 0, WORLD_H - 1);
+      const maxX = clamp(Math.ceil((camera.x + visibleW) / TILE) + 1, 0, WORLD_W - 1);
+      const maxY = clamp(Math.ceil((camera.y + visibleH) / TILE) + 1, 0, WORLD_H - 1);
 
       for (let y = minY; y <= maxY; y++) {
         for (let x = minX; x <= maxX; x++) drawTerrainTile(x, y, simClock);
@@ -6953,6 +7025,7 @@
     const baseText = document.getElementById("baseText");
     const ammoText = document.getElementById("ammoText");
     const threatText = document.getElementById("threatText");
+    const zoomIndicator = document.getElementById("zoomIndicator");
     const TOOL_PAGE_SIZE = 2;
     let mobileLayout = window.innerWidth <= 760;
     let buildDrawerOpen = !mobileLayout;
@@ -6961,6 +7034,7 @@
     let selectedTechKey = null;
     let toastTimer = 0;
     let saveFlashTimer = 0;
+    let zoomIndicatorTimer = 0;
     let cachedNetwork = null;
     let cachedNetworkAt = 0;
 
@@ -6995,6 +7069,13 @@
       window.clearTimeout(saveFlashTimer);
       menuBtn.style.borderColor = "#70d58d";
       saveFlashTimer = window.setTimeout(() => { menuBtn.style.borderColor = ""; }, 450);
+    }
+
+    function showZoomIndicator() {
+      window.clearTimeout(zoomIndicatorTimer);
+      zoomIndicator.textContent = `ZOOM ${Math.round(camera.zoom * 100)}%`;
+      zoomIndicator.classList.add("show");
+      zoomIndicatorTimer = window.setTimeout(() => zoomIndicator.classList.remove("show"), 750);
     }
 
     function getNetworkRates(force = false) {
@@ -7519,7 +7600,7 @@
       } else if (!mobileLayout && desktopBuildOpen) {
         modeHint.innerHTML = `<strong>MODO BUILD</strong> • 1–9 / O Q E Z X V G escolhem peças • botão direito remove • B fecha`;
       } else {
-        modeHint.textContent = "WASD/setas: andar • Espaço: pausa • Y/J/K/L/N: operações • B: BUILD • T: TEC • P: prestígio • M: menu";
+        modeHint.textContent = "WASD/setas: andar • Roda: zoom • Espaço: pausa • Y/J/K/L/N: operações • B: BUILD • T: TEC • P: prestígio • M: menu";
       }
       updateToolPageButtons();
     }
@@ -7991,7 +8072,7 @@
          <p><strong>Diretor de Ameaça:</strong> mede o pico de itens/h e Cr/h, além de Tier, créditos, tamanho, tecnologias e Prestígio. Antes da wave ele também mostra sua adaptação: Demolidores contra muralhas, Blindados contra Torretas, formação dispersa contra Canhões, Enxame contra Railguns ou Sabotadores contra fábricas extensas. O plano fica travado quando a wave começa.</p>
          <p><strong>Sabotagem:</strong> Sabotadores atravessam a malha, descartam parte dos buffers e param uma construção temporariamente. J repara e reativa tudo perto do personagem; K também limpa a pane enquanto atordoa inimigos.</p>
          <p><strong>Offline:</strong> ao voltar, o jogo calcula em lote a vazão das rotas conectadas. Limite inicial de 24 h, ampliável pela árvore tecnológica.</p>
-         <p><strong>Atalhos desktop:</strong> Espaço pausar/retomar • B BUILD • botão direito remove • 1–9/O/V/G/Q/E/Z/X construções • C receitas/contratos • Y/J/K/L/N operações • R girar • F inverter • U melhorar • Del remover • T tecnologias • P prestígio • M menu • Esc cancelar.</p>`,
+         <p><strong>Atalhos desktop:</strong> roda do mouse zoom no cursor • Espaço pausar/retomar • B BUILD • botão direito remove • 1–9/O/V/G/Q/E/Z/X construções • C receitas/contratos • Y/J/K/L/N operações • R girar • F inverter • U melhorar • Del remover • T tecnologias • P prestígio • M menu • Esc cancelar.</p>`,
         [{
           label: firstRun ? "Começar" : "Voltar ao jogo",
           kind: "primary",
@@ -8194,8 +8275,8 @@
       const sx = clientX - rect.left;
       const sy = clientY - rect.top;
       return {
-        x: Math.floor((sx + camera.x) / TILE),
-        y: Math.floor((sy + camera.y) / TILE)
+        x: Math.floor((sx / camera.zoom + camera.x) / TILE),
+        y: Math.floor((sy / camera.zoom + camera.y) / TILE)
       };
     }
 
@@ -8372,6 +8453,18 @@
       if (event.pointerType === "mouse" && !event.buttons) stopPainting(event);
     });
     canvas.addEventListener("contextmenu", event => event.preventDefault());
+    canvas.addEventListener("wheel", event => {
+      if (mobileLayout) return;
+      event.preventDefault();
+      const rect = canvas.getBoundingClientRect();
+      const sx = event.clientX - rect.left;
+      const sy = event.clientY - rect.top;
+      const delta = clamp(Number(event.deltaY) || 0, -120, 120);
+      if (!delta) return;
+      const factor = Math.exp(-delta * 0.0015);
+      setCameraZoom(camera.zoom * factor, sx, sy);
+      showZoomIndicator();
+    }, { passive: false });
 
     const toolHotkeys = new Map([
       ["Digit1", "miner"],
@@ -8499,6 +8592,7 @@
     // Inicialização, game loop e ciclo de vida mobile
     // ---------------------------------------------------------------------
     state = loadLocalState();
+    camera.zoom = state.ui.zoom;
     rebuildBuildingIndexes();
     rebuildItemIndex();
     resizeCanvas();
@@ -8570,6 +8664,7 @@
     // Pequena API de inspeção e testes locais.
     window.FactoryGridDebug = Object.freeze({
       getState: () => JSON.parse(JSON.stringify(state)),
+      getCamera: () => JSON.parse(JSON.stringify(camera)),
       getRates: () => JSON.parse(JSON.stringify(calculateNetworkRates())),
       getCatalog: () => ({
         items: Object.keys(ITEMS),
@@ -8624,6 +8719,8 @@
         render(0.016);
         return true;
       },
+      setZoom: (value, screenX = viewW / 2, screenY = viewH / 2) => setCameraZoom(value, screenX, screenY),
+      screenToTile: (screenX, screenY) => pointerToTile(screenX, screenY),
       getThreat: () => JSON.parse(JSON.stringify(
         state.combat.phase === "active"
           ? state.combat.threat
