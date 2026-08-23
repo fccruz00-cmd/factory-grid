@@ -235,6 +235,9 @@
       top: calc(62px + env(safe-area-inset-top));
       left: 50%;
       transform: translateX(-50%);
+      display: flex;
+      align-items: stretch;
+      gap: 6px;
       pointer-events: auto;
     }
 
@@ -275,6 +278,32 @@
     }
 
     #defenseBtn.base-critical .hub strong { color: #ff8c83; }
+    #defenseBtn.paused-wave {
+      border-color: #78cce3;
+      background: linear-gradient(180deg, rgba(30, 61, 72, .98), rgba(16, 35, 42, .98));
+      animation: none;
+    }
+
+    #pauseWaveBtn {
+      min-width: 68px;
+      min-height: 38px;
+      display: grid;
+      place-content: center;
+      gap: 2px;
+      padding: 5px 9px;
+      border-radius: 10px;
+      border-color: #668d76;
+      background: linear-gradient(180deg, rgba(28, 49, 39, .97), rgba(12, 26, 19, .97));
+      font-weight: 900;
+    }
+    #pauseWaveBtn span { color: #f4e8a9; font-size: 13px; line-height: 1; }
+    #pauseWaveBtn small { color: #afc2b2; font-size: 7px; line-height: 1; letter-spacing: .45px; }
+    #pauseWaveBtn.paused {
+      border-color: #78d8ee;
+      background: linear-gradient(#315f6c, #173842);
+      box-shadow: 0 4px 0 #08171c, 0 0 13px rgba(105,213,235,.25);
+    }
+    #pauseWaveBtn.paused span { color: #d9f9ff; }
 
     @keyframes defensePulse {
       from { box-shadow: 0 5px 14px rgba(0,0,0,.42), 0 0 0 rgba(239,124,114,0); }
@@ -1842,6 +1871,9 @@
       <span class="defense-chip ammo">MUNIÇÃO<strong id="ammoText">0</strong></span>
       <span class="defense-chip threat">AMEAÇA<strong id="threatText">NÍVEL 0</strong></span>
     </button>
+    <button id="pauseWaveBtn" aria-label="Pausar toda a simulação, tecla Espaço" title="Pausa tática • Espaço">
+      <span id="pauseWaveIcon">Ⅱ</span><small id="pauseWaveLabel">PAUSAR · ESPAÇO</small>
+    </button>
   </div>
 
   <div id="controlDeck">
@@ -1960,7 +1992,7 @@
     const MAX_FRAME_DELTA = 0.25;
     const BASE_OFFLINE_MAX_SECONDS = 24 * 60 * 60;
     const SAVE_KEY = "factoryGridMVP_save_v1";
-    const SAVE_VERSION = 11;
+    const SAVE_VERSION = 12;
     const STARTING_CREDITS = 100;
     const MINER_INTERVAL = 1.5;
     const BELT_SPEED = 2.1;
@@ -3013,6 +3045,7 @@
         combat: {
           wave: 1,
           phase: "locked",
+          paused: false,
           timer: 0,
           baseHp: HUB_MAX_HP,
           spawnRemaining: 0,
@@ -3214,6 +3247,8 @@
       const hadCombat = raw.combat && typeof raw.combat === "object";
       safe.combat.wave = Math.max(1, Math.floor(Number(safe.combat.wave) || 1));
       safe.combat.phase = ["locked", "prep", "active"].includes(safe.combat.phase) ? safe.combat.phase : "locked";
+      // Pausa é uma escolha transitória da sessão: nunca deixa um save preso ao recarregar.
+      safe.combat.paused = false;
       safe.combat.timer = Math.max(0, Number(safe.combat.timer) || 0);
       safe.combat.baseHp = clamp(Number(safe.combat.baseHp) || HUB_MAX_HP, 0, HUB_MAX_HP);
       safe.combat.spawnRemaining = Math.max(0, Math.floor(Number(safe.combat.spawnRemaining) || 0));
@@ -3556,6 +3591,7 @@
     }
 
     function attemptMove(dirIndex) {
+      if (state.combat.paused) return false;
       const player = state.player;
       const dir = DIRS[dirIndex];
       player.dir = dirIndex;
@@ -3618,6 +3654,10 @@
     }
 
     function useAbility(key) {
+      if (state.combat.paused) {
+        showToast("Retome a simulação para usar operações de campo.");
+        return false;
+      }
       const ability = ABILITIES[key];
       const problem = abilityUnlockProblem(key);
       if (problem) {
@@ -4604,10 +4644,30 @@
     function unlockCombatIfNeeded(silent = false) {
       if (!state || state.economy.tier < 2 || state.combat.phase !== "locked") return;
       state.combat.phase = "prep";
+      state.combat.paused = false;
       state.combat.timer = FIRST_WAVE_PREP;
       state.combat.baseHp = HUB_MAX_HP;
       state.inventory.ammo += STARTER_AMMO;
       if (!silent) showToast(`Defesa liberada: ${FIRST_WAVE_PREP} s até a primeira wave. Você recebeu ${STARTER_AMMO} munições de emergência.`);
+    }
+
+    function toggleCombatPause(force = null, notify = true) {
+      if (state.combat.phase === "locked") {
+        if (notify) showToast("Waves e pausa tática são liberadas no Tier 2.");
+        return false;
+      }
+      const next = force == null ? !state.combat.paused : Boolean(force);
+      if (next === state.combat.paused) return true;
+      state.combat.paused = next;
+      heldMoveDir = null;
+      updateUI(true);
+      saveGame(false);
+      if (notify) {
+        showToast(next
+          ? "Pausa tática: combate, fábrica e recargas congelados."
+          : "Simulação retomada.");
+      }
+      return true;
     }
 
     function startWave(manual = false) {
@@ -4615,6 +4675,7 @@
       const network = getNetworkRates(true);
       state.combat.threat = evaluateFactoryThreat(network, true);
       state.combat.phase = "active";
+      state.combat.paused = false;
       state.combat.timer = 0;
       state.combat.spawnRemaining = waveEnemyCount(state.combat.wave, state.combat.threat);
       state.combat.spawnedThisWave = 0;
@@ -4638,6 +4699,7 @@
       state.combat.victories += 1;
       state.combat.wave += 1;
       state.combat.phase = "prep";
+      state.combat.paused = false;
       state.combat.timer = Math.max(20, BETWEEN_WAVE_PREP - completedWave * 0.7);
       state.combat.baseHp = Math.min(HUB_MAX_HP, state.combat.baseHp + HUB_MAX_HP * 0.25);
       showToast(`Wave ${completedWave} vencida no nível ${threat.score}: +${credits} Cr e +${formatNumber(research)} Pesquisa.`);
@@ -4650,6 +4712,7 @@
       state.economy.credits = Math.max(0, state.economy.credits - lostCredits);
       state.combat.defeats += 1;
       state.combat.phase = "prep";
+      state.combat.paused = false;
       state.combat.timer = 60;
       state.combat.baseHp = HUB_MAX_HP;
       state.combat.spawnRemaining = 0;
@@ -4764,7 +4827,9 @@
     }
 
     function suspendCombatForOffline() {
-      if (!state || state.combat.phase !== "active") return false;
+      if (!state) return false;
+      state.combat.paused = false;
+      if (state.combat.phase !== "active") return false;
       state.enemies = [];
       state.combat.phase = "prep";
       state.combat.timer = Math.max(25, state.combat.timer || 0);
@@ -4775,6 +4840,7 @@
     }
 
     function simulateStep(dt) {
+      if (state.combat.paused) return;
       simClock += dt;
       state.stats.onlineSeconds += dt;
       rebuildItemIndex();
@@ -6884,6 +6950,9 @@
     const toolPrevBtn = document.getElementById("toolPrevBtn");
     const toolNextBtn = document.getElementById("toolNextBtn");
     const defenseBtn = document.getElementById("defenseBtn");
+    const pauseWaveBtn = document.getElementById("pauseWaveBtn");
+    const pauseWaveIcon = document.getElementById("pauseWaveIcon");
+    const pauseWaveLabel = document.getElementById("pauseWaveLabel");
     const waveText = document.getElementById("waveText");
     const baseText = document.getElementById("baseText");
     const ammoText = document.getElementById("ammoText");
@@ -7329,6 +7398,8 @@
       const basePercent = Math.round(clamp(state.combat.baseHp / HUB_MAX_HP, 0, 1) * 100);
       waveText.textContent = state.combat.phase === "locked"
         ? "TIER 2"
+        : state.combat.paused
+          ? `${state.combat.wave} • PAUSADA`
         : state.combat.phase === "prep"
           ? `${state.combat.wave} EM ${Math.ceil(state.combat.timer)}s`
           : `${state.combat.wave} • ${state.enemies.length + state.combat.spawnRemaining} RESTAM`;
@@ -7337,20 +7408,30 @@
       threatText.textContent = `NÍVEL ${visibleThreat.score}`;
       const visibleAdaptations = (visibleThreat.adaptations || []).map(key => ENEMY_ADAPTATIONS[key]?.label).filter(Boolean).join(" + ");
       threatText.title = `HP ${formatNumber(visibleThreat.hpMultiplier)}× • dano ${formatNumber(visibleThreat.damageMultiplier)}× • velocidade ${formatNumber(visibleThreat.speedMultiplier)}×${visibleAdaptations ? ` • adaptação: ${visibleAdaptations}` : ""}`;
-      defenseBtn.setAttribute("aria-label", `Defesa da wave ${state.combat.wave}; ameaça nível ${visibleThreat.score}`);
-      defenseBtn.classList.toggle("active-wave", state.combat.phase === "active");
+      defenseBtn.setAttribute("aria-label", `Defesa da wave ${state.combat.wave}; ameaça nível ${visibleThreat.score}${state.combat.paused ? "; simulação pausada" : ""}`);
+      defenseBtn.classList.toggle("active-wave", state.combat.phase === "active" && !state.combat.paused);
       defenseBtn.classList.toggle("base-critical", basePercent <= 30);
+      defenseBtn.classList.toggle("paused-wave", state.combat.paused);
+      pauseWaveBtn.disabled = state.combat.phase === "locked";
+      pauseWaveBtn.classList.toggle("paused", state.combat.paused);
+      pauseWaveIcon.textContent = state.combat.paused ? "▶" : "Ⅱ";
+      pauseWaveLabel.textContent = state.combat.paused ? "RETOMAR · ESPAÇO" : "PAUSAR · ESPAÇO";
+      pauseWaveBtn.title = state.combat.paused ? "Retomar simulação • Espaço" : "Pausa tática • Espaço";
+      pauseWaveBtn.setAttribute("aria-label", state.combat.paused
+        ? "Retomar toda a simulação, tecla Espaço"
+        : "Pausar toda a simulação, tecla Espaço");
 
       for (const button of document.querySelectorAll(".ability-btn[data-ability]")) {
         const key = button.dataset.ability;
         const problem = abilityUnlockProblem(key);
+        const pauseProblem = state.combat.paused ? "Indisponível durante a pausa tática." : null;
         const remaining = Math.max(0, Number(state.abilities.cooldowns[key]) || 0);
         button.classList.toggle("locked", Boolean(problem));
         button.classList.toggle("ready", !problem && remaining <= 0);
-        button.disabled = Boolean(problem || remaining > 0);
-        button.title = problem || `${ABILITIES[key].label}${remaining > 0 ? ` • ${Math.ceil(remaining)} s` : " • pronta"} • tecla ${ABILITIES[key].hotkey}`;
+        button.disabled = Boolean(problem || pauseProblem || remaining > 0);
+        button.title = problem || pauseProblem || `${ABILITIES[key].label}${remaining > 0 ? ` • ${Math.ceil(remaining)} s` : " • pronta"} • tecla ${ABILITIES[key].hotkey}`;
         const cooldown = button.querySelector(".ability-cooldown");
-        if (cooldown) cooldown.textContent = problem ? "BLOQ" : remaining > 0 ? `${Math.ceil(remaining)}s` : "PRONTA";
+        if (cooldown) cooldown.textContent = problem ? "BLOQ" : pauseProblem ? "PAUSA" : remaining > 0 ? `${Math.ceil(remaining)}s` : "PRONTA";
       }
 
       const selected = buildingById.get(selectedBuildingId);
@@ -7443,7 +7524,7 @@
       } else if (!mobileLayout && desktopBuildOpen) {
         modeHint.innerHTML = `<strong>MODO BUILD</strong> • 1–9 / O Q E Z X V G escolhem peças • botão direito remove • B fecha`;
       } else {
-        modeHint.textContent = "WASD/setas: andar • Y/J/K/L/N: operações de campo • B: BUILD • T: TEC • P: prestígio • M: menu";
+        modeHint.textContent = "WASD/setas: andar • Espaço: pausa • Y/J/K/L/N: operações • B: BUILD • T: TEC • P: prestígio • M: menu";
       }
       updateToolPageButtons();
     }
@@ -7911,10 +7992,11 @@
            tungstênio + aço + circuito → dardo de Railgun
          </div>
          <p><strong>Waves:</strong> são liberadas no Tier 2. Inimigos entram pelas quatro estradas, atacam obstáculos e tentam destruir o Hub. Clique no painel WAVE/HUB/MUNIÇÃO/AMEAÇA para ver detalhes ou iniciar a próxima wave antes.</p>
+         <p><strong>Pausa tática:</strong> pressione Espaço ou use o botão PAUSAR ao lado da wave. Inimigos, armas, produção, personagem e recargas ficam congelados; construção e menus continuam disponíveis.</p>
          <p><strong>Diretor de Ameaça:</strong> mede o pico de itens/h e Cr/h, além de Tier, créditos, tamanho, tecnologias e Prestígio. Antes da wave ele também mostra sua adaptação: Demolidores contra muralhas, Blindados contra Torretas, formação dispersa contra Canhões, Enxame contra Railguns ou Sabotadores contra fábricas extensas. O plano fica travado quando a wave começa.</p>
          <p><strong>Sabotagem:</strong> Sabotadores atravessam a malha, descartam parte dos buffers e param uma construção temporariamente. J repara e reativa tudo perto do personagem; K também limpa a pane enquanto atordoa inimigos.</p>
          <p><strong>Offline:</strong> ao voltar, o jogo calcula em lote a vazão das rotas conectadas. Limite inicial de 24 h, ampliável pela árvore tecnológica.</p>
-         <p><strong>Atalhos desktop:</strong> B BUILD • botão direito remove • 1–9/O/V/G/Q/E/Z/X construções • C receitas/contratos • Y/J/K/L/N operações • R girar • F inverter • U melhorar • Del remover • T tecnologias • P prestígio • M menu • Esc cancelar.</p>`,
+         <p><strong>Atalhos desktop:</strong> Espaço pausar/retomar • B BUILD • botão direito remove • 1–9/O/V/G/Q/E/Z/X construções • C receitas/contratos • Y/J/K/L/N operações • R girar • F inverter • U melhorar • Del remover • T tecnologias • P prestígio • M menu • Esc cancelar.</p>`,
         [{
           label: firstRun ? "Começar" : "Voltar ao jogo",
           kind: "primary",
@@ -7973,6 +8055,8 @@
       const threat = state.combat.phase === "active" ? state.combat.threat : previewThreat;
       const phaseText = state.combat.phase === "locked"
         ? "Bloqueada até o Tier 2"
+        : state.combat.paused
+          ? `${state.combat.phase === "active" ? "Wave em andamento" : "Preparação"} • PAUSA TÁTICA`
         : state.combat.phase === "prep"
           ? `Preparação • ${Math.ceil(state.combat.timer)} s restantes`
           : `Em andamento • ${state.enemies.length + state.combat.spawnRemaining} inimigos restantes`;
@@ -7990,6 +8074,13 @@
         : "Nenhuma especialização detectada; a formação usa invasores básicos.";
       const peakWasUsed = threat.resourcesPerHour > state.stats.lastResourcesPerHour + 0.5 || threat.creditsPerHour > state.stats.lastCreditsPerHour + 0.5;
       const actions = [];
+      if (state.combat.phase !== "locked") {
+        actions.push({
+          label: state.combat.paused ? "Retomar simulação • Espaço" : "Pausar simulação • Espaço",
+          kind: state.combat.paused ? "primary" : "",
+          onClick: () => toggleCombatPause()
+        });
+      }
       if (state.combat.phase === "prep") {
         actions.push({ label: `Iniciar Wave ${state.combat.wave} agora`, kind: "danger", onClick: () => startWave(true) });
       }
@@ -8017,6 +8108,7 @@
          Tungstênio + Aço + Circuito → Dardo → Railgun</div>
          <p>Waves vencidas: <strong>${state.combat.victories}</strong> • eliminações: <strong>${state.combat.kills}</strong> • derrotas: <strong>${state.combat.defeats}</strong> • sabotagens sofridas: <strong>${state.stats.sabotagesSuffered}</strong></p>
          <p><strong>Regra anti-exploit:</strong> a maior produção observada na rodada nunca diminui. Ao iniciar a wave, o Diretor salva um snapshot; mudanças na fábrica só afetam a próxima formação.</p>
+         <p><strong>Pausa tática:</strong> congela toda a simulação, inclusive a produção e as recargas. Você ainda pode reorganizar construções e consultar os menus.</p>
          <p><strong>Offline justo:</strong> a fábrica continua produzindo com a aba fechada, mas uma wave ativa volta para preparação; o Hub não é destruído offline.</p>`,
         actions
       );
@@ -8061,11 +8153,11 @@
       }).join("");
       const actions = Object.keys(ABILITIES).map(key => ({
         label: `${ABILITIES[key].hotkey} • ${ABILITIES[key].label}`,
-        disabled: Boolean(abilityUnlockProblem(key) || state.abilities.cooldowns[key] > 0),
+        disabled: Boolean(state.combat.paused || abilityUnlockProblem(key) || state.abilities.cooldowns[key] > 0),
         onClick: () => useAbility(key)
       }));
       actions.push({ label: "Fechar", kind: "primary" });
-      openModal("Operações de campo", `${cards}<p>Posicione o personagem onde a operação terá maior impacto. A Doutrina de campo no Prestígio reduz recargas e aumenta os efeitos.</p>`, actions);
+      openModal("Operações de campo", `${state.combat.paused ? '<div class="box"><strong>PAUSA TÁTICA:</strong> retome a simulação para executar uma operação.</div>' : ""}${cards}<p>Posicione o personagem onde a operação terá maior impacto. A Doutrina de campo no Prestígio reduz recargas e aumenta os efeitos.</p>`, actions);
     }
 
     function showMenu() {
@@ -8078,6 +8170,11 @@
           { label: `Tecnologias (${formatNumber(state.economy.researchPoints)} ⚗)`, onClick: showTechTree },
           { label: `Árvore de Prestígio (${state.economy.corePoints} ✦ livres)`, onClick: showPrestigeTree },
           { label: `Defesa • Wave ${state.combat.wave}`, onClick: showDefenseStatus },
+          {
+            label: state.combat.paused ? "Retomar simulação • Espaço" : "Pausar simulação • Espaço",
+            disabled: state.combat.phase === "locked",
+            onClick: () => toggleCombatPause()
+          },
           { label: "Operações de campo • Y/J/K/L/N", onClick: showFieldOperations },
           { label: `Contratos • ${state.contracts.reputation} reputação`, disabled: !terminal, onClick: () => showContractTerminal(terminal?.id) },
           { label: "Marcar Distrito legado no personagem", disabled: !hasPrestigeNode("districtInheritance"), onClick: markLegacyDistrict },
@@ -8211,6 +8308,7 @@
     techBtn.addEventListener("click", showTechTree);
     prestigeBtn.addEventListener("click", showPrestigeTree);
     defenseBtn.addEventListener("click", showDefenseStatus);
+    pauseWaveBtn.addEventListener("click", () => toggleCombatPause());
     document.getElementById("helpBtn").addEventListener("click", () => showHelp(false));
     menuBtn.addEventListener("click", showMenu);
     buildModeBtn.addEventListener("click", () => setDesktopBuildMode(!desktopBuildOpen));
@@ -8314,7 +8412,10 @@
         }
         return;
       }
-      if (toolHotkeys.has(event.code)) {
+      if (event.code === "Space") {
+        event.preventDefault();
+        if (!event.repeat) toggleCombatPause();
+      } else if (toolHotkeys.has(event.code)) {
         event.preventDefault();
         toggleToolSelection(toolHotkeys.get(event.code));
       } else if (event.code === "KeyB") {
@@ -8443,6 +8544,7 @@
     document.addEventListener("visibilitychange", () => {
       heldMoveDir = null;
       if (document.hidden) {
+        state.combat.paused = false;
         state.lastSavedAt = Date.now();
         saveGame(false, true);
         return;
@@ -8597,6 +8699,7 @@
         building.hp = Math.max(1, building.hp - Math.max(0, Number(amount) || 0));
         return true;
       },
+      pause: value => toggleCombatPause(value == null ? null : Boolean(value), false),
       startWave: () => startWave(true),
       spawnEnemy: (x, y, hp = 1000, kind = "raider") => {
         const enemy = {
