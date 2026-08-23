@@ -2382,6 +2382,61 @@
         linear-gradient(90deg, rgba(184, 205, 194, .018) 1px, transparent 1px);
     }
 
+    #worldNavigator {
+      position: fixed;
+      z-index: 24;
+      right: 16px;
+      bottom: 18px;
+      width: 184px;
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--panel);
+      box-shadow: 0 14px 34px var(--shadow);
+      backdrop-filter: blur(12px);
+      pointer-events: none;
+      transition: bottom .18s ease, opacity .18s ease;
+    }
+
+    .world-nav-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 6px;
+      padding: 0 2px;
+    }
+
+    #regionText {
+      overflow: hidden;
+      color: #dce6e0;
+      font-size: 7px;
+      font-weight: 750;
+      letter-spacing: .7px;
+      text-overflow: ellipsis;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    #coordsText {
+      color: var(--muted);
+      font: 700 7px/1 ui-monospace, monospace;
+      white-space: nowrap;
+    }
+
+    #minimap {
+      width: 166px;
+      height: 124px;
+      display: block;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #0d1613;
+      image-rendering: pixelated;
+    }
+
+    body.desktop-edition.has-selection #worldNavigator,
+    body.desktop-edition.building-mode #worldNavigator { bottom: 226px; }
+
     @media (min-width: 800px) {
       body.desktop-edition .top-row { gap: 8px; }
 
@@ -2457,6 +2512,7 @@
     }
 
     @media (max-width: 760px) {
+      #worldNavigator { display: none; }
       #statPills { gap: 2px; padding: 3px; }
       .pill + .pill::before { display: none; }
       .top-actions { padding: 3px; }
@@ -2611,6 +2667,10 @@
     <button class="ability-btn" data-ability="scanner"><svg class="ability-icon ui-icon" aria-hidden="true"><use href="assets/ui/icons.svg#scanner"></use></svg><span class="ability-key">L • SCAN</span><span class="ability-cooldown"></span></button>
     <button class="ability-btn" data-ability="recall"><svg class="ability-icon ui-icon" aria-hidden="true"><use href="assets/ui/icons.svg#home"></use></svg><span class="ability-key">N • HUB</span><span class="ability-cooldown"></span></button>
   </div>
+  <aside id="worldNavigator" aria-label="Navegação do mundo">
+    <div class="world-nav-head"><span id="regionText">Distrito Central</span><span id="coordsText">64, 46</span></div>
+    <canvas id="minimap" width="166" height="124" aria-label="Minimapa do mundo aberto"></canvas>
+  </aside>
   <div id="toast" role="status" aria-live="polite"></div>
 
   <div id="modalOverlay" hidden>
@@ -2631,16 +2691,17 @@
     const canvas = document.getElementById("game");
     const ctx = canvas.getContext("2d", { alpha: false });
     const TILE = 40;
-    const MIN_ZOOM = 0.55;
+    const MIN_ZOOM = 0.45;
     const MAX_ZOOM = 1.8;
-    const WORLD_W = 48;
-    const WORLD_H = 34;
-    const HUB = Object.freeze({ x: 24, y: 17 });
+    const WORLD_W = 128;
+    const WORLD_H = 96;
+    const HUB = Object.freeze({ x: 64, y: 48 });
+    const LEGACY_HUB = Object.freeze({ x: 24, y: 17 });
     const SIM_STEP = 0.1;
     const MAX_FRAME_DELTA = 0.25;
     const BASE_OFFLINE_MAX_SECONDS = 24 * 60 * 60;
     const SAVE_KEY = "factoryGridMVP_save_v1";
-    const SAVE_VERSION = 13;
+    const SAVE_VERSION = 14;
     const STARTING_CREDITS = 100;
     const MINER_INTERVAL = 1.5;
     const BELT_SPEED = 2.1;
@@ -2650,10 +2711,10 @@
     const HUB_MAX_HP = 1000;
     const ENEMY_ATTACK_INTERVAL = 0.8;
     const ENEMY_SPAWNS = Object.freeze([
-      { x: 24, y: 2, label: "Norte" },
-      { x: 45, y: 17, label: "Leste" },
-      { x: 24, y: 31, label: "Sul" },
-      { x: 2, y: 17, label: "Oeste" }
+      { x: 64, y: 1, label: "Norte" },
+      { x: 126, y: 48, label: "Leste" },
+      { x: 64, y: 94, label: "Sul" },
+      { x: 1, y: 48, label: "Oeste" }
     ]);
 
     const DIRS = Object.freeze([
@@ -2925,12 +2986,22 @@
     });
 
     const EXPLORATION_SITES = Object.freeze([
-      { id: "westCache", x: 6, y: 17, label: "Depósito ferroviário", credits: 180, research: 8, items: { ironPlate: 12 } },
-      { id: "northCache", x: 24, y: 5, label: "Posto de observação", credits: 260, research: 14, items: { ammo: 18 } },
-      { id: "eastCache", x: 42, y: 17, label: "Armazém abandonado", credits: 420, research: 22, items: { copperWire: 18 } },
-      { id: "southCache", x: 24, y: 29, label: "Oficina de campo", credits: 650, research: 32, items: { circuit: 5 } },
-      { id: "coalCache", x: 10, y: 27, label: "Sondagem carbonífera", credits: 800, research: 45, items: { steelPlate: 6 } },
-      { id: "tungstenCache", x: 39, y: 8, label: "Cápsula geológica", credits: 1400, research: 75, items: { tungstenPlate: 3 } }
+      { id: "westCache", x: 46, y: 48, label: "Depósito ferroviário", credits: 180, research: 8, items: { ironPlate: 12 } },
+      { id: "northCache", x: 64, y: 36, label: "Posto de observação", credits: 260, research: 14, items: { ammo: 18 } },
+      { id: "eastCache", x: 82, y: 48, label: "Armazém abandonado", credits: 420, research: 22, items: { copperWire: 18 } },
+      { id: "southCache", x: 64, y: 60, label: "Oficina de campo", credits: 650, research: 32, items: { circuit: 5 } },
+      { id: "coalCache", x: 50, y: 58, label: "Sondagem carbonífera", credits: 800, research: 45, items: { steelPlate: 6 } },
+      { id: "tungstenCache", x: 79, y: 39, label: "Cápsula geológica", credits: 1400, research: 75, items: { tungstenPlate: 3 } },
+      { id: "forestRelay", x: 30, y: 24, label: "Relé da mata setentrional", credits: 520, research: 28, items: { ironPlate: 18 } },
+      { id: "northSurvey", x: 64, y: 12, label: "Estação meteorológica", credits: 900, research: 48, items: { ammo: 24 } },
+      { id: "ridgeVault", x: 102, y: 24, label: "Cofre da escarpa", credits: 1800, research: 95, items: { tungstenPlate: 4 } },
+      { id: "eastRelay", x: 112, y: 36, label: "Subestação oriental", credits: 1050, research: 58, items: { copperWire: 30 } },
+      { id: "copperDepot", x: 108, y: 72, label: "Entreposto de cobre", credits: 1650, research: 90, items: { copperPlate: 24, circuit: 3 } },
+      { id: "southFoundry", x: 64, y: 84, label: "Fundição desativada", credits: 2200, research: 120, items: { steelPlate: 10 } },
+      { id: "marshLab", x: 22, y: 72, label: "Laboratório do brejo", credits: 1300, research: 72, items: { propellant: 8 } },
+      { id: "westTerminal", x: 14, y: 48, label: "Terminal do poente", credits: 950, research: 52, items: { ironPlate: 24 } },
+      { id: "eastTerminal", x: 116, y: 48, label: "Terminal do nascente", credits: 2400, research: 135, items: { railSlug: 2 } },
+      { id: "deepSouth", x: 94, y: 86, label: "Acampamento de prospecção", credits: 2800, research: 155, items: { tungstenPlate: 5, circuit: 4 } }
     ]);
 
     const RESOURCE_UNLOCK_TECH = Object.freeze({
@@ -3509,48 +3580,125 @@
     const terrain = Array.from({ length: WORLD_H }, () => Array(WORLD_W).fill(0));
     const deposits = new Map();
 
-    function addDepositCluster(cx, cy, kind) {
-      for (let dy = -1; dy <= 1; dy++) {
-        for (let dx = -1; dx <= 1; dx++) {
-          if (Math.abs(dx) + Math.abs(dy) <= 2) {
-            deposits.set(posKey(cx + dx, cy + dy), kind);
-          }
+    const BIOMES = Object.freeze({
+      central:   { name: "Distrito Central", ground: "#609c4d", groundAlt: "#6aa551", dark: "#27743b", light: "#b7d867", tree: "#2f7540" },
+      forest:    { name: "Mata Setentrional", ground: "#477f46", groundAlt: "#528b4d", dark: "#235b39", light: "#83b95a", tree: "#1f633d" },
+      highlands: { name: "Escarpa Mineral", ground: "#758451", groundAlt: "#818d58", dark: "#4f603f", light: "#b7bd72", tree: "#4f7540" },
+      marsh:     { name: "Brejo Carbonífero", ground: "#507b57", groundAlt: "#5c8760", dark: "#315d4d", light: "#8faf6d", tree: "#27634d" },
+      copper:    { name: "Planícies de Cobre", ground: "#8a8c50", groundAlt: "#979557", dark: "#5d6840", light: "#c7bc67", tree: "#59783f" },
+      frontier:  { name: "Fronteira Industrial", ground: "#5d8f4c", groundAlt: "#679951", dark: "#346b3f", light: "#aaca62", tree: "#347443" }
+    });
+
+    const DEPOSIT_SITES = Object.freeze([
+      { x: 56, y: 48, kind: "ironOre", label: "FERRO", major: true },
+      { x: 72, y: 51, kind: "copperOre", label: "COBRE", major: true },
+      { x: 54, y: 56, kind: "coal", label: "CARVÃO", major: true },
+      { x: 75, y: 41, kind: "tungstenOre", label: "TUNGSTÊNIO", major: true },
+      { x: 32, y: 28, kind: "ironOre", label: "FERRO", radius: 2 },
+      { x: 96, y: 28, kind: "ironOre", label: "FERRO", radius: 2 },
+      { x: 102, y: 76, kind: "ironOre", label: "FERRO", radius: 2 },
+      { x: 104, y: 54, kind: "copperOre", label: "COBRE", radius: 2 },
+      { x: 34, y: 74, kind: "copperOre", label: "COBRE", radius: 2 },
+      { x: 86, y: 80, kind: "copperOre", label: "COBRE", radius: 2 },
+      { x: 22, y: 58, kind: "coal", label: "CARVÃO", radius: 2 },
+      { x: 56, y: 82, kind: "coal", label: "CARVÃO", radius: 2 },
+      { x: 106, y: 30, kind: "coal", label: "CARVÃO", radius: 2 },
+      { x: 30, y: 18, kind: "tungstenOre", label: "TUNGSTÊNIO", radius: 2 },
+      { x: 98, y: 18, kind: "tungstenOre", label: "TUNGSTÊNIO", radius: 2 },
+      { x: 108, y: 82, kind: "tungstenOre", label: "TUNGSTÊNIO", radius: 2 }
+    ]);
+
+    const WATER_BODIES = Object.freeze([
+      { x: 16, y: 18, rx: 11, ry: 7 },
+      { x: 45, y: 14, rx: 9, ry: 5 },
+      { x: 92, y: 12, rx: 14, ry: 6 },
+      { x: 114, y: 27, rx: 8, ry: 12 },
+      { x: 14, y: 67, rx: 8, ry: 14 },
+      { x: 43, y: 84, rx: 13, ry: 7 },
+      { x: 79, y: 73, rx: 9, ry: 6 },
+      { x: 112, y: 68, rx: 11, ry: 15 }
+    ]);
+
+    const REGION_LANDMARKS = Object.freeze([
+      { x: 64, y: 43, label: "DISTRITO CENTRAL" },
+      { x: 31, y: 40, label: "MATA SETENTRIONAL" },
+      { x: 99, y: 40, label: "ESCARPA MINERAL" },
+      { x: 31, y: 67, label: "BREJO CARBONÍFERO" },
+      { x: 98, y: 67, label: "PLANÍCIES DE COBRE" }
+    ]);
+
+    function biomeAt(x, y) {
+      if (Math.hypot(x - HUB.x, y - HUB.y) < 18) return "central";
+      if (x < 46 && y < 45) return "forest";
+      if (x > 84 && y < 45) return "highlands";
+      if (x < 46 && y > 58) return "marsh";
+      if (x > 84 && y > 58) return "copper";
+      return "frontier";
+    }
+
+    function regionAt(x, y) {
+      return BIOMES[biomeAt(x, y)].name;
+    }
+
+    function isRoadTile(x, y) {
+      if (x === HUB.x || y === HUB.y) return true;
+      const outerHorizontal = (y === 24 || y === 72) && x >= 24 && x <= 104;
+      const outerVertical = (x === 24 || x === 104) && y >= 24 && y <= 72;
+      const eastBranch = y === 36 && x >= HUB.x && x <= 112;
+      const westBranch = y === 60 && x >= 16 && x <= HUB.x;
+      const marshBranch = x === 22 && y >= HUB.y && y <= 72;
+      const southBranch = y === 84 && x >= HUB.x && x <= 96;
+      const copperBranch = y === 72 && x >= 104 && x <= 112;
+      return outerHorizontal || outerVertical || eastBranch || westBranch || marshBranch || southBranch || copperBranch;
+    }
+
+    function addDepositCluster(cx, cy, kind, radius = 1) {
+      for (let dy = -radius; dy <= radius; dy++) {
+        for (let dx = -radius; dx <= radius; dx++) {
+          if (Math.abs(dx) + Math.abs(dy) > radius + 1) continue;
+          const x = cx + dx;
+          const y = cy + dy;
+          if (x >= 2 && y >= 2 && x < WORLD_W - 2 && y < WORLD_H - 2) deposits.set(posKey(x, y), kind);
         }
       }
     }
 
-    addDepositCluster(16, 17, "ironOre");
-    addDepositCluster(32, 20, "copperOre");
-    addDepositCluster(14, 25, "coal");
-    addDepositCluster(35, 10, "tungstenOre");
+    for (const site of DEPOSIT_SITES) addDepositCluster(site.x, site.y, site.kind, site.radius || 1);
 
     function nearFactoryZone(x, y) {
-      const nearHub = Math.hypot(x - HUB.x, y - HUB.y) < 13;
-      const nearIron = Math.hypot(x - 16, y - 17) < 6;
-      const nearCopper = Math.hypot(x - 32, y - 20) < 6;
-      const nearCoal = Math.hypot(x - 14, y - 25) < 5;
-      const nearTungsten = Math.hypot(x - 35, y - 10) < 5;
-      return nearHub || nearIron || nearCopper || nearCoal || nearTungsten;
+      if (Math.hypot(x - HUB.x, y - HUB.y) < 13 || isRoadTile(x, y)) return true;
+      if (DEPOSIT_SITES.some(site => Math.hypot(x - site.x, y - site.y) < (site.radius || 1) + 4)) return true;
+      return EXPLORATION_SITES.some(site => Math.hypot(x - site.x, y - site.y) < 2.5);
+    }
+
+    function isProceduralWater(x, y) {
+      if (isRoadTile(x, y) || deposits.has(posKey(x, y))) return false;
+      const border = x < 2 || y < 2 || x >= WORLD_W - 2 || y >= WORLD_H - 2;
+      if (border) return true;
+      return WATER_BODIES.some(body => {
+        const wobble = (hash2(x + body.x * 3, y + body.y * 5) - 0.5) * 0.16;
+        return ((x - body.x) ** 2) / (body.rx ** 2) + ((y - body.y) ** 2) / (body.ry ** 2) < 1 + wobble;
+      });
     }
 
     function generateTerrain() {
       for (let y = 0; y < WORLD_H; y++) {
         for (let x = 0; x < WORLD_W; x++) {
-          const border = x < 2 || y < 2 || x >= WORLD_W - 2 || y >= WORLD_H - 2;
-          const pondA = ((x - 7) ** 2) / 13 + ((y - 7) ** 2) / 7 < 1;
-          const pondB = ((x - 41) ** 2) / 12 + ((y - 9) ** 2) / 18 < 1;
-          if (border || pondA || pondB) {
-            terrain[y][x] = 2; // água
-            continue;
-          }
-          if (x === HUB.x || y === HUB.y) {
+          if (isRoadTile(x, y)) {
             terrain[y][x] = 1; // caminho
             continue;
           }
+          if (isProceduralWater(x, y)) {
+            terrain[y][x] = 2; // água
+            continue;
+          }
           if (!nearFactoryZone(x, y) && !deposits.has(posKey(x, y))) {
+            const biome = biomeAt(x, y);
             const h = hash2(x, y);
-            if (h < 0.036) terrain[y][x] = 3; // árvore
-            else if (h > 0.975) terrain[y][x] = 4; // pedra
+            const treeLimit = biome === "forest" ? 0.12 : biome === "marsh" ? 0.075 : biome === "central" ? 0.025 : 0.045;
+            const rockLimit = biome === "highlands" ? 0.91 : biome === "copper" ? 0.955 : 0.975;
+            if (h < treeLimit) terrain[y][x] = 3; // árvore
+            else if (h > rockLimit) terrain[y][x] = 4; // pedra
           }
         }
       }
@@ -3728,6 +3876,11 @@
       const base = createNewState();
       if (!raw || typeof raw !== "object") return base;
       const previousVersion = Math.max(0, Math.floor(Number(raw.version) || 0));
+      const migrateExpandedWorld = previousVersion > 0 && previousVersion < 14;
+      const worldShiftX = migrateExpandedWorld ? HUB.x - LEGACY_HUB.x : 0;
+      const worldShiftY = migrateExpandedWorld ? HUB.y - LEGACY_HUB.y : 0;
+      const shiftedWorldX = value => Number(value) + worldShiftX;
+      const shiftedWorldY = value => Number(value) + worldShiftY;
 
       const safe = {
         ...base,
@@ -3763,8 +3916,10 @@
         ui: { ...base.ui, ...(raw.ui || {}) }
       };
 
-      safe.player.x = clamp(Math.round(Number(safe.player.x) || base.player.x), 2, WORLD_W - 3);
-      safe.player.y = clamp(Math.round(Number(safe.player.y) || base.player.y), 2, WORLD_H - 3);
+      const sourcePlayerX = migrateExpandedWorld ? (raw.player?.x ?? LEGACY_HUB.x) : safe.player.x;
+      const sourcePlayerY = migrateExpandedWorld ? (raw.player?.y ?? (LEGACY_HUB.y - 2)) : safe.player.y;
+      safe.player.x = clamp(Math.round(shiftedWorldX(sourcePlayerX) || base.player.x), 2, WORLD_W - 3);
+      safe.player.y = clamp(Math.round(shiftedWorldY(sourcePlayerY) || base.player.y), 2, WORLD_H - 3);
       safe.player.tx = safe.player.x;
       safe.player.ty = safe.player.y;
       safe.player.moving = false;
@@ -3809,14 +3964,18 @@
         ? safe.exploration.found.filter(id => EXPLORATION_SITES.some(site => site.id === id))
         : [])];
       safe.exploration.scans = Math.max(0, Math.floor(Number(safe.exploration.scans) || 0));
-      safe.legacy.anchorX = clamp(Math.round(Number(safe.legacy.anchorX) || HUB.x), 2, WORLD_W - 3);
-      safe.legacy.anchorY = clamp(Math.round(Number(safe.legacy.anchorY) || HUB.y), 2, WORLD_H - 3);
+      const sourceLegacyX = migrateExpandedWorld ? (raw.legacy?.anchorX ?? LEGACY_HUB.x) : safe.legacy.anchorX;
+      const sourceLegacyY = migrateExpandedWorld ? (raw.legacy?.anchorY ?? LEGACY_HUB.y) : safe.legacy.anchorY;
+      safe.legacy.anchorX = clamp(Math.round(shiftedWorldX(sourceLegacyX) || HUB.x), 2, WORLD_W - 3);
+      safe.legacy.anchorY = clamp(Math.round(shiftedWorldY(sourceLegacyY) || HUB.y), 2, WORLD_H - 3);
       safe.lastSavedAt = Number(safe.lastSavedAt) || Date.now();
       safe.nextId = Math.max(1, Math.floor(Number(safe.nextId) || 1));
 
       const validTypes = new Set(["miner", "belt", "crafter", "furnace", "assembler", "terminal", "splitter", "underground", "merger", "wall", "turret", "cannon", "railgun", "beacon", "deepDrill", "repairStation", "tesla"]);
       safe.buildings = Array.isArray(raw.buildings) ? raw.buildings.filter(b => {
-        return b && validTypes.has(b.type) && inBounds(Number(b.x), Number(b.y)) && !isHub(Number(b.x), Number(b.y));
+        const x = b ? shiftedWorldX(b.x) : NaN;
+        const y = b ? shiftedWorldY(b.y) : NaN;
+        return b && validTypes.has(b.type) && inBounds(x, y) && !isHub(x, y);
       }).map(b => {
         const legacyCrafter = b.type === "crafter";
         const migratedType = legacyCrafter
@@ -3843,8 +4002,8 @@
           id: String(b.id || `b${safe.nextId++}`),
           type: migratedType,
           recipe,
-          x: Math.round(Number(b.x)),
-          y: Math.round(Number(b.y)),
+          x: Math.round(shiftedWorldX(b.x)),
+          y: Math.round(shiftedWorldY(b.y)),
           dir: clamp(Math.round(Number(b.dir) || 0), 0, 3),
           level,
           hp: clamp(Number.isFinite(Number(b.hp)) ? Number(b.hp) : maximumHp, 0, maximumHp),
@@ -3861,8 +4020,8 @@
           aimAngle: Number(b.aimAngle) || 0,
           shotFlash: 0,
           targetId: null,
-          shotX: Number(b.shotX) || Math.round(Number(b.x)),
-          shotY: Number(b.shotY) || Math.round(Number(b.y)),
+          shotX: Math.round(shiftedWorldX(Number.isFinite(Number(b.shotX)) ? b.shotX : b.x)),
+          shotY: Math.round(shiftedWorldY(Number.isFinite(Number(b.shotY)) ? b.shotY : b.y)),
           shotTargets: []
         };
       }) : [];
@@ -3885,12 +4044,12 @@
       }
 
       safe.items = Array.isArray(raw.items) ? raw.items.filter(item => {
-        return item && ITEMS[item.kind] && inBounds(Number(item.x), Number(item.y));
+        return item && ITEMS[item.kind] && inBounds(shiftedWorldX(item.x), shiftedWorldY(item.y));
       }).map(item => ({
         id: String(item.id || `i${safe.nextId++}`),
         kind: item.kind,
-        x: Math.round(Number(item.x)),
-        y: Math.round(Number(item.y)),
+        x: Math.round(shiftedWorldX(item.x)),
+        y: Math.round(shiftedWorldY(item.y)),
         progress: clamp(Number(item.progress) || 0, 0, 0.999)
       })) : [];
 
@@ -3951,17 +4110,17 @@
       }
 
       safe.enemies = Array.isArray(raw.enemies) ? raw.enemies.filter(enemy => {
-        return enemy && inBounds(Number(enemy.x), Number(enemy.y));
+        return enemy && inBounds(shiftedWorldX(enemy.x), shiftedWorldY(enemy.y));
       }).map(enemy => {
         const kind = ["raider", "runner", "tank", "breacher", "armored", "disperser", "swarm", "saboteur"].includes(enemy.kind) ? enemy.kind : "raider";
         const maximumHp = Math.max(1, Number(enemy.maxHp) || 40);
         return {
           id: String(enemy.id || `e${safe.nextId++}`),
           kind,
-          x: clamp(Math.round(Number(enemy.x) || HUB.x), 0, WORLD_W - 1),
-          y: clamp(Math.round(Number(enemy.y) || HUB.y), 0, WORLD_H - 1),
-          tx: Number.isFinite(Number(enemy.tx)) ? clamp(Math.round(Number(enemy.tx)), 0, WORLD_W - 1) : null,
-          ty: Number.isFinite(Number(enemy.ty)) ? clamp(Math.round(Number(enemy.ty)), 0, WORLD_H - 1) : null,
+          x: clamp(Math.round(shiftedWorldX(enemy.x) || HUB.x), 0, WORLD_W - 1),
+          y: clamp(Math.round(shiftedWorldY(enemy.y) || HUB.y), 0, WORLD_H - 1),
+          tx: Number.isFinite(Number(enemy.tx)) ? clamp(Math.round(shiftedWorldX(enemy.tx)), 0, WORLD_W - 1) : null,
+          ty: Number.isFinite(Number(enemy.ty)) ? clamp(Math.round(shiftedWorldY(enemy.ty)), 0, WORLD_H - 1) : null,
           progress: clamp(Number(enemy.progress) || 0, 0, 0.999),
           hp: clamp(Number(enemy.hp) || maximumHp, 0, maximumHp),
           maxHp: maximumHp,
@@ -6341,6 +6500,81 @@
     let viewH = window.innerHeight;
     let dpr = 1;
     const camera = { x: 0, y: 0, zoom: 1, followPause: 0 };
+    const minimapCanvas = document.getElementById("minimap");
+    const minimapContext = minimapCanvas.getContext("2d", { alpha: false });
+    const minimapBase = document.createElement("canvas");
+    const minimapBaseContext = minimapBase.getContext("2d", { alpha: false });
+    const regionText = document.getElementById("regionText");
+    const coordsText = document.getElementById("coordsText");
+    minimapBase.width = WORLD_W;
+    minimapBase.height = WORLD_H;
+
+    function rebuildMinimapBase() {
+      minimapBaseContext.imageSmoothingEnabled = false;
+      for (let y = 0; y < WORLD_H; y++) {
+        for (let x = 0; x < WORLD_W; x++) {
+          const tile = terrain[y][x];
+          const deposit = getDeposit(x, y);
+          if (deposit) minimapBaseContext.fillStyle = ITEMS[deposit].color;
+          else if (tile === 2) minimapBaseContext.fillStyle = "#155e72";
+          else if (tile === 1) minimapBaseContext.fillStyle = "#9d7043";
+          else if (tile === 3) minimapBaseContext.fillStyle = "#1f5737";
+          else if (tile === 4) minimapBaseContext.fillStyle = "#69716c";
+          else minimapBaseContext.fillStyle = BIOMES[biomeAt(x, y)].ground;
+          minimapBaseContext.fillRect(x, y, 1, 1);
+        }
+      }
+    }
+
+    function drawMinimap() {
+      const width = minimapCanvas.width;
+      const height = minimapCanvas.height;
+      const scaleX = width / WORLD_W;
+      const scaleY = height / WORLD_H;
+      minimapContext.imageSmoothingEnabled = false;
+      minimapContext.drawImage(minimapBase, 0, 0, width, height);
+
+      minimapContext.fillStyle = "rgba(111,205,228,.68)";
+      for (const building of state.buildings) {
+        minimapContext.fillRect(building.x * scaleX, building.y * scaleY, Math.max(1, scaleX), Math.max(1, scaleY));
+      }
+
+      minimapContext.fillStyle = "#f0c75e";
+      minimapContext.fillRect((HUB.x - 1) * scaleX, (HUB.y - 1) * scaleY, scaleX * 3, scaleY * 3);
+
+      for (const site of EXPLORATION_SITES) {
+        const found = state.exploration.found.includes(site.id);
+        const scanned = state.abilities.scannerTarget === site.id && state.abilities.scannerFor > 0;
+        if (!found && !scanned) continue;
+        minimapContext.fillStyle = found ? "#77d3a2" : "#d8f7ff";
+        minimapContext.fillRect(site.x * scaleX - 1, site.y * scaleY - 1, 3, 3);
+      }
+
+      const player = playerVisualTile();
+      minimapContext.fillStyle = "#ffffff";
+      minimapContext.beginPath();
+      minimapContext.arc((player.x + .5) * scaleX, (player.y + .5) * scaleY, 2.4, 0, Math.PI * 2);
+      minimapContext.fill();
+      minimapContext.strokeStyle = "rgba(8,16,13,.9)";
+      minimapContext.lineWidth = 1;
+      minimapContext.stroke();
+
+      const visibleTilesW = viewW / camera.zoom / TILE;
+      const visibleTilesH = viewH / camera.zoom / TILE;
+      minimapContext.strokeStyle = "rgba(238,247,242,.62)";
+      minimapContext.lineWidth = 1;
+      minimapContext.strokeRect(
+        camera.x / TILE * scaleX + .5,
+        camera.y / TILE * scaleY + .5,
+        visibleTilesW * scaleX - 1,
+        visibleTilesH * scaleY - 1
+      );
+
+      regionText.textContent = regionAt(Math.round(player.x), Math.round(player.y));
+      coordsText.textContent = `${Math.round(player.x)}, ${Math.round(player.y)}`;
+    }
+
+    rebuildMinimapBase();
 
     function resizeCanvas() {
       viewW = Math.max(1, window.innerWidth);
@@ -6460,14 +6694,16 @@
     }
 
     function drawGrassGround(x, y, px, py, noise) {
-      ctx.fillStyle = grassGroundGradient;
+      const palette = BIOMES[biomeAt(x, y)];
+      ctx.fillStyle = noise > 0.54 ? palette.groundAlt : palette.ground;
       ctx.fillRect(px, py, TILE, TILE);
       const tuftCount = noise > 0.76 ? 3 : noise > 0.3 ? 2 : 1;
       for (let i = 0; i < tuftCount; i++) {
         const detail = hash2(x * 17 + i * 13, y * 19 + i * 7);
         const tx = px + 6 + Math.floor(detail * 27);
         const ty = py + 8 + Math.floor(hash2(x * 23 + i, y * 29 + i * 5) * 25);
-        ctx.strokeStyle = detail > 0.5 ? "rgba(39,119,53,.44)" : "rgba(183,213,92,.42)";
+        ctx.strokeStyle = detail > 0.5 ? palette.dark : palette.light;
+        ctx.globalAlpha = detail > 0.5 ? .48 : .4;
         ctx.lineWidth = detail > 0.82 ? 1.4 : 1;
         ctx.beginPath();
         ctx.moveTo(tx, ty + 4);
@@ -6478,6 +6714,7 @@
         ctx.lineTo(tx + 1, ty + 1);
         ctx.stroke();
       }
+      ctx.globalAlpha = 1;
       if (hash2(x + 101, y + 233) > 0.92) {
         const fx = px + 9 + Math.floor(hash2(x + 55, y + 71) * 21);
         const fy = py + 9 + Math.floor(hash2(x + 81, y + 37) * 20);
@@ -6664,13 +6901,19 @@
       const py = y * TILE;
       const tile = terrain[y][x];
       const noise = hash2(x, y);
-      if (tile === 3) drawTree(px, py, noise);
-      if (tile === 4) drawRock(px, py, "#78817c", "#394842", noise);
+      const biome = biomeAt(x, y);
+      const palette = BIOMES[biome];
+      if (tile === 3) drawTree(px, py, noise, palette);
+      if (tile === 4) {
+        const fill = biome === "highlands" ? "#8c8e75" : biome === "copper" ? "#958064" : "#78817c";
+        const edge = biome === "highlands" ? "#4d5146" : biome === "copper" ? "#584634" : "#394842";
+        drawRock(px, py, fill, edge, noise);
+      }
       const deposit = getDeposit(x, y);
       if (deposit) drawDeposit(px, py, deposit, noise);
     }
 
-    function drawTree(px, py, noise) {
+    function drawTree(px, py, noise, palette = BIOMES.central) {
       ctx.fillStyle = "rgba(21,52,25,.34)";
       ctx.beginPath();
       ctx.ellipse(px + 23, py + 33, 14, 5, -0.12, 0, Math.PI * 2);
@@ -6690,17 +6933,17 @@
       ctx.lineTo(px + 21, py + 20);
       ctx.stroke();
       const shift = (noise - 0.5) * 4;
-      ctx.fillStyle = "#194f31";
+      ctx.fillStyle = palette.dark;
       ctx.beginPath();
       ctx.arc(px + 21, py + 17, 15, 0, Math.PI * 2);
       ctx.fill();
-      ctx.fillStyle = "#2f7540";
+      ctx.fillStyle = palette.tree;
       ctx.beginPath();
       ctx.arc(px + 15 + shift, py + 15, 10, 0, Math.PI * 2);
       ctx.arc(px + 27, py + 14, 9, 0, Math.PI * 2);
       ctx.arc(px + 22, py + 9, 9, 0, Math.PI * 2);
       ctx.fill();
-      ctx.fillStyle = "#64a748";
+      ctx.fillStyle = palette.light;
       ctx.beginPath();
       ctx.arc(px + 16 + shift, py + 10, 5, 0, Math.PI * 2);
       ctx.arc(px + 23, py + 7, 4, 0, Math.PI * 2);
@@ -7833,13 +8076,25 @@
     }
 
     function drawMapLabel(x, y, text, color) {
+      const width = Math.max(48, text.length * 5.5 + 12);
       ctx.fillStyle = "rgba(9,20,14,.72)";
-      roundedRectPath(ctx, x * TILE - 24, y * TILE - 11, 48, 15, 4);
+      roundedRectPath(ctx, x * TILE - width / 2, y * TILE - 11, width, 15, 4);
       ctx.fill();
       ctx.fillStyle = color;
       ctx.font = "bold 8px ui-monospace, monospace";
       ctx.textAlign = "center";
       ctx.fillText(text, x * TILE, y * TILE);
+    }
+
+    function drawRegionLabels() {
+      ctx.save();
+      ctx.textAlign = "center";
+      ctx.font = "700 13px 'Segoe UI', sans-serif";
+      ctx.fillStyle = "rgba(235,244,238,.18)";
+      for (const landmark of REGION_LANDMARKS) {
+        ctx.fillText(landmark.label, landmark.x * TILE, landmark.y * TILE);
+      }
+      ctx.restore();
     }
 
     function drawExplorationSites(time) {
@@ -7937,10 +8192,11 @@
         for (let x = minX; x <= maxX; x++) drawTerrainProps(x, y);
       }
 
-      drawMapLabel(16.5, 14.8, "FERRO", "#d4ddda");
-      drawMapLabel(32.5, 17.8, "COBRE", "#f0a16a");
-      drawMapLabel(14.5, 22.8, "CARVÃO", "#bac3be");
-      drawMapLabel(35.5, 7.8, "TUNGSTÊNIO", "#b7e5f5");
+      drawRegionLabels();
+      for (const site of DEPOSIT_SITES) {
+        const resource = ITEMS[site.kind];
+        drawMapLabel(site.x + 0.5, site.y - (site.radius || 1) - 0.2, site.label, resource.color);
+      }
       drawEnemySpawns(simClock);
       drawHub(simClock);
       drawExplorationSites(simClock);
@@ -7956,6 +8212,7 @@
       drawGhost();
       drawPlayer(simClock);
       ctx.restore();
+      drawMinimap();
     }
 
     // ---------------------------------------------------------------------
@@ -9024,7 +9281,7 @@
            <li><strong>8 Parede:</strong> clique e arraste para formar muralhas. <strong>9 Torreta:</strong> usa Munição. <strong>V Canhão:</strong> usa Obuses e explode grupos. <strong>G Railgun:</strong> usa Dardos e perfura inimigos alinhados.</li>
            <li>Pesquise <strong>Contratos industriais</strong> e construa o <strong>Terminal (O)</strong>. Selecione-o com C, aceite um pedido e conecte esteiras às quatro laterais; itens no inventário não contam.</li>
            <li>O personagem opera a fábrica: <strong>Y Overclock</strong>, <strong>J Reparo</strong>, <strong>K EMP</strong>, <strong>L Scanner</strong> e <strong>N Retorno ao Hub</strong>. A barra inferior mostra recargas.</li>
-           <li>Explore as quatro estradas e regiões de minério. Caixas de campo aparecem quando você se aproxima; o Scanner marca a mais próxima e os prêmios reiniciam a cada prestígio.</li>
+           <li>Explore o mundo de <strong>${WORLD_W}×${WORLD_H} tiles</strong>. O minimapa mostra sua região, posição, estradas, lagos e jazidas; caixas de campo aparecem quando você se aproxima. O Scanner marca a mais próxima e o Retorno leva você ao Hub.</li>
            <li>Selecione uma construção e use <strong>Melhorar</strong>: cada nível dá +20% local, mas o custo cresce.</li>
            <li>Só materiais processados e circuitos entregues geram <strong>Pesquisa</strong>; minério bruto não gera. Abra <strong>TEC</strong>, arraste o mapa e toque nos nós para ver os caminhos permanentes.</li>
            <li>Ao entregar pelo menos <strong>${PRESTIGE_CIRCUITS} Circuitos</strong>, faça Prestígio para receber Núcleos. Pressione <strong>P</strong> para investi-los permanentemente em Indústria, Logística ou Defesa.</li>
@@ -9100,6 +9357,7 @@
         Pesquisa disponível: <strong>${formatNumber(state.economy.researchPoints)}</strong><br>
         Tecnologias: <strong>${Object.keys(TECHS).filter(key => hasTech(key)).length}/${Object.keys(TECHS).length}</strong><br>
         Contratos: <strong>${state.contracts.reputation} reputação • ${state.contracts.lifetimeCompleted} concluídos • ${activeContract()?.label || "nenhum ativo"}</strong><br>
+        Mundo: <strong>${regionAt(state.player.x, state.player.y)} • ${state.player.x}, ${state.player.y} • ${WORLD_W}×${WORLD_H} tiles</strong><br>
         Exploração: <strong>${state.exploration.found.length}/${EXPLORATION_SITES.length} caixas nesta rodada</strong><br>
         Prestígio: <strong>${state.economy.prestige} Núcleos totais • ${state.economy.corePoints} livres • ${Object.keys(PRESTIGE_NODES).filter(key => hasPrestigeNode(key)).length}/${Object.keys(PRESTIGE_NODES).length} nós</strong><br>
         Multiplicador global: <strong>${formatNumber(machineMultiplier())}×</strong></p>`;
@@ -9646,6 +9904,14 @@
       getState: () => JSON.parse(JSON.stringify(state)),
       getCamera: () => JSON.parse(JSON.stringify(camera)),
       getRates: () => JSON.parse(JSON.stringify(calculateNetworkRates())),
+      getWorld: () => ({
+        width: WORLD_W,
+        height: WORLD_H,
+        hub: { ...HUB },
+        region: regionAt(state.player.x, state.player.y),
+        deposits: DEPOSIT_SITES.length,
+        explorationSites: EXPLORATION_SITES.length
+      }),
       getCatalog: () => ({
         items: Object.keys(ITEMS),
         recipes: Object.keys(RECIPES),
@@ -9683,6 +9949,15 @@
         }
         for (const [key, ability] of Object.entries(ABILITIES)) {
           if (ability.tech && !TECHS[ability.tech]) errors.push(`Habilidade ${key} usa tech inválida`);
+        }
+        for (const spawn of ENEMY_SPAWNS) {
+          if (!inBounds(spawn.x, spawn.y) || !defenseTerrainPassable(spawn.x, spawn.y)) errors.push(`Entrada ${spawn.label} inválida`);
+        }
+        for (const site of EXPLORATION_SITES) {
+          if (!inBounds(site.x, site.y) || terrain[site.y][site.x] === 2) errors.push(`Exploração ${site.id} fora do mundo acessível`);
+        }
+        for (const site of DEPOSIT_SITES) {
+          if (getDeposit(site.x, site.y) !== site.kind || terrain[site.y][site.x] === 2) errors.push(`Jazida ${site.kind} em ${site.x},${site.y} inválida`);
         }
         return errors;
       },
