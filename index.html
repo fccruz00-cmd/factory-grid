@@ -6499,15 +6499,23 @@
     let viewW = window.innerWidth;
     let viewH = window.innerHeight;
     let dpr = 1;
+    const MAX_RENDER_DPR = 1.5;
+    const MINIMAP_INTERVAL = 1 / 8;
+    const OVERVIEW_TILE = 8;
     const camera = { x: 0, y: 0, zoom: 1, followPause: 0 };
     const minimapCanvas = document.getElementById("minimap");
     const minimapContext = minimapCanvas.getContext("2d", { alpha: false });
     const minimapBase = document.createElement("canvas");
     const minimapBaseContext = minimapBase.getContext("2d", { alpha: false });
+    const terrainOverview = document.createElement("canvas");
+    const terrainOverviewContext = terrainOverview.getContext("2d", { alpha: false });
     const regionText = document.getElementById("regionText");
     const coordsText = document.getElementById("coordsText");
+    let minimapElapsed = MINIMAP_INTERVAL;
     minimapBase.width = WORLD_W;
     minimapBase.height = WORLD_H;
+    terrainOverview.width = WORLD_W * OVERVIEW_TILE;
+    terrainOverview.height = WORLD_H * OVERVIEW_TILE;
 
     function rebuildMinimapBase() {
       minimapBaseContext.imageSmoothingEnabled = false;
@@ -6526,7 +6534,76 @@
       }
     }
 
-    function drawMinimap() {
+    function rebuildTerrainOverview() {
+      const overview = terrainOverviewContext;
+      overview.imageSmoothingEnabled = false;
+      for (let y = 0; y < WORLD_H; y++) {
+        for (let x = 0; x < WORLD_W; x++) {
+          const px = x * OVERVIEW_TILE;
+          const py = y * OVERVIEW_TILE;
+          const tile = terrain[y][x];
+          const noise = hash2(x, y);
+          const palette = BIOMES[biomeAt(x, y)];
+          overview.fillStyle = tile === 2 ? (y < WORLD_H * .48 ? "#197f92" : "#146d82")
+            : tile === 1 ? (noise > .52 ? "#aa7847" : "#9d6d41")
+            : noise > .54 ? palette.groundAlt : palette.ground;
+          overview.fillRect(px, py, OVERVIEW_TILE, OVERVIEW_TILE);
+
+          if (tile === 2) {
+            overview.fillStyle = noise > .5 ? "rgba(112,218,219,.28)" : "rgba(8,67,88,.25)";
+            overview.fillRect(px + 1 + Math.floor(noise * 2), py + 2 + Math.floor(noise * 4), 4, 1);
+            overview.fillStyle = "rgba(7,48,61,.22)";
+            if (terrainAt(x, y - 1) !== 2) overview.fillRect(px, py, OVERVIEW_TILE, 1);
+            if (terrainAt(x - 1, y) !== 2) overview.fillRect(px, py, 1, OVERVIEW_TILE);
+          } else {
+            overview.fillStyle = noise > .5 ? "rgba(18,54,29,.12)" : "rgba(225,246,172,.1)";
+            overview.fillRect(px + 1 + Math.floor(noise * 5), py + 1 + Math.floor(hash2(x + 9, y + 5) * 5), 1, 1);
+            if (tile === 1) {
+              overview.fillStyle = "rgba(72,47,27,.24)";
+              if (terrainAt(x, y - 1) !== 1) overview.fillRect(px, py, OVERVIEW_TILE, 1);
+              if (terrainAt(x - 1, y) !== 1) overview.fillRect(px, py, 1, OVERVIEW_TILE);
+            }
+            if (terrainAt(x, y - 1) === 2) {
+              overview.fillStyle = "#8a6639";
+              overview.fillRect(px, py, OVERVIEW_TILE, 1);
+            }
+            if (terrainAt(x - 1, y) === 2) {
+              overview.fillStyle = "#8a6639";
+              overview.fillRect(px, py, 1, OVERVIEW_TILE);
+            }
+          }
+
+          if (tile === 3) {
+            overview.fillStyle = "#684429";
+            overview.fillRect(px + 3, py + 5, 2, 3);
+            overview.fillStyle = palette.dark;
+            overview.fillRect(px + 1, py + 1, 6, 5);
+            overview.fillStyle = palette.light;
+            overview.fillRect(px + 2, py + 1, 3, 2);
+          } else if (tile === 4) {
+            overview.fillStyle = "#3d4843";
+            overview.fillRect(px + 1, py + 3, 6, 4);
+            overview.fillStyle = "#89918b";
+            overview.fillRect(px + 2, py + 2, 4, 3);
+          }
+
+          const deposit = getDeposit(x, y);
+          if (deposit) {
+            overview.fillStyle = "rgba(10,18,14,.55)";
+            overview.fillRect(px + 1, py + 2, 6, 5);
+            overview.fillStyle = ITEMS[deposit].color;
+            overview.fillRect(px + 2, py + 2, 4, 4);
+            overview.fillStyle = "rgba(255,255,255,.5)";
+            overview.fillRect(px + 3, py + 2, 2, 1);
+          }
+        }
+      }
+    }
+
+    function drawMinimap(renderDt) {
+      minimapElapsed += renderDt;
+      if (minimapElapsed < MINIMAP_INTERVAL) return;
+      minimapElapsed %= MINIMAP_INTERVAL;
       const width = minimapCanvas.width;
       const height = minimapCanvas.height;
       const scaleX = width / WORLD_W;
@@ -6575,11 +6652,12 @@
     }
 
     rebuildMinimapBase();
+    rebuildTerrainOverview();
 
     function resizeCanvas() {
       viewW = Math.max(1, window.innerWidth);
       viewH = Math.max(1, window.innerHeight);
-      dpr = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
+      dpr = Math.min(MAX_RENDER_DPR, Math.max(1, window.devicePixelRatio || 1));
       canvas.width = Math.round(viewW * dpr);
       canvas.height = Math.round(viewH * dpr);
       canvas.style.width = `${viewW}px`;
@@ -6684,20 +6762,41 @@
       context.closePath();
     }
 
-    let grassGroundGradient = "#5f9c4d";
-    let waterGroundGradient = "#16758a";
-    let roadGroundGradient = "#a87946";
-
     function terrainAt(x, y) {
       if (x < 0 || y < 0 || x >= WORLD_W || y >= WORLD_H) return 2;
       return terrain[y][x];
     }
 
-    function drawGrassGround(x, y, px, py, noise) {
+    function terrainDetailLevel() {
+      if (camera.zoom < 0.68) return 0;
+      if (camera.zoom < 0.9) return 1;
+      return 2;
+    }
+
+    function drawTerrainOverviewLayer(minX, minY, maxX, maxY) {
+      const tileWidth = maxX - minX + 1;
+      const tileHeight = maxY - minY + 1;
+      ctx.save();
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(
+        terrainOverview,
+        minX * OVERVIEW_TILE,
+        minY * OVERVIEW_TILE,
+        tileWidth * OVERVIEW_TILE,
+        tileHeight * OVERVIEW_TILE,
+        minX * TILE,
+        minY * TILE,
+        tileWidth * TILE,
+        tileHeight * TILE
+      );
+      ctx.restore();
+    }
+
+    function drawGrassGround(x, y, px, py, noise, detailLevel) {
       const palette = BIOMES[biomeAt(x, y)];
       ctx.fillStyle = noise > 0.54 ? palette.groundAlt : palette.ground;
       ctx.fillRect(px, py, TILE, TILE);
-      const tuftCount = noise > 0.76 ? 3 : noise > 0.3 ? 2 : 1;
+      const tuftCount = detailLevel === 1 ? 1 : noise > 0.76 ? 3 : noise > 0.3 ? 2 : 1;
       for (let i = 0; i < tuftCount; i++) {
         const detail = hash2(x * 17 + i * 13, y * 19 + i * 7);
         const tx = px + 6 + Math.floor(detail * 27);
@@ -6715,7 +6814,7 @@
         ctx.stroke();
       }
       ctx.globalAlpha = 1;
-      if (hash2(x + 101, y + 233) > 0.92) {
+      if (detailLevel === 2 && hash2(x + 101, y + 233) > 0.92) {
         const fx = px + 9 + Math.floor(hash2(x + 55, y + 71) * 21);
         const fy = py + 9 + Math.floor(hash2(x + 81, y + 37) * 20);
         ctx.fillStyle = hash2(x + 12, y + 98) > 0.5 ? "#ffe88a" : "#f4d1e9";
@@ -6726,20 +6825,24 @@
       }
     }
 
-    function drawWaterGround(x, y, px, py, time) {
-      ctx.fillStyle = waterGroundGradient;
+    function drawWaterGround(x, y, px, py, time, detailLevel) {
+      const depth = y / Math.max(1, WORLD_H - 1);
+      ctx.fillStyle = depth < .36 ? "#18879a" : depth < .72 ? "#16758a" : "#12677c";
       ctx.fillRect(px, py, TILE, TILE);
       ctx.save();
       ctx.beginPath();
       ctx.rect(px, py, TILE, TILE);
       ctx.clip();
       ctx.lineCap = "round";
-      for (let band = -1; band <= 3; band++) {
+      const firstBand = detailLevel === 1 ? 0 : -1;
+      const lastBand = detailLevel === 1 ? 1 : 3;
+      const waveStep = detailLevel === 1 ? 5 : 2;
+      for (let band = firstBand; band <= lastBand; band++) {
         const baseY = Math.floor(py / 14) * 14 + band * 14;
         ctx.strokeStyle = band % 2 === 0 ? "rgba(122,224,224,.34)" : "rgba(29,130,166,.44)";
         ctx.lineWidth = band % 2 === 0 ? 1.4 : 1;
         ctx.beginPath();
-        for (let gx = px - 2; gx <= px + TILE + 2; gx += 2) {
+        for (let gx = px - 2; gx <= px + TILE + 2; gx += waveStep) {
           const gy = baseY + Math.sin((gx + time * 8) * 0.13 + baseY * 0.055) * 2.2;
           if (gx === px - 2) ctx.moveTo(gx, gy);
           else ctx.lineTo(gx, gy);
@@ -6747,7 +6850,7 @@
         ctx.stroke();
       }
       ctx.restore();
-      if (hash2(x + 311, y + 127) > 0.82) {
+      if (detailLevel === 2 && hash2(x + 311, y + 127) > 0.82) {
         const sx = px + 10 + Math.floor(hash2(x + 53, y + 17) * 20);
         const sy = py + 9 + Math.floor(hash2(x + 91, y + 43) * 20);
         ctx.fillStyle = `rgba(218,255,247,${0.25 + Math.sin(time * 2.4 + x) * 0.1})`;
@@ -6838,8 +6941,8 @@
       }
     }
 
-    function drawRoadGround(x, y, px, py, noise) {
-      ctx.fillStyle = roadGroundGradient;
+    function drawRoadGround(x, y, px, py, noise, detailLevel) {
+      ctx.fillStyle = noise > .52 ? "#ad7b49" : "#a16f43";
       ctx.fillRect(px, py, TILE, TILE);
       const horizontal = terrainAt(x - 1, y) === 1 || terrainAt(x + 1, y) === 1;
       const vertical = terrainAt(x, y - 1) === 1 || terrainAt(x, y + 1) === 1;
@@ -6863,7 +6966,8 @@
         ctx.stroke();
       }
       ctx.setLineDash([]);
-      for (let i = 0; i < 3; i++) {
+      const stoneCount = detailLevel === 1 ? 1 : 3;
+      for (let i = 0; i < stoneCount; i++) {
         const stone = hash2(x * 31 + i * 7, y * 37 + i * 11);
         const sx = px + 5 + Math.floor(stone * 29);
         const sy = py + 7 + Math.floor(hash2(x * 41 + i, y * 43 + i) * 26);
@@ -6877,23 +6981,25 @@
       if (terrainAt(x + 1, y) !== 1) ctx.fillRect(px + TILE - 2, py, 2, TILE);
     }
 
-    function drawTerrainTile(x, y, time) {
+    function drawTerrainTile(x, y, time, detailLevel) {
       const px = x * TILE;
       const py = y * TILE;
       const tile = terrain[y][x];
       const noise = hash2(x, y);
       if (tile === 2) {
-        drawWaterGround(x, y, px, py, time);
+        drawWaterGround(x, y, px, py, time, detailLevel);
         drawShoreline(x, y, px, py);
       } else if (tile === 1) {
-        drawRoadGround(x, y, px, py, noise);
+        drawRoadGround(x, y, px, py, noise, detailLevel);
       } else {
-        drawGrassGround(x, y, px, py, noise);
+        drawGrassGround(x, y, px, py, noise, detailLevel);
         drawLandBank(x, y, px, py);
       }
-      ctx.strokeStyle = tile === 2 ? "rgba(6,53,69,.02)" : "rgba(21,59,29,.036)";
-      ctx.lineWidth = 1;
-      ctx.strokeRect(px + 0.5, py + 0.5, TILE - 1, TILE - 1);
+      if (detailLevel === 2) {
+        ctx.strokeStyle = tile === 2 ? "rgba(6,53,69,.02)" : "rgba(21,59,29,.036)";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(px + 0.5, py + 0.5, TILE - 1, TILE - 1);
+      }
     }
 
     function drawTerrainProps(x, y) {
@@ -7720,8 +7826,36 @@
       }
     }
 
-    function drawBuilding(building, time) {
-      if (building.type === "belt") drawBelt(building, time);
+    const BUILDING_OVERVIEW_COLORS = Object.freeze({
+      belt: "#39747c", splitter: "#4c8790", underground: "#315b66", merger: "#4c8790",
+      miner: "#b78646", deepDrill: "#7c6ab3", furnace: "#b65f3d", assembler: "#477e98",
+      terminal: "#c9a445", wall: "#6f7773", turret: "#a64e4c", cannon: "#985c42",
+      railgun: "#77598f", beacon: "#4c9a75", repairStation: "#55a681", tesla: "#587eac"
+    });
+
+    function drawBuildingOverview(building) {
+      const px = building.x * TILE;
+      const py = building.y * TILE;
+      const transport = isTransportBuilding(building);
+      ctx.fillStyle = "rgba(7,17,14,.5)";
+      ctx.fillRect(px + 4, py + 5, TILE - 7, TILE - 7);
+      ctx.fillStyle = BUILDING_OVERVIEW_COLORS[building.type] || "#6b7d76";
+      ctx.fillRect(px + 3, py + 3, TILE - 7, TILE - 7);
+      ctx.fillStyle = transport ? "#a9d9d5" : "rgba(235,244,232,.68)";
+      if (transport) {
+        const direction = DIRS[building.dir] || DIRS[1];
+        if (direction.x) ctx.fillRect(px + 7, py + 18, TILE - 14, 4);
+        else ctx.fillRect(px + 18, py + 7, 4, TILE - 14);
+      } else {
+        ctx.fillRect(px + 11, py + 11, TILE - 22, TILE - 22);
+      }
+      ctx.fillStyle = "rgba(9,22,17,.46)";
+      ctx.fillRect(px + 3, py + TILE - 6, TILE - 7, 3);
+    }
+
+    function drawBuilding(building, time, detailLevel = 2) {
+      if (detailLevel === 0) drawBuildingOverview(building);
+      else if (building.type === "belt") drawBelt(building, time);
       else if (building.type === "splitter") drawSplitter(building, time);
       else if (building.type === "underground") drawUnderground(building, time);
       else if (building.type === "merger") drawMerger(building, time);
@@ -7789,7 +7923,7 @@
       }
     }
 
-    function drawItem(item) {
+    function drawItem(item, detailLevel = 2) {
       const transport = buildingAt(item.x, item.y);
       if (!isTransportBuilding(transport)) return;
       const directionIndex = transport.type === "splitter" ? transportOutputDirections(transport)[0] : transport.dir;
@@ -7799,6 +7933,13 @@
       const cx = (item.x + 0.5 + (hiddenTravel ? 0 : dir.x * progress)) * TILE;
       const cy = (item.y + 0.5 + (hiddenTravel ? 0 : dir.y * progress)) * TILE;
       const data = ITEMS[item.kind];
+      if (detailLevel === 0) {
+        ctx.fillStyle = data.edge;
+        ctx.fillRect(cx - 4, cy - 4, 8, 8);
+        ctx.fillStyle = data.color;
+        ctx.fillRect(cx - 2, cy - 2, 4, 4);
+        return;
+      }
       ctx.save();
       if (hiddenTravel) ctx.globalAlpha = 1 - progress * 0.58;
       ctx.fillStyle = "rgba(0,0,0,.35)";
@@ -7970,9 +8111,10 @@
       ctx.fillRect(cx - 11, cy - size / 2 - 7 + bob, 22 * hpRatio, 2);
     }
 
-    function drawEnemySpawns(time) {
+    function drawEnemySpawns(time, minX, minY, maxX, maxY) {
       const danger = state.combat.phase === "active";
       for (const spawn of ENEMY_SPAWNS) {
+        if (spawn.x < minX - 1 || spawn.x > maxX + 1 || spawn.y < minY - 1 || spawn.y > maxY + 1) continue;
         const cx = (spawn.x + 0.5) * TILE;
         const cy = (spawn.y + 0.5) * TILE;
         const pulse = 0.55 + Math.sin(time * 4 + spawn.x + spawn.y) * 0.18;
@@ -8086,12 +8228,13 @@
       ctx.fillText(text, x * TILE, y * TILE);
     }
 
-    function drawRegionLabels() {
+    function drawRegionLabels(minX, minY, maxX, maxY) {
       ctx.save();
       ctx.textAlign = "center";
       ctx.font = "700 13px 'Segoe UI', sans-serif";
       ctx.fillStyle = "rgba(235,244,238,.18)";
       for (const landmark of REGION_LANDMARKS) {
+        if (landmark.x < minX - 3 || landmark.x > maxX + 3 || landmark.y < minY - 2 || landmark.y > maxY + 2) continue;
         ctx.fillText(landmark.label, landmark.x * TILE, landmark.y * TILE);
       }
       ctx.restore();
@@ -8171,48 +8314,45 @@
       const minY = clamp(Math.floor(camera.y / TILE) - 1, 0, WORLD_H - 1);
       const maxX = clamp(Math.ceil((camera.x + visibleW) / TILE) + 1, 0, WORLD_W - 1);
       const maxY = clamp(Math.ceil((camera.y + visibleH) / TILE) + 1, 0, WORLD_H - 1);
+      const detailLevel = terrainDetailLevel();
 
-      grassGroundGradient = ctx.createLinearGradient(0, 0, WORLD_W * TILE, WORLD_H * TILE);
-      grassGroundGradient.addColorStop(0, "#6eaa56");
-      grassGroundGradient.addColorStop(0.5, "#5f9c4d");
-      grassGroundGradient.addColorStop(1, "#4f8847");
-      waterGroundGradient = ctx.createLinearGradient(0, 0, 0, WORLD_H * TILE);
-      waterGroundGradient.addColorStop(0, "#188ba0");
-      waterGroundGradient.addColorStop(0.56, "#16758a");
-      waterGroundGradient.addColorStop(1, "#105e77");
-      roadGroundGradient = ctx.createLinearGradient(0, 0, WORLD_W * TILE, WORLD_H * TILE);
-      roadGroundGradient.addColorStop(0, "#b78750");
-      roadGroundGradient.addColorStop(0.55, "#a87946");
-      roadGroundGradient.addColorStop(1, "#8f653d");
-
-      for (let y = minY; y <= maxY; y++) {
-        for (let x = minX; x <= maxX; x++) drawTerrainTile(x, y, simClock);
-      }
-      for (let y = minY; y <= maxY; y++) {
-        for (let x = minX; x <= maxX; x++) drawTerrainProps(x, y);
+      if (detailLevel === 0) {
+        drawTerrainOverviewLayer(minX, minY, maxX, maxY);
+      } else {
+        for (let y = minY; y <= maxY; y++) {
+          for (let x = minX; x <= maxX; x++) drawTerrainTile(x, y, simClock, detailLevel);
+        }
+        for (let y = minY; y <= maxY; y++) {
+          for (let x = minX; x <= maxX; x++) drawTerrainProps(x, y);
+        }
       }
 
-      drawRegionLabels();
+      drawRegionLabels(minX, minY, maxX, maxY);
       for (const site of DEPOSIT_SITES) {
+        if (site.x < minX - 3 || site.x > maxX + 3 || site.y < minY - 3 || site.y > maxY + 3) continue;
         const resource = ITEMS[site.kind];
         drawMapLabel(site.x + 0.5, site.y - (site.radius || 1) - 0.2, site.label, resource.color);
       }
-      drawEnemySpawns(simClock);
+      drawEnemySpawns(simClock, minX, minY, maxX, maxY);
       drawHub(simClock);
       drawExplorationSites(simClock);
       drawLegacyDistrict();
 
       for (const building of state.buildings) {
         if (building.x >= minX - 1 && building.x <= maxX + 1 && building.y >= minY - 1 && building.y <= maxY + 1) {
-          drawBuilding(building, simClock);
+          drawBuilding(building, simClock, detailLevel);
         }
       }
-      for (const item of state.items) drawItem(item);
-      for (const enemy of state.enemies) drawEnemy(enemy, simClock);
+      for (const item of state.items) {
+        if (item.x >= minX - 1 && item.x <= maxX + 1 && item.y >= minY - 1 && item.y <= maxY + 1) drawItem(item, detailLevel);
+      }
+      for (const enemy of state.enemies) {
+        if (enemy.x >= minX - 2 && enemy.x <= maxX + 2 && enemy.y >= minY - 2 && enemy.y <= maxY + 2) drawEnemy(enemy, simClock);
+      }
       drawGhost();
       drawPlayer(simClock);
       ctx.restore();
-      drawMinimap();
+      drawMinimap(renderDt);
     }
 
     // ---------------------------------------------------------------------
@@ -9846,6 +9986,8 @@
 
     let lastFrameTime = performance.now();
     let accumulator = 0;
+    const RENDER_INTERVAL = 1 / 60;
+    let renderAccumulator = RENDER_INTERVAL;
 
     function frame(now) {
       const elapsed = Math.min(MAX_FRAME_DELTA, Math.max(0, (now - lastFrameTime) / 1000));
@@ -9863,7 +10005,12 @@
         } else {
           accumulator = 0;
         }
-        render(elapsed);
+        renderAccumulator = Math.min(renderAccumulator + elapsed, MAX_FRAME_DELTA);
+        if (renderAccumulator >= RENDER_INTERVAL) {
+          const renderElapsed = renderAccumulator;
+          renderAccumulator %= RENDER_INTERVAL;
+          render(renderElapsed);
+        }
       }
       requestAnimationFrame(frame);
     }
@@ -9883,6 +10030,7 @@
       if (summary) summary.combatPaused = combatPaused;
       state.lastSavedAt = Date.now();
       accumulator = 0;
+      renderAccumulator = RENDER_INTERVAL;
       lastFrameTime = performance.now();
       cachedNetwork = null;
       updateUI(true);
