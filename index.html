@@ -3654,10 +3654,6 @@
     }
 
     function useAbility(key) {
-      if (state.combat.paused) {
-        showToast("Retome a simulação para usar operações de campo.");
-        return false;
-      }
       const ability = ABILITIES[key];
       const problem = abilityUnlockProblem(key);
       if (problem) {
@@ -7424,14 +7420,13 @@
       for (const button of document.querySelectorAll(".ability-btn[data-ability]")) {
         const key = button.dataset.ability;
         const problem = abilityUnlockProblem(key);
-        const pauseProblem = state.combat.paused ? "Indisponível durante a pausa tática." : null;
         const remaining = Math.max(0, Number(state.abilities.cooldowns[key]) || 0);
         button.classList.toggle("locked", Boolean(problem));
         button.classList.toggle("ready", !problem && remaining <= 0);
-        button.disabled = Boolean(problem || pauseProblem || remaining > 0);
-        button.title = problem || pauseProblem || `${ABILITIES[key].label}${remaining > 0 ? ` • ${Math.ceil(remaining)} s` : " • pronta"} • tecla ${ABILITIES[key].hotkey}`;
+        button.disabled = Boolean(problem || remaining > 0);
+        button.title = problem || `${ABILITIES[key].label}${remaining > 0 ? ` • ${Math.ceil(remaining)} s` : " • pronta"} • tecla ${ABILITIES[key].hotkey}`;
         const cooldown = button.querySelector(".ability-cooldown");
-        if (cooldown) cooldown.textContent = problem ? "BLOQ" : pauseProblem ? "PAUSA" : remaining > 0 ? `${Math.ceil(remaining)}s` : "PRONTA";
+        if (cooldown) cooldown.textContent = problem ? "BLOQ" : remaining > 0 ? `${Math.ceil(remaining)}s` : "PRONTA";
       }
 
       const selected = buildingById.get(selectedBuildingId);
@@ -7992,7 +7987,7 @@
            tungstênio + aço + circuito → dardo de Railgun
          </div>
          <p><strong>Waves:</strong> são liberadas no Tier 2. Inimigos entram pelas quatro estradas, atacam obstáculos e tentam destruir o Hub. Clique no painel WAVE/HUB/MUNIÇÃO/AMEAÇA para ver detalhes ou iniciar a próxima wave antes.</p>
-         <p><strong>Pausa tática:</strong> pressione Espaço ou use o botão PAUSAR ao lado da wave. Inimigos, armas, produção, personagem e recargas ficam congelados; construção e menus continuam disponíveis.</p>
+         <p><strong>Pausa tática:</strong> pressione Espaço ou use o botão PAUSAR ao lado da wave. Inimigos, armas, produção, movimento e recargas ficam congelados; construção, edição, menus e operações de campo continuam disponíveis.</p>
          <p><strong>Diretor de Ameaça:</strong> mede o pico de itens/h e Cr/h, além de Tier, créditos, tamanho, tecnologias e Prestígio. Antes da wave ele também mostra sua adaptação: Demolidores contra muralhas, Blindados contra Torretas, formação dispersa contra Canhões, Enxame contra Railguns ou Sabotadores contra fábricas extensas. O plano fica travado quando a wave começa.</p>
          <p><strong>Sabotagem:</strong> Sabotadores atravessam a malha, descartam parte dos buffers e param uma construção temporariamente. J repara e reativa tudo perto do personagem; K também limpa a pane enquanto atordoa inimigos.</p>
          <p><strong>Offline:</strong> ao voltar, o jogo calcula em lote a vazão das rotas conectadas. Limite inicial de 24 h, ampliável pela árvore tecnológica.</p>
@@ -8108,7 +8103,7 @@
          Tungstênio + Aço + Circuito → Dardo → Railgun</div>
          <p>Waves vencidas: <strong>${state.combat.victories}</strong> • eliminações: <strong>${state.combat.kills}</strong> • derrotas: <strong>${state.combat.defeats}</strong> • sabotagens sofridas: <strong>${state.stats.sabotagesSuffered}</strong></p>
          <p><strong>Regra anti-exploit:</strong> a maior produção observada na rodada nunca diminui. Ao iniciar a wave, o Diretor salva um snapshot; mudanças na fábrica só afetam a próxima formação.</p>
-         <p><strong>Pausa tática:</strong> congela toda a simulação, inclusive a produção e as recargas. Você ainda pode reorganizar construções e consultar os menus.</p>
+         <p><strong>Pausa tática:</strong> congela os ticks automáticos, inclusive produção, inimigos, armas e recargas. Você ainda pode reorganizar construções e usar operações de campo para preparar a defesa.</p>
          <p><strong>Offline justo:</strong> a fábrica continua produzindo com a aba fechada, mas uma wave ativa volta para preparação; o Hub não é destruído offline.</p>`,
         actions
       );
@@ -8153,11 +8148,11 @@
       }).join("");
       const actions = Object.keys(ABILITIES).map(key => ({
         label: `${ABILITIES[key].hotkey} • ${ABILITIES[key].label}`,
-        disabled: Boolean(state.combat.paused || abilityUnlockProblem(key) || state.abilities.cooldowns[key] > 0),
+        disabled: Boolean(abilityUnlockProblem(key) || state.abilities.cooldowns[key] > 0),
         onClick: () => useAbility(key)
       }));
       actions.push({ label: "Fechar", kind: "primary" });
-      openModal("Operações de campo", `${state.combat.paused ? '<div class="box"><strong>PAUSA TÁTICA:</strong> retome a simulação para executar uma operação.</div>' : ""}${cards}<p>Posicione o personagem onde a operação terá maior impacto. A Doutrina de campo no Prestígio reduz recargas e aumenta os efeitos.</p>`, actions);
+      openModal("Operações de campo", `${state.combat.paused ? '<div class="box"><strong>PAUSA TÁTICA:</strong> operações continuam liberadas para você preparar a defesa sem os inimigos avançarem.</div>' : ""}${cards}<p>Posicione o personagem onde a operação terá maior impacto. A Doutrina de campo no Prestígio reduz recargas e aumenta os efeitos.</p>`, actions);
     }
 
     function showMenu() {
